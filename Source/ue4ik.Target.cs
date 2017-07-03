@@ -10,5 +10,10 @@ public class ue4ikTarget : TargetRules
 		Type = TargetType.Game;
 
 		ExtraModuleNames.AddRange( new string[] { "ue4ik" } );
+
+        if (UEBuildConfiguration.bBuildEditor)
+        {
+            ExtraModuleNames.Add("ue4ikEditor");
+        }
 	}
 }

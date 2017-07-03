@@ -10,5 +10,6 @@ public class ue4ikEditorTarget : TargetRules
 		Type = TargetType.Editor;
 
 		ExtraModuleNames.AddRange( new string[] { "ue4ik" } );
+        ExtraModuleNames.Add("ue4ikEditor");
 	}
 }
