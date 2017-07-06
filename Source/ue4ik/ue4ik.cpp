@@ -4,3 +4,6 @@
 #include "Modules/ModuleManager.h"
 
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, ue4ik, "ue4ik" );
+
+DEFINE_LOG_CATEGORY(LogIK)
+
