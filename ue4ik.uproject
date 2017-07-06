@@ -1,16 +1,23 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "4.16",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "ue4ik",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine"
-			]
-		}
-	]
+  "FileVersion": 3,
+  "EngineAssociation": "4.16",
+  "Category": "",
+  "Description": "",
+  "Modules": [
+    {
+      "Name": "ue4ik",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "CoreUObject",
+        "AnimGraph"
+      ]
+    },
+    {
+      "Name": "ue4ikEditor",
+      "Type": "Editor",
+      "LoadingPhase":  "PostEngineInit"
+    }
+  ]
 }

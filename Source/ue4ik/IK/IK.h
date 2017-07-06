@@ -8,8 +8,8 @@
 
 #include "ue4ik.h"
 #include "AnimNode_SkeletalControlBase.h"
+#include "BoneControllers/AnimNode_Fabrik.h"
 #include "IK.generated.h"
-
 
 /*
 * A bone used in IK
@@ -79,14 +79,31 @@ public:
 	bInitSuccess(false)
 	{ }
 
+	FAnimNode_Fabrik FabrikSolver;
 	FIKBone RootBone;
 	FIKBone EffectorBone;	
+
+	// How close the effector tip needs to be before FABRIK solver stops. Decrease for 
+    // better results and worse performance.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver")
+	float Precision;
 	
+	// Maximum number of iterations the solver may run for. Increase for better results
+    // but possibly worse performance.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver")
+	float MaxIterations;
 
 	bool InitBoneReferences(const FBoneContainer& RequiredBones)
 	{
 		bool bInitSuccess = InitAndAssignBones(RequiredBones);
-		if (!bInitSuccess)
+		if (bInitSuccess)
+		{
+			FabrikSolver.EffectorRotationSource = BRS_KeepComponentSpaceRotation;
+			FabrikSolver.EffectorTransformSpace = BCS_WorldSpace;
+			FabrikSolver.MaxIterations = MaxIterations;
+			FabrikSolver.Precision = Precision;
+		}
+		else
 		{
 			UE_LOG(LogIK, Warning, TEXT("UFabrikIKChain::InitBoneReferences -- Chain contains invalid bone references and could not be initialized"));
 		}
