@@ -3,6 +3,7 @@
 #pragma once
 
 #include "AnimGraphNode_SkeletalControlBase.h"
+#include "IK/AnimNode_BipedHipAdjustment.h"
 #include "AnimGraphNode_BipedHipAdjustment.generated.h"
 
 /**
@@ -14,7 +15,15 @@ class UAnimGraphNode_BipedHipAdjustment : public UAnimGraphNode_SkeletalControlB
 {
 	GENERATED_BODY()
 	
-		
+public:
+	UAnimGraphNode_BipedHipAdjustment(const FObjectInitializer& ObjectInitializer);
+	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	FLinearColor GetNodeTitleColor() const override;
+	FString GetNodeCategory() const override;
 
-
+protected:
+	virtual FText GetControllerDescription() const;
+protected:
+	UPROPERTY(EditAnywhere, Category = Settings)
+	FAnimNode_BipedHipAdjustment Node;
 };

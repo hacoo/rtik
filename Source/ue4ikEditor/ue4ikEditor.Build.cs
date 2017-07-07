@@ -9,7 +9,7 @@ public class ue4ikEditor : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" , "UnrealEd" });
+        PublicDependencyModuleNames.AddRange(new string[] { "ue4ik", "Core", "CoreUObject", "Engine", "InputCore" , "UnrealEd" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "EditorStyle", "AnimGraph", "BlueprintGraph", "PropertyEditor", "Slate", "SlateCore" });
 
