@@ -67,3 +67,33 @@ public:
 		return bInitOk;		
 	}
 };
+
+/*
+* Holds trace data used in IK. Don't make one yourself, use the Humanoid IK Trace node to create one.
+*/
+USTRUCT(BlueprintType)
+struct FHumanoidIKTraceData 
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	FHitResult FootHitResult;
+	FHitResult LegHitResult;
+};
+
+
+UCLASS()
+class UHumanoidIKLibrary : public UBlueprintFunctionLibrary
+{
+
+	GENERATED_BODY()
+
+	/*
+    * Does traces from foot, toe, etc. Traces are somewhat expensive, so try to
+    * call this once per graph and reuse the result between IK nodes.
+    */
+	UFUNCTION(BlueprintPure, Category = IK)
+	void HumanoidIKLegTrace(const FFabrikHumanoidLegChain& LegChain, FHumanoidIKTraceData& OutTraceData);
+};
+

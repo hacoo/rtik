@@ -78,7 +78,9 @@ public:
 
 	FFabrikIKChain()
 		:
-	bInitSuccess(false)
+	bInitSuccess(false),
+	Precision(0.01f),
+	MaxIterations(10)
 	{ }
 
 	FAnimNode_Fabrik FabrikSolver;
@@ -123,33 +125,3 @@ private:
 	bool bInitSuccess;
 
 };
-
-/*
-* Holds trace data used in IK. Event graph MUST update this every frame.
-* I'm trying to figure out a better way to do this...
-USTRUCT(BlueprintType, BlueprintType)
-struct UIKTraceData : public UObject
-{
-	GENERATED_BODY()
-
-	UIKTraceData(const FIKBone& InShinBone, const FIKBone& InFootBone)
-		:
-		ShinBone(InShinBone),
-		FootBone(InFootBone)
-	{ }
-
-public:
-
-	// connects from bottom of knee to top of foot
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Bones)
-	FIKBone ShinBone;
-
-	// connects from bottom of shin to toe
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Bones)
-	FIKBone FootBone;
-
-	FHitResult FootHitResult;
-	FHitResult LegHitResult;
-};
-
-*/
