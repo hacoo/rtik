@@ -10,45 +10,17 @@
 /**
  * 
  */
-UCLASS()
-class UE4IK_API UAnimUtil : public UObject
+USTRUCT()
+struct UE4IK_API FAnimUtil 
 {
 	GENERATED_BODY()
 	
 public:
 
-	// Do a line trace from Source to Target. Code courtesy of Rama:
-	// https://wiki.unrealengine.com/Trace_Functions
-	static FORCEINLINE bool LineTrace(
-		UWorld* World,
-		AActor* ActorToIgnore,
-		const FVector& Start,
-		const FVector& End,
-		FHitResult& HitOut,
-		ECollisionChannel CollisionChannel = ECC_Pawn,
-		bool ReturnPhysMat = false) 
-	{ 
-		FCollisionQueryParams TraceParams(FName(TEXT("Line Trace")), true, ActorToIgnore);
-		TraceParams.bTraceComplex = true;
-		//TraceParams.bTraceAsyncScene = true;
-		TraceParams.bReturnPhysicalMaterial = ReturnPhysMat;
-		
-		//Ignore Actors
-		TraceParams.AddIgnoredActor(ActorToIgnore);
-		
-		//Re-initialize hit info
-		HitOut = FHitResult(ForceInit);
-		
-		//Trace!
-		World->LineTraceSingleByChannel(
-			HitOut,		//result
-			Start,	//start
-			End, //end
-			CollisionChannel, //collision channel
-			TraceParams
-		);
- 
-		//Hit any Actor?
-		return (HitOut.GetActor() != NULL);
-	}
+	// Get worldspace location of a bone
+	FVector GetBoneWorldLocation(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+
+	// Get worldspace transform of a bone
+	FTransform GetBoneWorldTransform(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+
 };

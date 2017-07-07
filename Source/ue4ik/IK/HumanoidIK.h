@@ -21,12 +21,18 @@ public:
 
 	FFabrikHumanoidLegChain()
 		:
-		FootRadius(0.0f)
+		FootRadius(10.0f),
+		ToeRadius(5.0f)
 	{ }
 
 	// Distance between the bottom of the shin bone and the bottom surface of the foot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
     float FootRadius;
+
+	// Distance between 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    float ToeRadius;
+
 	
 	// Connects from pelvis to upper leg bone
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -39,6 +45,10 @@ public:
 	// Connects from bottom of knee to top of foot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FIKBone ShinBone;
+
+	// Connects from bottom of shin to start of the toe
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FIKBone FootBone;
 
 	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones)
 	{
@@ -60,6 +70,13 @@ public:
 			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Shin Bone invalid"));
 			bInitOk = false;
 		}
+
+		if (!FootBone.Init(RequiredBones))
+		{
+			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Foot Bone invalid"));
+			bInitOk = false;
+		}
+
 
 		EffectorBone = ShinBone;
 		RootBone = HipBone;
@@ -94,6 +111,8 @@ class UHumanoidIKLibrary : public UBlueprintFunctionLibrary
     * call this once per graph and reuse the result between IK nodes.
     */
 	UFUNCTION(BlueprintPure, Category = IK)
-	void HumanoidIKLegTrace(const FFabrikHumanoidLegChain& LegChain, FHumanoidIKTraceData& OutTraceData);
+	void HumanoidIKLegTrace(ACharacter* Character, 
+		const FFabrikHumanoidLegChain& LegChain,
+		FHumanoidIKTraceData& OutTraceData);
 };
 
