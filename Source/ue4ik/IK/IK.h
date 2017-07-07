@@ -9,6 +9,8 @@
 #include "ue4ik.h"
 #include "AnimNode_SkeletalControlBase.h"
 #include "BoneControllers/AnimNode_Fabrik.h"
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
 #include "IK.generated.h"
 
 /*
@@ -122,62 +124,32 @@ private:
 
 };
 
-
 /*
-* Represents a humanoid leg, with a hip bone, thigh bone, and shin bone. 
-*/
-USTRUCT(BlueprintType)
-struct FFabrikBipedLegChain : public FFabrikIKChain
+* Holds trace data used in IK. Event graph MUST update this every frame.
+* I'm trying to figure out a better way to do this...
+USTRUCT(BlueprintType, BlueprintType)
+struct UIKTraceData : public UObject
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
+
+	UIKTraceData(const FIKBone& InShinBone, const FIKBone& InFootBone)
+		:
+		ShinBone(InShinBone),
+		FootBone(InFootBone)
+	{ }
 
 public:
 
-	FFabrikBipedLegChain()
-		:
-		FootRadius(0.0f)
-	{ }
-
-	// Distance between the bottom of the shin bone and the bottom surface of the foot
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-    float FootRadius;
-	
-	// Connects from pelvis to upper leg bone
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FIKBone HipBone;
-
-	// Connects from end of hip to top of knee
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FIKBone ThighBone;
-
-	// Connects from bottom of knee to top of foot
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	// connects from bottom of knee to top of foot
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Bones)
 	FIKBone ShinBone;
 
-	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones)
-	{
-		bool bInitOk = true;
-		if (!HipBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Hip Bone invalid"));
-			bInitOk = false;
-		}
+	// connects from bottom of shin to toe
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Bones)
+	FIKBone FootBone;
 
-		if (!ThighBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Thigh Bone invalid"));
-			bInitOk = false;
-		}
-
-		if (!ShinBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Shin Bone invalid"));
-			bInitOk = false;
-		}
-
-		EffectorBone = ShinBone;
-		RootBone = HipBone;
-   
-		return bInitOk;		
-	}
+	FHitResult FootHitResult;
+	FHitResult LegHitResult;
 };
+
+*/

@@ -1,28 +1,28 @@
 // Copyright (c) Henry Cooney 2017
 
-#include "AnimNode_BipedHipAdjustment.h"
+#include "AnimNode_HumanoidPelvisHeightAdjustment.h"
 #include "IK.h"
 
-void FAnimNode_BipedHipAdjustment::UpdateInternal(const FAnimationUpdateContext & Context)
+void FAnimNode_HumanoidPelvisHeightAdjustment::UpdateInternal(const FAnimationUpdateContext & Context)
 {
 	FAnimNode_SkeletalControlBase::UpdateInternal(Context);
 	DeltaTime = Context.GetDeltaTime();
 }
 
-void FAnimNode_BipedHipAdjustment::EvaluateComponentSpaceInternal(FComponentSpacePoseContext & Context)
+void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateComponentSpaceInternal(FComponentSpacePoseContext & Context)
 {
 }
 
-void FAnimNode_BipedHipAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
+void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
 }
 
-bool FAnimNode_BipedHipAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
+bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
 	return bInitSuccess;
 }
 
-void FAnimNode_BipedHipAdjustment::InitializeBoneReferences(const FBoneContainer & RequiredBones)
+void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer & RequiredBones)
 {
 	bInitSuccess = true;
 	if (!RightLeg.InitAndAssignBones(RequiredBones))
