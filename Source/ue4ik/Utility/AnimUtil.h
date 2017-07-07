@@ -18,9 +18,15 @@ struct UE4IK_API FAnimUtil
 public:
 
 	// Get worldspace location of a bone
-	FVector GetBoneWorldLocation(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+	static FORCEINLINE FVector GetBoneWorldLocation(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
 
 	// Get worldspace transform of a bone
-	FTransform GetBoneWorldTransform(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+	static FORCEINLINE FTransform GetBoneWorldTransform(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+
+	// Get component space location of a bone
+	static FORCEINLINE FVector GetBoneCSLocation(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
+
+	// Get component space transform of a bone
+	static FORCEINLINE FTransform GetBoneCSTransform(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex);
 
 };

@@ -21,3 +21,15 @@ FTransform FAnimUtil::GetBoneWorldTransform(USkeletalMeshComponent& SkelComp, FC
 	FAnimationRuntime::ConvertCSTransformToBoneSpace(SkelComp.GetComponentTransform(), MeshBases, BoneTransform, BoneIndex, BCS_WorldSpace);
 	return BoneTransform;
 }
+
+// Get the world space location vector for a bone
+FVector FAnimUtil::GetBoneCSLocation(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex)
+{
+	return MeshBases.GetComponentSpaceTransform(BoneIndex).GetLocation();
+}
+
+// Get the world space transform for a bone
+FTransform FAnimUtil::GetBoneCSTransform(USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& MeshBases, FCompactPoseBoneIndex BoneIndex)
+{
+	return MeshBases.GetComponentSpaceTransform(BoneIndex);
+}
