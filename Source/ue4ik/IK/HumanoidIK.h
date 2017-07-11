@@ -3,6 +3,7 @@
 #pragma once
 
 #include "IK.h"
+#include "BonePose.h"
 #include "HumanoidIK.generated.h"
 
 /*
@@ -22,7 +23,9 @@ public:
 	FFabrikHumanoidLegChain()
 		:
 		FootRadius(10.0f),
-		ToeRadius(5.0f)
+		ToeRadius(5.0f),
+		TotalChainLength(0.0f),
+		bInitOk(false)
 	{ }
 
 	// Distance between the bottom of the shin bone and the bottom surface of the foot
@@ -32,7 +35,6 @@ public:
 	// Distance between 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
     float ToeRadius;
-
 	
 	// Connects from pelvis to upper leg bone
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -50,39 +52,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FIKBone FootBone;
 
-	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones)
-	{
-		bool bInitOk = true;
-		if (!HipBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Hip Bone invalid"));
-			bInitOk = false;
-		}
+	float GetTotalChainLength() const;
+	
 
-		if (!ThighBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Thigh Bone invalid"));
-			bInitOk = false;
-		}
+protected:
+	bool bInitOk;
+	virtual bool IsValidInternal(const FBoneContainer& RequiredBones) override;
+	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones) override;
 
-		if (!ShinBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Shin Bone invalid"));
-			bInitOk = false;
-		}
-
-		if (!FootBone.Init(RequiredBones))
-		{
-			UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Foot Bone invalid"));
-			bInitOk = false;
-		}
-
-
-		EffectorBone = ShinBone;
-		RootBone = HipBone;
-   
-		return bInitOk;		
-	}
+	// Total length of all bones in the chain (thigh, shin, and foot bones).
+    // Does not include foot or toe radius.
+	float TotalChainLength;
 };
 
 /*
@@ -100,19 +80,18 @@ public:
 };
 
 
-UCLASS()
-class UHumanoidIKLibrary : public UBlueprintFunctionLibrary
+USTRUCT()
+struct FHumanoidIK 
 {
-
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	/*
     * Does traces from foot, toe, etc. Traces are somewhat expensive, so try to
     * call this once per graph and reuse the result between IK nodes.
     */
-	UFUNCTION(BlueprintPure, Category = IK)
-	void HumanoidIKLegTrace(ACharacter* Character, 
-		const FFabrikHumanoidLegChain& LegChain,
+	static void HumanoidIKLegTrace(ACharacter* Character, 
+		FCSPose<FCompactPose>& MeshBases,
+		FFabrikHumanoidLegChain& LegChain,
 		FHumanoidIKTraceData& OutTraceData);
 };
 

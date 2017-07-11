@@ -1,45 +1,75 @@
 // Copyright (c) Henry Cooney 2017
 
 #include "AnimNode_HumanoidPelvisHeightAdjustment.h"
-#include "IK.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstanceProxy.h"
+#include "IK/IK.h"
+#include "HumanoidIK.h"
+
+DECLARE_CYCLE_STAT(TEXT("IK Humanoid Pelvis Height Adjust Eval"), STAT_HumanoidPelvisHeightAdjust_Eval, STATGROUP_Anim);
+
 
 void FAnimNode_HumanoidPelvisHeightAdjustment::UpdateInternal(const FAnimationUpdateContext & Context)
 {
-	FAnimNode_SkeletalControlBase::UpdateInternal(Context);
 	DeltaTime = Context.GetDeltaTime();
 }
 
-void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateComponentSpaceInternal(FComponentSpacePoseContext & Context)
+//void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
+void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateComponentSpaceInternal(FComponentSpacePoseContext & Output)
 {
-}
+	SCOPE_CYCLE_COUNTER(STAT_HumanoidPelvisHeightAdjust_Eval);
 
-void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
-{
+#if ENABLE_ANIM_DEBUG
+	check(Output.AnimInstanceProxy->GetSkelMeshComponent());
+#endif
+	//check(OutBoneTransforms.Num() == 0);
+
+	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
+	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
+	FHumanoidIKTraceData LeftTraceData;
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg, LeftTraceData);	
+	UE_LOG(LogIK, Warning, TEXT("Zonga!"));
 }
 
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	return bInitSuccess;
+	bool bValid = LeftLeg.InitIfInvalid(RequiredBones)
+		&& RightLeg.InitIfInvalid(RequiredBones)
+		&& PelvisBone.InitIfInvalid(RequiredBones);
+
+#if ENABLE_IK_DEBUG_VERBOSE
+	if (!bValid)
+	{
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid to evaluate"));
+	}
+#endif // ENABLE_ANIM_DEBUG
+
+	return bValid;
 }
 
-void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer & RequiredBones)
+void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	bInitSuccess = true;
-	if (!RightLeg.InitAndAssignBones(RequiredBones))
+	UE_LOG(LogIK, Warning, TEXT("Initializing biped leg IK..."));
+	if (!RightLeg.InitBoneReferences(RequiredBones))
 	{
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize right leg for biped hip adjustment"));
-		bInitSuccess = false;
+#endif // ENABLE_IK_DEBUG
 	}
 
-	if (!LeftLeg.InitAndAssignBones(RequiredBones))
+	if (!LeftLeg.InitBoneReferences(RequiredBones))
 	{
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize left leg for biped hip adjustment"));
-		bInitSuccess = false;
+#endif // ENABLE_IK_DEBUG
 	}
 
 	if (!PelvisBone.Init(RequiredBones))
 	{
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize pelvis bone for biped hip adjustment"));
-		bInitSuccess = false;
-	}
+#endif // ENABLE_IK_DEBUG
+	}	
 }
+
+

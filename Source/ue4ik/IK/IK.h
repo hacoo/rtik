@@ -13,51 +13,104 @@
 #include "GameFramework/Character.h"
 #include "IK.generated.h"
 
+#define ENABLE_IK_DEBUG (1 && !(UE_BUILD_SHIPPING || UE_BUILD_TEST))
+#define ENABLE_IK_DEBUG_VERBOSE (1 && !(UE_BUILD_SHIPPING || UE_BUILD_TEST))
+
+
 /*
 * A bone used in IK
 */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FIKBone
 {
 	GENERATED_USTRUCT_BODY()
 
 public:
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FBoneReference BoneRef;
+
+	FCompactPoseBoneIndex BoneIndex;
+
+public:
+	
 	FIKBone()
 		:
-		bInitSuccess(false)
+		BoneIndex(INDEX_NONE)
 	{ }
+	
+
+/*
+	FIKBone(const FIKBone& Other)
+		:
+		BoneIndex(Other.BoneIndex)
+	{
+		UE_LOG(LogIK, Warning, TEXT("hi from the copy constructor"));
+		BoneRef.BoneIndex = Other.BoneRef.BoneIndex;
+		BoneRef.BoneName = Other.BoneRef.BoneName;
+		BoneRef.bUseSkeletonIndex = Other.BoneRef.bUseSkeletonIndex;
+		BoneRef.CachedCompactPoseIndex = Other.BoneRef.CachedCompactPoseIndex;
+	}
 
 	FIKBone& operator= (const FIKBone& Other)
 	{		
-		BoneRef = Other.BoneRef;
-		bInitSuccess = Other.bInitSuccess;
+		UE_LOG(LogIK, Warning, TEXT("hi from the assignment operator"));
+		BoneRef.BoneIndex = Other.BoneRef.BoneIndex;
+		BoneRef.BoneName = Other.BoneRef.BoneName;
+		BoneRef.bUseSkeletonIndex = Other.BoneRef.bUseSkeletonIndex;
+		BoneRef.CachedCompactPoseIndex = Other.BoneRef.CachedCompactPoseIndex;
+		BoneIndex = Other.BoneIndex;
+
+		UE_LOG(LogIK, Warning, TEXT("%d"), BoneRef.BoneIndex);
 		return *this;
 	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FBoneReference BoneRef;
-	
+*/
+
+    // Check if this bone is valid, if not, attempt to initialize it. Return whether the bone is (after re-initialization if needed)
+	bool InitIfInvalid(const FBoneContainer& RequiredBones)
+	{
+		if (IsValid(RequiredBones))
+		{
+			return true;
+		}
+
+		Init(RequiredBones);
+		bool bIsValid = Init(RequiredBones);
+		return bIsValid;
+	}
+
+    // Initialize this IK Bone. Must be called before use.
 	bool Init(const FBoneContainer& RequiredBones)
 	{
 		if (BoneRef.Initialize(RequiredBones))
 		{
+			BoneIndex = BoneRef.GetCompactPoseIndex(RequiredBones);
 			return true;
 		}
 		else
 		{
-			UE_LOG(LogIK, Warning, TEXT("FIKBone::Init -- Bone initialization failed"));
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("FIKBone::Init -- IK Bone initialization failed for bone: %s"), 
+				*BoneRef.BoneName.ToString());
+#endif // ENABLE_ANIM_DEBUG
 			return false;
 		}
 	}
 
-	bool IsInitialized()
+	bool IsValid(const FBoneContainer& RequiredBones)
 	{
-		return bInitSuccess;
+		bool bValid = BoneRef.IsValid(RequiredBones);
+
+#if ENABLE_IK_DEBUG_VERBOSE
+		if (!bValid)
+		{
+			UE_LOG(LogIK, Warning, TEXT("FIKBone::IsValid -- IK Bone %s was invalid"), 
+				*BoneRef.BoneName.ToString());
+		}
+#endif // ENABLE_IK_DEBUG_VERBOSE
+		return bValid;
 	}
 
-private:
-	bool bInitSuccess;
 
 };
 
@@ -75,7 +128,6 @@ struct FFabrikIKChain
 
 public:
 		
-
 	FFabrikIKChain()
 		:
 	bInitSuccess(false),
@@ -96,32 +148,35 @@ public:
     // but possibly worse performance.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver")
 	float MaxIterations;
+	
+	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
+    // Returns true if valid or initialization succeeds.
+	bool InitIfInvalid(const FBoneContainer& RequiredBones);
 
-	bool InitBoneReferences(const FBoneContainer& RequiredBones)
-	{
-		bool bInitSuccess = InitAndAssignBones(RequiredBones);
-		if (bInitSuccess)
-		{
-			FabrikSolver.EffectorRotationSource = BRS_KeepComponentSpaceRotation;
-			FabrikSolver.EffectorTransformSpace = BCS_WorldSpace;
-			FabrikSolver.MaxIterations = MaxIterations;
-			FabrikSolver.Precision = Precision;
-		}
-		else
-		{
-			UE_LOG(LogIK, Warning, TEXT("UFabrikIKChain::InitBoneReferences -- Chain contains invalid bone references and could not be initialized"));
-		}
-		return bInitSuccess;
-	}
+	// Initialize all bones used in this chain. Must be called before use.
+	bool InitBoneReferences(const FBoneContainer& RequiredBones);
 
-private:
+	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
+	bool IsValid(const FBoneContainer& RequiredBones);
+
+protected:
 	// Subclasses must implement this function so that:
     // - All additional bones are initialized
     // - RootBone and EffectorBone are assigned as needed
-	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones)
-	{
-		return true;
-	}
-	bool bInitSuccess;
+	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones);
 
+	// Subclasses must implement this function so that all additional bones are tested for validity
+	virtual bool IsValidInternal(const FBoneContainer& RequiredBones);
+
+	bool bInitSuccess;
+};
+
+UCLASS(BlueprintType)
+class UIKTestType : public UObject
+{
+	GENERATED_BODY()
+
+public: 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FIKBone IKBone;	
 };

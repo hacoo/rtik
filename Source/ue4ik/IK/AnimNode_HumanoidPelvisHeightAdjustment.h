@@ -24,9 +24,7 @@ struct UE4IK_API FAnimNode_HumanoidPelvisHeightAdjustment : public FAnimNode_Ske
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
-	FPoseLink InputPose;
-
+		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	FFabrikHumanoidLegChain LeftLeg;
 
@@ -52,22 +50,20 @@ public:
 	FAnimNode_HumanoidPelvisHeightAdjustment()
 		:
 		DeltaTime(0.0f),
-		bInitSuccess(false),
 		LastHipOffset(0.0f, 0.0f, 0.0f),
 		PelvisAdjustVelocity(20.0f),
 		MaxPelvisAdjustHeight(40.0)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
-	virtual void UpdateInternal(const FAnimationUpdateContext& Context);
-	virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Context);
-	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms);
-	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones);
-	virtual void InitializeBoneReferences(const FBoneContainer& RequiredBones);
+	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
+	//virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
+	virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Output) override;
+	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
+	virtual void InitializeBoneReferences(const FBoneContainer& RequiredBones) override;
 	// End FAnimNode_SkeletalControlBase Interface
 
 protected:
 	float DeltaTime;
-	bool bInitSuccess;
 	FVector LastHipOffset;
 };
