@@ -57,8 +57,8 @@ public:
 
 	// FAnimNode_SkeletalControlBase Interface
 	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
-	//virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
-	virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Output) override;
+	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
+	//virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Output) override;
 	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
 	virtual void InitializeBoneReferences(const FBoneContainer& RequiredBones) override;
 	// End FAnimNode_SkeletalControlBase Interface

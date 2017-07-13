@@ -8,7 +8,7 @@
 #include "AnimUtil.generated.h"
 
 /**
- * 
+ * Animation utility functions
  */
 USTRUCT()
 struct UE4IK_API FAnimUtil 

@@ -66,7 +66,7 @@ protected:
 };
 
 /*
-* Holds trace data used in IK. Don't make one yourself, use the Humanoid IK Trace node to create one.
+* Holds trace data used in leg IK
 */
 USTRUCT(BlueprintType)
 struct FHumanoidIKTraceData 
@@ -76,7 +76,7 @@ struct FHumanoidIKTraceData
 public:
 
 	FHitResult FootHitResult;
-	FHitResult LegHitResult;
+	FHitResult ToeHitResult;
 };
 
 
@@ -86,12 +86,14 @@ struct FHumanoidIK
 	GENERATED_USTRUCT_BODY()
 
 	/*
-    * Does traces from foot, toe, etc. Traces are somewhat expensive, so try to
-    * call this once per graph and reuse the result between IK nodes.
+    * Does traces from foot and toe to the floor
     */
 	static void HumanoidIKLegTrace(ACharacter* Character, 
 		FCSPose<FCompactPose>& MeshBases,
 		FFabrikHumanoidLegChain& LegChain,
-		FHumanoidIKTraceData& OutTraceData);
+		FIKBone& PelvisBone,
+		float MaxPelvisAdjustHeight,
+		FHumanoidIKTraceData& OutTraceData,
+		bool bEnableDebugDraw = false);
 };
 

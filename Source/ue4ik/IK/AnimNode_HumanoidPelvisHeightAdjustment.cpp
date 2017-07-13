@@ -14,21 +14,19 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::UpdateInternal(const FAnimationUp
 	DeltaTime = Context.GetDeltaTime();
 }
 
-//void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
-void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateComponentSpaceInternal(FComponentSpacePoseContext & Output)
+void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
 	SCOPE_CYCLE_COUNTER(STAT_HumanoidPelvisHeightAdjust_Eval);
 
 #if ENABLE_ANIM_DEBUG
 	check(Output.AnimInstanceProxy->GetSkelMeshComponent());
 #endif
-	//check(OutBoneTransforms.Num() == 0);
+	check(OutBoneTransforms.Num() == 0);
 
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
 	FHumanoidIKTraceData LeftTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg, LeftTraceData);	
-	UE_LOG(LogIK, Warning, TEXT("Zonga!"));
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg, PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, true);	
 }
 
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)

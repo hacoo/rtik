@@ -3,16 +3,22 @@
 #include "HumanoidIK.h"
 #include "Utility/AnimUtil.h"
 #include "Utility/TraceUtil.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 	FCSPose<FCompactPose>& MeshBases,
 	FFabrikHumanoidLegChain& LegChain,
-	FHumanoidIKTraceData& OutTraceData)
+	FIKBone& PelvisBone,
+	float MaxPelvisAdjustHeight,
+	FHumanoidIKTraceData& OutTraceData,
+	bool bEnableDebugDraw)
 {
-	// Traces to find floor points below foot bone and toe. Traces from character capsule midpoint
-    // to the max step-down height.
+	// Traces to find floor points below foot bone and toe. 
 
-    // Trace direction is downward axis of the character.
+    // Each trace proceeds downward in a vertical line through the foot / toe bone. The start point is the
+    // pelvis height, foot height, or toe height, whichever is greatest. The end point is determined by the max leg exention length.
+
+    // Trace direction is downward axis of skeletal mesh component.
 
 	if (Character == nullptr)
 	{
@@ -20,32 +26,55 @@ void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 		return;
 	}
 
-	UCapsuleComponent* CapsuleComponent = Character->GetCapsuleComponent();
 	USkeletalMeshComponent* SkelComp = Character->GetMesh();
 	UWorld* World = Character->GetWorld();
 	const FBoneContainer& RequiredBones = MeshBases.GetPose().GetBoneContainer();	
 	FVector TraceDirection = -1 * Character->GetActorUpVector();
 
-	// Do foot trace:
+	// All calcuations done in CS; will be translated to world space for final trace
+	FVector PelvisLocation = FAnimUtil::GetBoneCSLocation(*SkelComp,
+		MeshBases,
+		PelvisBone.BoneIndex);
 
-	FVector FootLocation = FAnimUtil::GetBoneWorldLocation(*SkelComp,
-		MeshBases, 
-		LegChain.ShinBone.BoneIndex);
+	FVector FootLocation = FAnimUtil::GetBoneCSLocation(*SkelComp, MeshBases, LegChain.ShinBone.BoneIndex);
+	FVector ToeLocation = FAnimUtil::GetBoneCSLocation(*SkelComp, MeshBases, LegChain.FootBone.BoneIndex);
 
-	FVector ToeLocation = FAnimUtil::GetBoneWorldLocation(*SkelComp,
-		MeshBases, 
-		LegChain.FootBone.BoneIndex);
+	float TraceStartHeight = FMath::Max3(FootLocation.Z + LegChain.FootRadius,
+		ToeLocation.Z + LegChain.ToeRadius,
+		PelvisLocation.Z);
+	float TraceEndHeight = PelvisLocation.Z - (LegChain.GetTotalChainLength() + LegChain.FootRadius + LegChain.ToeRadius + MaxPelvisAdjustHeight);
+
+	FVector FootTraceStart(FootLocation.X, FootLocation.Y, TraceStartHeight);
+	FVector FootTraceEnd(FootLocation.X, FootLocation.Y, TraceEndHeight);
+
+	FVector ToeTraceStart(ToeLocation.X, ToeLocation.Y, TraceStartHeight);
+	FVector ToeTraceEnd(ToeLocation.X, ToeLocation.Y, TraceEndHeight);
+
+	// Convert to world space for tracing
+	FTransform ComponentToWorld = SkelComp->ComponentToWorld;
+	FootTraceStart = ComponentToWorld.TransformPosition(FootTraceStart);
+	FootTraceEnd   = ComponentToWorld.TransformPosition(FootTraceEnd);
+	ToeTraceStart  = ComponentToWorld.TransformPosition(ToeTraceStart);
+	ToeTraceEnd    = ComponentToWorld.TransformPosition(ToeTraceEnd);
 	
-	//UTraceUtil::LineTrace(World, &Character, )
-	
+	UTraceUtil::LineTrace(World,
+		Character,
+		FootTraceStart,
+		FootTraceEnd,
+		OutTraceData.FootHitResult,
+		ECC_Pawn,
+		false,
+		bEnableDebugDraw);
 
-
-
-	//FVector FootTraceStart =
-
+	UTraceUtil::LineTrace(World,
+		Character,
+		ToeTraceStart,
+		ToeTraceEnd,
+		OutTraceData.ToeHitResult,
+		ECC_Pawn,
+		false,
+		bEnableDebugDraw);
 }
-
-
 
 bool FFabrikHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBones)
 {
