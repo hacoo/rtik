@@ -3,11 +3,15 @@
 #include "AnimNode_HumanoidPelvisHeightAdjustment.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "Utility/AnimUtil.h"
 #include "IK/IK.h"
 #include "HumanoidIK.h"
 
-DECLARE_CYCLE_STAT(TEXT("IK Humanoid Pelvis Height Adjust Eval"), STAT_HumanoidPelvisHeightAdjust_Eval, STATGROUP_Anim);
+#if WITH_EDITOR
+#include "Utility/DebugDrawUtil.h"
+#endif
 
+DECLARE_CYCLE_STAT(TEXT("IK Humanoid Pelvis Height Adjust Eval"), STAT_HumanoidPelvisHeightAdjust_Eval, STATGROUP_Anim);
 
 void FAnimNode_HumanoidPelvisHeightAdjustment::UpdateInternal(const FAnimationUpdateContext & Context)
 {
@@ -25,8 +29,81 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
+	if(Character == nullptr)
+	{
+		UE_LOG(LogIK, Warning, TEXT("FAnimNode_HumanoidPelvisHeightAdjustment -- evaluation failed, skeletal mesh component owner could not be cast to ACharacter"));
+		return;
+	}
+
+	UWorld* World = Character->GetWorld();
+
 	FHumanoidIKTraceData LeftTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg, PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, true);	
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg,
+		PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, bEnableDebugDraw);
+
+	FHumanoidIKTraceData RightTraceData;
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg,
+		PelvisBone, MaxPelvisAdjustHeight, RightTraceData, bEnableDebugDraw);
+	
+	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
+	// is where it would be, over flat ground.
+
+	bool bReturnToCenter = false;
+	float TargetPelvisDelta;
+
+	if (LeftTraceData.FootHitResult.GetActor()     == nullptr
+		|| RightTraceData.FootHitResult.GetActor() == nullptr) 
+	{
+		bReturnToCenter = true;
+	}
+	else	
+	{
+		// Check in component space; this way charcter rotation doens't matter
+		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixWithScale().Inverse();
+		FVector LeftFootFloor    = LeftTraceData.FootHitResult.ImpactPoint;
+		FVector RightFootFloor   = RightTraceData.FootHitResult.ImpactPoint;
+		FVector LeftFootFloorCS  = ToCS.TransformPosition(LeftFootFloor);
+		FVector RightFootFloorCS = ToCS.TransformPosition(RightFootFloor);
+		
+		// The animroot, assumed to rest on the floor. The original animation assumed the floor was this high.
+		FVector RootPosition = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
+
+		DebugDrawUtil::DrawSphere(World, SkelComp->ComponentToWorld.TransformPosition(RootPosition));
+
+		FVector LeftFootCS  = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg.ShinBone.BoneIndex);
+		FVector RightFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg.ShinBone.BoneIndex);		
+
+		float LeftTargetHeight  = LeftFootCS.Z - RootPosition.Z;
+		float RightTargetHeight = RightFootCS.Z - RootPosition.Z;
+
+		float LeftActualHeight  = LeftFootCS.Z - LeftFootFloorCS.Z;
+		float RightActualHeight = RightFootCS.Z - RightFootFloorCS.Z; 
+
+		float LeftDifference  = LeftActualHeight - LeftTargetHeight;
+		float RightDifference = RightActualHeight - RightTargetHeight;
+
+		if (LeftDifference < 0.0f && RightDifference < 0.0f)
+		{
+			bReturnToCenter = true;
+		}
+		else
+		{
+			TargetPelvisDelta = -1*FMath::Max(LeftDifference, RightDifference);
+		}				
+	}
+	
+	// Apply pelvis height adjustment
+	if (bReturnToCenter)
+	{
+		TargetPelvisDelta = 0.0f;
+	}
+	
+	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone.BoneIndex);	
+	FVector PelvisLocationCS = PelvisTransformCS.GetLocation();
+	PelvisLocationCS.Z += TargetPelvisDelta;
+	PelvisTransformCS.SetLocation(PelvisLocationCS);
+
+	OutBoneTransforms.Add(FBoneTransform(PelvisBone.BoneIndex, PelvisTransformCS));
 }
 
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)

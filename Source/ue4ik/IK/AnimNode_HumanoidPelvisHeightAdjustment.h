@@ -44,6 +44,9 @@ public:
     // (more if you're brave)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	float MaxPelvisAdjustHeight;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	bool bEnableDebugDraw;
 
 public:
 
@@ -52,7 +55,8 @@ public:
 		DeltaTime(0.0f),
 		LastHipOffset(0.0f, 0.0f, 0.0f),
 		PelvisAdjustVelocity(20.0f),
-		MaxPelvisAdjustHeight(40.0)
+		MaxPelvisAdjustHeight(40.0),
+		bEnableDebugDraw(false)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
