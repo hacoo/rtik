@@ -44,11 +44,11 @@ bool UTraceUtil::LineTrace(
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{		
-		DebugDrawUtil::DrawLine(World, Start, End, FColor(0, 255, 255));
+		FDebugDrawUtil::DrawLine(World, Start, End, FColor(0, 255, 255));
 		if (bHitActor)
 		{
 			FVector HitLocation = HitOut.ImpactPoint;
-			DebugDrawUtil::DrawSphere(World, HitOut.ImpactPoint, FColor(255, 0, 0), 5.0f);	
+			FDebugDrawUtil::DrawSphere(World, HitOut.ImpactPoint, FColor(255, 0, 0), 5.0f);	
 		}
 	}
 #endif // WITH_EDITOR

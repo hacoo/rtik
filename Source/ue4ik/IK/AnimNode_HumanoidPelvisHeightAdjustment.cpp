@@ -39,17 +39,17 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	FHumanoidIKTraceData LeftTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg,
-		PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, bEnableDebugDraw);
+		PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, false);
 
 	FHumanoidIKTraceData RightTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg,
-		PelvisBone, MaxPelvisAdjustHeight, RightTraceData, bEnableDebugDraw);
+		PelvisBone, MaxPelvisAdjustHeight, RightTraceData, false);
 	
 	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
 	// is where it would be, over flat ground.
 
 	bool bReturnToCenter = false;
-	float TargetPelvisDelta;
+	float TargetPelvisDelta = 0.0f;
 
 	if (LeftTraceData.FootHitResult.GetActor()     == nullptr
 		|| RightTraceData.FootHitResult.GetActor() == nullptr) 
@@ -66,44 +66,51 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 		FVector RightFootFloorCS = ToCS.TransformPosition(RightFootFloor);
 		
 		// The animroot, assumed to rest on the floor. The original animation assumed the floor was this high.
-		FVector RootPosition = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
+		FVector RootPosition     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
 
-		DebugDrawUtil::DrawSphere(World, SkelComp->ComponentToWorld.TransformPosition(RootPosition));
+		FVector LeftFootCS       = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg.ShinBone.BoneIndex);
+		FVector RightFootCS      = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg.ShinBone.BoneIndex);		
 
-		FVector LeftFootCS  = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg.ShinBone.BoneIndex);
-		FVector RightFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg.ShinBone.BoneIndex);		
+		float LeftTargetDelta    = LeftFootCS.Z - RootPosition.Z;
+		float RightTargetDelta   = RightFootCS.Z - RootPosition.Z;
 
-		float LeftTargetHeight  = LeftFootCS.Z - RootPosition.Z;
-		float RightTargetHeight = RightFootCS.Z - RootPosition.Z;
+		float LeftTargetHeight   = LeftFootFloorCS.Z + LeftTargetDelta;
+		float RightTargetHeight = RightFootFloorCS.Z + RightTargetDelta;
 
-		float LeftActualHeight  = LeftFootCS.Z - LeftFootFloorCS.Z;
-		float RightActualHeight = RightFootCS.Z - RightFootFloorCS.Z; 
-
-		float LeftDifference  = LeftActualHeight - LeftTargetHeight;
-		float RightDifference = RightActualHeight - RightTargetHeight;
-
-		if (LeftDifference < 0.0f && RightDifference < 0.0f)
-		{
-			bReturnToCenter = true;
-		}
-		else
-		{
-			TargetPelvisDelta = -1*FMath::Max(LeftDifference, RightDifference);
-		}				
+		TargetPelvisDelta        = LeftTargetHeight < RightTargetHeight ?
+			LeftTargetHeight - LeftFootCS.Z : RightTargetHeight - RightFootCS.Z; 
+		
 	}
-	
-	// Apply pelvis height adjustment
-	if (bReturnToCenter)
-	{
-		TargetPelvisDelta = 0.0f;
-	}
-	
+   
+	FVector TargetPelvisDeltaVec(0.0f, 0.0f, TargetPelvisDelta);
+
 	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone.BoneIndex);	
-	FVector PelvisLocationCS = PelvisTransformCS.GetLocation();
-	PelvisLocationCS.Z += TargetPelvisDelta;
+	FVector PelvisLocationCS     = PelvisTransformCS.GetLocation();
+	PelvisLocationCS += TargetPelvisDeltaVec;
 	PelvisTransformCS.SetLocation(PelvisLocationCS);
 
 	OutBoneTransforms.Add(FBoneTransform(PelvisBone.BoneIndex, PelvisTransformCS));
+
+#if WITH_EDITOR
+	if (bEnableDebugDraw)
+	{
+		FVector PelvisLocWorld = FAnimUtil::GetBoneWorldLocation(*SkelComp, Output.Pose, PelvisBone.BoneIndex);
+		FVector PelvisTarget = PelvisLocWorld + TargetPelvisDeltaVec;
+		
+		FDebugDrawUtil::DrawSphere(World, PelvisLocWorld, FColor(0, 255, 255), 20.0f);
+
+		if (bReturnToCenter)
+		{
+			FDebugDrawUtil::DrawSphere(World, PelvisTarget, FColor(255, 255, 0), 20.0f);
+			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(255, 255, 0));
+		} 
+		else
+		{
+			FDebugDrawUtil::DrawSphere(World, PelvisTarget, FColor(0, 0, 255), 20.0f);
+			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(0, 0, 255));
+		}
+	}
+#endif // WITH_EDITOR
 }
 
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
