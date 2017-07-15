@@ -39,11 +39,11 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	FHumanoidIKTraceData LeftTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg,
-		PelvisBone, MaxPelvisAdjustHeight, LeftTraceData, false);
+		PelvisBone, MaxPelvisAdjustSize, LeftTraceData, false);
 
 	FHumanoidIKTraceData RightTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg,
-		PelvisBone, MaxPelvisAdjustHeight, RightTraceData, false);
+		PelvisBone, MaxPelvisAdjustSize, RightTraceData, false);
 	
 	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
 	// is where it would be, over flat ground.
@@ -79,17 +79,23 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 		TargetPelvisDelta        = LeftTargetHeight < RightTargetHeight ?
 			LeftTargetHeight - LeftFootCS.Z : RightTargetHeight - RightFootCS.Z; 
+
+		if (TargetPelvisDelta > MaxPelvisAdjustSize)
+		{
+			bReturnToCenter = true;
+			TargetPelvisDelta = 0.0f;
+		}
 		
 	}
    
 	FVector TargetPelvisDeltaVec(0.0f, 0.0f, TargetPelvisDelta);
-
+	
 	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone.BoneIndex);	
 	FVector PelvisTargetCS       = PelvisTransformCS.GetLocation();
 	PelvisTargetCS += TargetPelvisDeltaVec;
 
 	FVector PreviousPelvisLoc    = PelvisTransformCS.GetLocation() + LastPelvisOffset;
-	FVector PelvisAdjustVec      = (PelvisTargetCS - PreviousPelvisLoc).ClampMaxSize(PelvisAdjustVelocity * DeltaTime);
+	FVector PelvisAdjustVec      = (PelvisTargetCS - PreviousPelvisLoc).GetClampedToMaxSize(PelvisAdjustVelocity * DeltaTime);
 	FVector NewPelvisLoc         = PelvisTransformCS.GetLocation() + PelvisAdjustVec;
 	LastPelvisOffset             = PelvisAdjustVec;
 

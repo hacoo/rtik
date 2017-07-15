@@ -13,9 +13,12 @@
  * it ensures that both legs are close enough to the ground to actually reach.
  * 
  * Functions as follows:
- * - Checks if foot is 'floating' in the air -- that is, if it is above where it would be in the base animation pose
- * - If so, smoothly transition the hips down so the low foot can reach. The hips are never transitioned up.
- * - If the required hip transition is too large, abort and transition back to the default hip height.
+ * - Assumes that the animroot rests on the floor. Checks the height offset of each foot relative to the animroot.
+ * - Traces to the floor from each foot. Each foot 'should' be the same height above the floor impact point as they
+ *   are above the animroot.
+ * - Moves the hips so that the lowest foot above the lowest floor point is at target height. 
+ *   IK will need to be applied to the other foot (it will now be clipping through the ground if the ground is not 
+ *   flat).
  */
 USTRUCT()
 struct UE4IK_API FAnimNode_HumanoidPelvisHeightAdjustment : public FAnimNode_SkeletalControlBase
@@ -35,15 +38,15 @@ public:
 	FIKBone PelvisBone;
 
 	// How quickly the pelvis moves to match floor height. Set higher to make IK more responsive and prevent
-    // floating feet; setting it too high will cause popping.
+    // floating/sinking feet; setting it too high will cause popping.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	float PelvisAdjustVelocity;
 
-	// Maximum height above the floor to do pelvis adjustment. Will transition back to base pose if 
-    // distance between low foot and floor is above this height. Should probably be something 1/3 character capsule height
+	// Maximum height above the floor to do pelvis adjustment. Will transition back to base pose if the 
+	// required hip adjustment is larger than this value. Should probably be something 1 / 3 character capsule height
     // (more if you're brave)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-	float MaxPelvisAdjustHeight;
+	float MaxPelvisAdjustSize;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
@@ -55,7 +58,7 @@ public:
 		DeltaTime(0.0f),
 		LastPelvisOffset(0.0f, 0.0f, 0.0f),
 		PelvisAdjustVelocity(20.0f),
-		MaxPelvisAdjustHeight(40.0),
+		MaxPelvisAdjustSize(40.0),
 		bEnableDebugDraw(false)
 	{ }
 
