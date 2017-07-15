@@ -75,7 +75,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 		float RightTargetDelta   = RightFootCS.Z - RootPosition.Z;
 
 		float LeftTargetHeight   = LeftFootFloorCS.Z + LeftTargetDelta;
-		float RightTargetHeight = RightFootFloorCS.Z + RightTargetDelta;
+		float RightTargetHeight  = RightFootFloorCS.Z + RightTargetDelta;
 
 		TargetPelvisDelta        = LeftTargetHeight < RightTargetHeight ?
 			LeftTargetHeight - LeftFootCS.Z : RightTargetHeight - RightFootCS.Z; 
@@ -85,9 +85,15 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	FVector TargetPelvisDeltaVec(0.0f, 0.0f, TargetPelvisDelta);
 
 	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone.BoneIndex);	
-	FVector PelvisLocationCS     = PelvisTransformCS.GetLocation();
-	PelvisLocationCS += TargetPelvisDeltaVec;
-	PelvisTransformCS.SetLocation(PelvisLocationCS);
+	FVector PelvisTargetCS       = PelvisTransformCS.GetLocation();
+	PelvisTargetCS += TargetPelvisDeltaVec;
+
+	FVector PreviousPelvisLoc    = PelvisTransformCS.GetLocation() + LastPelvisOffset;
+	FVector PelvisAdjustVec      = (PelvisTargetCS - PreviousPelvisLoc).ClampMaxSize(PelvisAdjustVelocity * DeltaTime);
+	FVector NewPelvisLoc         = PelvisTransformCS.GetLocation() + PelvisAdjustVec;
+	LastPelvisOffset             = PelvisAdjustVec;
+
+	PelvisTransformCS.SetLocation(NewPelvisLoc);
 
 	OutBoneTransforms.Add(FBoneTransform(PelvisBone.BoneIndex, PelvisTransformCS));
 

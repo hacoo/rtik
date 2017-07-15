@@ -53,7 +53,7 @@ public:
 	FAnimNode_HumanoidPelvisHeightAdjustment()
 		:
 		DeltaTime(0.0f),
-		LastHipOffset(0.0f, 0.0f, 0.0f),
+		LastPelvisOffset(0.0f, 0.0f, 0.0f),
 		PelvisAdjustVelocity(20.0f),
 		MaxPelvisAdjustHeight(40.0),
 		bEnableDebugDraw(false)
@@ -69,5 +69,5 @@ public:
 
 protected:
 	float DeltaTime;
-	FVector LastHipOffset;
+	FVector LastPelvisOffset;
 };
