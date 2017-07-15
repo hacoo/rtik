@@ -143,7 +143,6 @@ bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton
 
 void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	UE_LOG(LogIK, Warning, TEXT("Initializing biped leg IK..."));
 	if (!RightLeg.InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
