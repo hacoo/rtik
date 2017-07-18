@@ -18,9 +18,6 @@
 
 /*
 Augmented pose context; passes around additional information used by IK
-
-
-
 struct FIKPoseContext : public FComponentSpacePoseContext
 {
 public:
@@ -62,7 +59,7 @@ public:
 	{ }
 	
 	
-	/*
+/*
 FIKBone(const FIKBone& Other)
 :
 BoneIndex(Other.BoneIndex)
@@ -88,7 +85,7 @@ return *this;
 }
 */
 	
-// Check if this bone is valid, if not, attempt to initialize it. Return whether the bone is (after re-initialization if needed)
+    // Check if this bone is valid, if not, attempt to initialize it. Return whether the bone is (after re-initialization if needed)
 	bool InitIfInvalid(const FBoneContainer& RequiredBones)
 	{
 		if (IsValid(RequiredBones))
@@ -101,7 +98,7 @@ return *this;
 		return bIsValid;
 	}
 	
-		// Initialize this IK Bone. Must be called before use.
+	// Initialize this IK Bone. Must be called before use.
 	bool Init(const FBoneContainer& RequiredBones)
 	{
 		if (BoneRef.Initialize(RequiredBones))
@@ -152,26 +149,14 @@ public:
 	
 	FIKModChain()
 		:
-		bInitSuccess(false),
-		Precision(0.01f),
-		MaxIterations(10)
+		bInitSuccess(false)
 	{ }
 	
 	FIKBone RootBone;
 	FIKBone EffectorBone;
-	
-	// How close the effector tip needs to be before FABRIK solver stops. Decrease for
-// better results and worse performance.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver")
-		float Precision;
-	
-	// Maximum number of iterations the solver may run for. Increase for better results
-// but possibly worse performance.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver")
-		float MaxIterations;
-	
+   
 	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
-// Returns true if valid or initialization succeeds.
+    // Returns true if valid or initialization succeeds.
 	bool InitIfInvalid(const FBoneContainer& RequiredBones);
 	
 	// Initialize all bones used in this chain. Must be called before use.
@@ -182,8 +167,8 @@ public:
 	
 protected:
 	// Subclasses must implement this function so that:
-// - All additional bones are initialized
-// - RootBone and EffectorBone are assigned as needed
+    // - All additional bones are initialized
+    // - RootBone and EffectorBone are assigned as needed
 	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones);
 	
 	// Subclasses must implement this function so that all additional bones are tested for validity
