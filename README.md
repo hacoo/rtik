@@ -36,4 +36,4 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## References
 
-   A Aristidou, Y Chrysanthou, J Lasenby, "Extending FABRIK with model constraints", Computer Animation and Virtual Worlds, vol. 27, no. 1, pp.35-57, Jan. 2016
+  [1] A Aristidou, Y Chrysanthou, J Lasenby, "Extending FABRIK with model constraints", Computer Animation and Virtual Worlds, vol. 27, no. 1, pp.35-57, Jan. 2016
