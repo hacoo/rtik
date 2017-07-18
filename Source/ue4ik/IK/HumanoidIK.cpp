@@ -7,7 +7,7 @@
 
 void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 	FCSPose<FCompactPose>& MeshBases,
-	FFabrikHumanoidLegChain& LegChain,
+	FHumanoidLegChain& LegChain,
 	FIKBone& PelvisBone,
 	float MaxPelvisAdjustHeight,
 	FHumanoidIKTraceData& OutTraceData,
@@ -76,7 +76,7 @@ void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 		bEnableDebugDraw);
 }
 
-bool FFabrikHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBones)
+bool FHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBones)
 {
 	bool bValid = HipBone.IsValid(RequiredBones)
 		&& ThighBone.IsValid(RequiredBones)
@@ -87,13 +87,13 @@ bool FFabrikHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBone
 }
 
 
-float FFabrikHumanoidLegChain::GetTotalChainLength() const
+float FHumanoidLegChain::GetTotalChainLength() const
 {
 	return TotalChainLength;
 }
 
 
-bool FFabrikHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
+bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 {
 	TotalChainLength = 0.0f;
 	bInitOk = true;

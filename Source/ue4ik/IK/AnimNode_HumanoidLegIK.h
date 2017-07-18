@@ -9,6 +9,7 @@
 
 
  /*
+  * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
  */
 USTRUCT()
 struct UE4IK_API FAnimNode_HumanoidLegIK : public FAnimNode_SkeletalControlBase
@@ -17,7 +18,10 @@ struct UE4IK_API FAnimNode_HumanoidLegIK : public FAnimNode_SkeletalControlBase
 	GENERATED_USTRUCT_BODY()
 
 public:
-			
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
+
+	FHumanoidLegChain Leg;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
 

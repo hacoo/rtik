@@ -29,10 +29,10 @@ struct UE4IK_API FAnimNode_HumanoidPelvisHeightAdjustment : public FAnimNode_Ske
 public:
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
-	FFabrikHumanoidLegChain LeftLeg;
+	FHumanoidLegChain LeftLeg;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
-	FFabrikHumanoidLegChain RightLeg;
+	FHumanoidLegChain RightLeg;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	FIKBone PelvisBone;

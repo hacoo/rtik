@@ -2,7 +2,7 @@
 
 #include "IK.h"
 
-bool FFabrikIKChain::InitIfInvalid(const FBoneContainer& RequiredBones)
+bool FIKModChain::InitIfInvalid(const FBoneContainer& RequiredBones)
 {
 	if (IsValid(RequiredBones))
 	{
@@ -14,35 +14,28 @@ bool FFabrikIKChain::InitIfInvalid(const FBoneContainer& RequiredBones)
 	return bValid;
 }
 
-bool FFabrikIKChain::InitBoneReferences(const FBoneContainer& RequiredBones)
+bool FIKModChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 {
 	bool bInitSuccess = InitAndAssignBones(RequiredBones);
 	bInitSuccess = bInitSuccess && RootBone.Init(RequiredBones) && EffectorBone.Init(RequiredBones);
-	if (bInitSuccess)
-	{
-		FabrikSolver.EffectorRotationSource = BRS_KeepComponentSpaceRotation;
-		FabrikSolver.EffectorTransformSpace = BCS_WorldSpace;
-		FabrikSolver.MaxIterations = MaxIterations;
-		FabrikSolver.Precision = Precision;
-	}
 	return bInitSuccess;
 }
 
-bool FFabrikIKChain::IsValid(const FBoneContainer& RequiredBones)
+bool FIKModChain::IsValid(const FBoneContainer& RequiredBones)
 {
 	bool bValid = RootBone.IsValid(RequiredBones) && EffectorBone.IsValid(RequiredBones);
 	bValid &= IsValidInternal(RequiredBones);
 	return bValid;
 }
 
-bool FFabrikIKChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
+bool FIKModChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 {
 	check(false);
 	return false;
 }
 
 // Subclasses must implement this function so that all additional bones are tested for validity
-bool FFabrikIKChain::IsValidInternal(const FBoneContainer& RequiredBones)
+bool FIKModChain::IsValidInternal(const FBoneContainer& RequiredBones)
 {
 	check(false);
 	return false;

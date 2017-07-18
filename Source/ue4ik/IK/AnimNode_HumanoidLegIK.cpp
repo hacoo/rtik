@@ -31,7 +31,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	bool bValid = true;
+	bool bValid = Leg.InitIfInvalid(RequiredBones);
 
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
