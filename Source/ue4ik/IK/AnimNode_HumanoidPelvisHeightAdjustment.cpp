@@ -59,7 +59,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	else	
 	{
 		// Check in component space; this way charcter rotation doens't matter
-		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixWithScale().Inverse();
+		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 		FVector LeftFootFloor    = LeftTraceData.FootHitResult.ImpactPoint;
 		FVector RightFootFloor   = RightTraceData.FootHitResult.ImpactPoint;
 		FVector LeftFootFloorCS  = ToCS.TransformPosition(LeftFootFloor);
