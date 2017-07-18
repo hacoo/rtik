@@ -10,7 +10,7 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
  - Provide a modular set of AnimGraph nodes that can be used to build IK setups. These nodes will be 'lower level', but should enable animators to create custom IK setups without needing to write C++.
 
- - Create higher-level AnimGraph nodes for more common IK setups. These should make common IK scenarios veryeasy to set up. In particular, a very easy-to-use setup for humanoids will be provided.
+ - Create higher-level AnimGraph nodes for more common IK setups. These should make common IK scenarios easy to set up. In particular, a very easy-to-use setup for humanoids will be provided.
 
  - Add tooling support; that is, a graphical editor for setting up IK and testing with different animations (this is a longer-term goal)
 
