@@ -5,8 +5,6 @@
 #include "Animation/AnimInstanceProxy.h"
 #include "Runtime/AnimationCore/Public/TwoBoneIK.h"
 #include "Utility/AnimUtil.h"
-#include "IK/IK.h"
-#include "HumanoidIK.h"
 
 #if WITH_EDITOR
 #include "Utility/DebugDrawUtil.h"
