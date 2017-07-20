@@ -27,6 +27,14 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
+	if (LeftLeg == nullptr || RightLeg == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, one of the legs was null"));
+#endif // ENABLE_IK_DEBUG_VERBOSE
+		return;
+	}
+
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
 	if(Character == nullptr)
@@ -38,11 +46,11 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	UWorld* World = Character->GetWorld();
 
 	FHumanoidIKTraceData LeftTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg,
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg->Chain,
 		PelvisBone, MaxPelvisAdjustSize, LeftTraceData, false);
 
 	FHumanoidIKTraceData RightTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg,
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg->Chain,
 		PelvisBone, MaxPelvisAdjustSize, RightTraceData, false);
 	
 	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
@@ -68,8 +76,8 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 		// The animroot, assumed to rest on the floor. The original animation assumed the floor was this high.
 		FVector RootPosition     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
 
-		FVector LeftFootCS       = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg.ShinBone.BoneIndex);
-		FVector RightFootCS      = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg.ShinBone.BoneIndex);		
+		FVector LeftFootCS       = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg->Chain.ShinBone.BoneIndex);
+		FVector RightFootCS      = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg->Chain.ShinBone.BoneIndex);		
 
 		float LeftTargetDelta    = LeftFootCS.Z - RootPosition.Z;
 		float RightTargetDelta   = RightFootCS.Z - RootPosition.Z;
@@ -127,8 +135,17 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	bool bValid = LeftLeg.InitIfInvalid(RequiredBones)
-		&& RightLeg.InitIfInvalid(RequiredBones)
+	
+	if (LeftLeg == nullptr || RightLeg == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid -- one of the legs was null"));				
+#endif // ENABLE_ANIM_DEBUG
+		return false;
+	}
+
+	bool bValid = LeftLeg->InitIfInvalid(RequiredBones)
+		&& RightLeg->InitIfInvalid(RequiredBones)
 		&& PelvisBone.InitIfInvalid(RequiredBones);
 
 #if ENABLE_IK_DEBUG_VERBOSE
@@ -143,14 +160,23 @@ bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton
 
 void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	if (!RightLeg.InitBoneReferences(RequiredBones))
+
+	if (LeftLeg == nullptr || RightLeg == nullptr)
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize biped hip adjustment -- one of the legs was null"));
+#endif // ENABLE_IK_DEBUG
+		return;
+	}
+
+	if (!RightLeg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize right leg for biped hip adjustment"));
 #endif // ENABLE_IK_DEBUG
 	}
 
-	if (!LeftLeg.InitBoneReferences(RequiredBones))
+	if (!LeftLeg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize left leg for biped hip adjustment"));

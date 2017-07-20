@@ -16,24 +16,6 @@
 #define ENABLE_IK_DEBUG (1 && !(UE_BUILD_SHIPPING || UE_BUILD_TEST))
 #define ENABLE_IK_DEBUG_VERBOSE (1 && !(UE_BUILD_SHIPPING || UE_BUILD_TEST))
 
-/*
-Augmented pose context; passes around additional information used by IK
-struct FIKPoseContext : public FComponentSpacePoseContext
-{
-public:
-
-FIKPoseContext(FAnimInstanceProxy* InAnimInstanceProxy)
-: FComponentSpacePoseContext(InAnimInstanceProxy)
-{
-}
-
-// This constructor allocates a new uninitialized pose, copying non-pose state from the source context
-FIKPoseContext(const FComponentSpacePoseContext& SourceContext)
-: FComponentSpacePoseContext(SourceContext)
-{
-}
-};
-*/
 
 /*
 * Specifies what IK should do if the target is unreachable
@@ -55,14 +37,14 @@ enum class EIKUnreachableRule : uint8
 * A bone used in IK
 */
 USTRUCT(BlueprintType)
-struct FIKBone
+struct UE4IK_API FIKBone
 {
 	GENERATED_USTRUCT_BODY()
 		
 public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FBoneReference BoneRef;
+	FBoneReference BoneRef;
 	
 	FCompactPoseBoneIndex BoneIndex;
 	
@@ -72,34 +54,7 @@ public:
 		:
 		BoneIndex(INDEX_NONE)
 	{ }
-	
-	
-/*
-FIKBone(const FIKBone& Other)
-:
-BoneIndex(Other.BoneIndex)
-{
-UE_LOG(LogIK, Warning, TEXT("hi from the copy constructor"));
-BoneRef.BoneIndex = Other.BoneRef.BoneIndex;
-BoneRef.BoneName = Other.BoneRef.BoneName;
-BoneRef.bUseSkeletonIndex = Other.BoneRef.bUseSkeletonIndex;
-BoneRef.CachedCompactPoseIndex = Other.BoneRef.CachedCompactPoseIndex;
-}
 
-FIKBone& operator= (const FIKBone& Other)
-{
-UE_LOG(LogIK, Warning, TEXT("hi from the assignment operator"));
-BoneRef.BoneIndex = Other.BoneRef.BoneIndex;
-BoneRef.BoneName = Other.BoneRef.BoneName;
-BoneRef.bUseSkeletonIndex = Other.BoneRef.bUseSkeletonIndex;
-BoneRef.CachedCompactPoseIndex = Other.BoneRef.CachedCompactPoseIndex;
-BoneIndex = Other.BoneIndex;
-
-				UE_LOG(LogIK, Warning, TEXT("%d"), BoneRef.BoneIndex);
-return *this;
-}
-*/
-	
     // Check if this bone is valid, if not, attempt to initialize it. Return whether the bone is (after re-initialization if needed)
 	bool InitIfInvalid(const FBoneContainer& RequiredBones)
 	{
@@ -156,7 +111,7 @@ return *this;
 * This function should initialize bone references, and assign the RootBone and EffectorBone as needed.
 */
 USTRUCT(BlueprintType)
-struct FIKModChain
+struct UE4IK_API FIKModChain 
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -192,12 +147,45 @@ protected:
 	bool bInitSuccess;
 };
 
-UCLASS(BlueprintType)
-class UIKTestType : public UObject
+/*
+* Wraps an IK chain so it can be passed around in BPs
+*/
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API UIKChainWrapper : public UObject
 {
 	GENERATED_BODY()
-		
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FIKBone IKBone;
+
+public: 
+
+	UIKChainWrapper(const FObjectInitializer& ObjectInitializer)
+		: 
+		Super(ObjectInitializer),
+		bInitialized(false)
+	{ }
+
+	// Subclasses should implement an Initialize method that copies incoming chain
+    // into internal struct
+
+	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
+    // Returns true if valid or initialization succeeds.
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones) 
+	{
+		return false;
+	}
+	
+	// Initialize all bones used in this chain. Must be called before use.
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
+	{
+		return false;
+	}
+	
+	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
+	virtual bool IsValid(const FBoneContainer& RequiredBones)
+	{
+		return false;
+	}
+	
+protected:
+
+	bool bInitialized;
 };

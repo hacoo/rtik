@@ -25,8 +25,7 @@ public:
 
 	// The leg on which IK is applied
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
-	FHumanoidLegChain Leg;
-	
+	UHumanoidLegChain_Wrapper* Leg;
 	
 	// Target location for the foot; IK will attempt to move the tip of the shin here. In world space.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))

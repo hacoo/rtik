@@ -15,7 +15,7 @@
 * Represents a humanoid leg, with a hip bone, thigh bone, and shin bone.
 */
 USTRUCT(BlueprintType)
-struct FHumanoidLegChain : public FIKModChain
+struct UE4IK_API FHumanoidLegChain : public FIKModChain
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -69,7 +69,7 @@ protected:
 * Holds trace data used in leg IK
 */
 USTRUCT(BlueprintType)
-struct FHumanoidIKTraceData
+struct UE4IK_API FHumanoidIKTraceData
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -79,7 +79,68 @@ public:
 	FHitResult ToeHitResult;
 };
 
+/*
+* Wrapper class for passing around in BP
+*/
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API UHumanoidLegChain_Wrapper : public UIKChainWrapper
+{
+	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FHumanoidLegChain Chain;
+
+	UFUNCTION(BlueprintCallable, Category = IK)
+	void Initialize(FHumanoidLegChain InChain) 
+	{		
+		Chain = InChain;
+		bInitialized = true;
+	}
+
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+		
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Initialize all bones used in this chain. Must be called before use.
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
+	virtual bool IsValid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+			return false;
+		}
+
+		return Chain.IsValid(RequiredBones);
+	}
+};
+
+/*
+* Contains Humanoid IK utility functions
+*/
 USTRUCT()
 struct FHumanoidIK
 {

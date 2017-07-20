@@ -28,6 +28,14 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
+	if (Leg == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK, Leg was null"));
+#endif // ENABLE_IK_DEBUG_VERBOSE
+		return;
+	}
+
 	if (!bEnable)
 	{
 		return;
@@ -38,15 +46,15 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	FMatrix ToCS         = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 	FVector FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
 	
-	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.HipBone.BoneIndex);
-	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ThighBone.BoneIndex);
-	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ShinBone.BoneIndex);
+	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
+	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
+	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
 	 
 	// Ensure that the target is reachable; if not do not apply IK
     // This only tests distance to the target. Future work: check ROM as well
 
 	FVector HipToTarget = (FootTargetCS - HipCS);
-	float LegLengthSq = FMath::Square(Leg.GetTotalChainLength());
+	float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
 	float HipToTargetLengthSq = HipToTarget.SizeSquared();
 
 	if (HipToTargetLengthSq > LegLengthSq)
@@ -84,7 +92,15 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	bool bValid = Leg.InitIfInvalid(RequiredBones);
+	if (Leg == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- Leg was null"));		
+#endif ENABLE_IK_DEBUG_VERBOSE
+		return false;
+	}
+	
+	bool bValid = Leg->InitIfInvalid(RequiredBones);
 
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
@@ -107,19 +123,31 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 
 void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	if (!Leg.InitBoneReferences(RequiredBones))
+
+	if (Leg == nullptr)
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- Leg invalid"));
+#endif // ENABLE_IK_DEBUG
+
+		return;
+	}
+
+	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
 #endif // ENABLE_IK_DEBUG
 	}
-
-	// Set up FABRIK solver
-	FabrikSolver.ActualAlpha = 1.0f;
-	FabrikSolver.TipBone = Leg.ShinBone.BoneRef;
-	FabrikSolver.RootBone = Leg.HipBone.BoneRef;
-	FabrikSolver.Precision = Precision;
-	FabrikSolver.MaxIterations = MaxIterations;	
+	else
+	{
+		// Set up FABRIK solver
+		FabrikSolver.ActualAlpha = 1.0f;
+		FabrikSolver.TipBone = Leg->Chain.ShinBone.BoneRef;
+		FabrikSolver.RootBone = Leg->Chain.HipBone.BoneRef;
+		FabrikSolver.Precision = Precision;
+		FabrikSolver.MaxIterations = MaxIterations;
+	}
 }
 
 
