@@ -40,4 +40,6 @@ public:
 	virtual void EvaluateComponentSpace(FComponentSpacePoseContext& Output) override;
 	virtual void Initialize(const FAnimationInitializeContext& Context) override;
 	// End FAnimNode_Base Interface
+
+	virtual bool IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones);
 };

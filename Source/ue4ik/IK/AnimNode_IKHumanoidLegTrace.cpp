@@ -10,6 +10,8 @@
 #include "Utility/DebugDrawUtil.h"
 #endif
 
+DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Trace"), STAT_IKHumanoidLegTrace_Eval, STATGROUP_Anim);
+
 void FAnimNode_IKHumanoidLegTrace::Update(const FAnimationUpdateContext & Context)
 {
 	EvaluateGraphExposedInputs.Execute(Context);
@@ -17,47 +19,42 @@ void FAnimNode_IKHumanoidLegTrace::Update(const FAnimationUpdateContext & Contex
 
 void FAnimNode_IKHumanoidLegTrace::EvaluateComponentSpace(FComponentSpacePoseContext& Output)
 {
+	SCOPE_CYCLE_COUNTER(STAT_IKHumanoidLegTrace_Eval);
+
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK, Leg was null"));
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK Trace, Leg was null"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
+		return;
+	}
+	
+	USkeletalMeshComponent* SkelComp    = Output.AnimInstanceProxy->GetSkelMeshComponent();
+	USkeleton* Skeleton                 = Output.AnimInstanceProxy->GetSkeleton();
+	const FBoneContainer& RequiredBones = Output.AnimInstanceProxy->GetRequiredBones();
+
+	if (!IsValidToEvaluate(Skeleton, RequiredBones))
+	{
 		return;
 	}
 }
 
-/*
+
 bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- Leg was null"));		
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- Leg was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
 	
 	bool bValid = Leg->InitIfInvalid(RequiredBones);
 
-#if ENABLE_IK_DEBUG_VERBOSE
-	if (!bValid)
-	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate"));
-	}
-#endif // ENABLE_ANIM_DEBUG
-
-	
-	bValid &= FabrikSolver.IsValidToEvaluate(Skeleton, RequiredBones);
-#if ENABLE_IK_DEBUG_VERBOSE
-	if (!bValid)
-	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg -- internal FABRIK solver was not ready to evaluate"));
-	}
-#endif // ENABLE_ANIM_DEBUG
-   
 	return bValid;
 }
-*/
+
 
 void FAnimNode_IKHumanoidLegTrace::Initialize(const FAnimationInitializeContext& Context)
 {
@@ -65,7 +62,7 @@ void FAnimNode_IKHumanoidLegTrace::Initialize(const FAnimationInitializeContext&
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- Leg invalid"));
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace -- Leg invalid"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
@@ -74,7 +71,7 @@ void FAnimNode_IKHumanoidLegTrace::Initialize(const FAnimationInitializeContext&
 	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace"));
 #endif // ENABLE_IK_DEBUG
 	}
 }
