@@ -48,9 +48,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
 	 
-	// Ensure that the target is reachable; if not do not apply IK
-    // This only tests distance to the target. Future work: check ROM as well
-
+	// Reachability is checked by max extension length only -- not ROM
 	FVector HipToTarget = (FootTargetCS - HipCS);
 	float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
 	float HipToTargetLengthSq = HipToTarget.SizeSquared();
