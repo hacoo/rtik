@@ -10,6 +10,19 @@
 
 
 /*
+* How leg IK should behave
+*/
+UENUM(BlueprintType)
+enum class EHumanoidLegIKMode : uint8
+{	
+	// IK for normal locomotion -- will prevent feet from clipping or floating above the ground during normal movement.
+	IK_Human_Leg_Locomotion UMETA(DisplayName = "Normal Locomotion"),
+	
+	// IK onto an arbitrary world location
+	IK_Human_Leg_WorldLocation UMETA(DisplayName = "IK Onto World Location")
+};
+
+/*
   * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
   * Uses FABRIK IK solver.  
   * 
@@ -26,6 +39,10 @@ public:
 	// The leg on which IK is applied
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidLegChain_Wrapper* Leg;
+
+	// Trace data for this leg (use IKHumanoidLegTrace to update it)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
+	UHumanoidIKTraceData_Wrapper* TraceData;
 	
 	// Target location for the foot; IK will attempt to move the tip of the shin here. In world space.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
@@ -48,10 +65,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnable;	
 
-	// How
+	// How to handle an unreachable IK target
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
 	EIKUnreachableRule UnreachableRule;
 
+	// Set to 'locomotion' for normal movement; 'world location' to manually IK the leg onto a world location
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	EHumanoidLegIKMode Mode;
+   
 public:
 
 	FAnimNode_HumanoidLegIK()
@@ -62,7 +83,8 @@ public:
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
-		UnreachableRule(EIKUnreachableRule::IK_Abort)
+		UnreachableRule(EIKUnreachableRule::IK_Abort),
+		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface

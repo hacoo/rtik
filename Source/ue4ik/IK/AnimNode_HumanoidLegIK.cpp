@@ -26,7 +26,8 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
-	if (Leg == nullptr)
+/*
+	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK, Leg was null"));
@@ -38,43 +39,62 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	{
 		return;
 	}
+*/
 	
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
-
-	FMatrix ToCS         = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
-	FVector FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
 	
 	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
 	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-	 
-	// Ensure that the target is reachable; if not do not apply IK
-    // This only tests distance to the target. Future work: check ROM as well
 
-	FVector HipToTarget = (FootTargetCS - HipCS);
-	float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
-	float HipToTargetLengthSq = HipToTarget.SizeSquared();
+	FMatrix ToCS      = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 
-	if (HipToTargetLengthSq > LegLengthSq)
+	FVector FootTargetCS;
+
+	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_WorldLocation)
 	{
-		switch (UnreachableRule)
+		FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
+	}
+	else
+	{
+		// Use trace data to figure out where the foot should go.
+		// If foot is X cm above animroot before adjustment, it should be X cm above the floor trace impact after adjustment
+		
+		FVector RootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
+		FVector FloorCS = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
+		float HeightAboveRoot = FootCS.Z - RootCS.Z;
+		FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot);
+	}
+
+	if (Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
+	{
+		// Ensure that the target is reachable; if not do not apply IK
+		// This only tests distance to the target. Future work: check ROM as well
+		// No need to check if in locomotion mode; target shoudl always be reachable.
+
+		FVector HipToTarget = (FootTargetCS - HipCS);
+		float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
+		float HipToTargetLengthSq = HipToTarget.SizeSquared();
+
+		if (HipToTargetLengthSq > LegLengthSq)
 		{
-		case EIKUnreachableRule::IK_Abort : 
-			return;
-		case EIKUnreachableRule::IK_DragRoot : 
+			switch (UnreachableRule)
+			{
+			case EIKUnreachableRule::IK_Abort:
+				return;
+			case EIKUnreachableRule::IK_DragRoot:
 #if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Humanoid Leg IK Solver does not support IK Unreachable Rule Drag Root"));
+				UE_LOG(LogIK, Warning, TEXT("Humanoid Leg IK Solver does not support IK Unreachable Rule Drag Root"));
 #endif // ENABLE_IK_DEBUG			
-			return;
-		case EIKUnreachableRule::IK_Reach : 
-			break;
+				return;
+			case EIKUnreachableRule::IK_Reach:
+				break;
+			}
 		}
 	}
 	
-	FTransform EffectorTransform(FootTargetCS);	
-
 	FabrikSolver.EffectorTransformSpace = EBoneControlSpace::BCS_ComponentSpace;
-	FabrikSolver.EffectorTransform = EffectorTransform;
+	FabrikSolver.EffectorTransform = FTransform(FootTargetCS);
 
 	// Internal fabrik solver will fill in OutBoneTransforms. Stock solver does not handle ROMs
 	FabrikSolver.EvaluateSkeletalControl_AnyThread(Output, OutBoneTransforms);
@@ -90,10 +110,10 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	if (Leg == nullptr)
+	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- Leg was null"));		
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- an input wrapper object was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -122,10 +142,10 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
 
-	if (Leg == nullptr)
+	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- Leg invalid"));
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
