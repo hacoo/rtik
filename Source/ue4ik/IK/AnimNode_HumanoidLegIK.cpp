@@ -10,7 +10,7 @@
 #include "Utility/DebugDrawUtil.h"
 #endif
 
-DECLARE_CYCLE_STAT(TEXT("IK Humanoid Pelvis Height Adjust Eval"), STAT_HumanoidPelvisHeightAdjust_Eval, STATGROUP_Anim);
+DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Eval"), STAT_HumanoidLegIK_Eval, STATGROUP_Anim);
 
 void FAnimNode_HumanoidLegIK::UpdateInternal(const FAnimationUpdateContext & Context)
 {
@@ -19,7 +19,7 @@ void FAnimNode_HumanoidLegIK::UpdateInternal(const FAnimationUpdateContext & Con
 
 void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
-	SCOPE_CYCLE_COUNTER(STAT_HumanoidPelvisHeightAdjust_Eval);
+	SCOPE_CYCLE_COUNTER(STAT_HumanoidLegIK_Eval);
 
 #if ENABLE_ANIM_DEBUG
 	check(Output.AnimInstanceProxy->GetSkelMeshComponent());
