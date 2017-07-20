@@ -68,7 +68,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	}
 	else	
 	{
-		// Check in component space; this way charcter rotation doens't matter
+		// Check in component space; this way character rotation doesn't matter
 		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 		FVector LeftFootFloor    = LeftLegTraceData->GetTraceData().FootHitResult.ImpactPoint;
 		FVector RightFootFloor   = RightLegTraceData->GetTraceData().FootHitResult.ImpactPoint;
@@ -76,6 +76,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 		FVector RightFootFloorCS = ToCS.TransformPosition(RightFootFloor);
 		
 		// The animroot, assumed to rest on the floor. The original animation assumed the floor was this high.
+		// The adjusted animation should maintain a similar relationship to the (possibly uneven) floor.
 		FVector RootPosition     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
 
 		FVector LeftFootCS       = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg->Chain.ShinBone.BoneIndex);
