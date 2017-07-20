@@ -46,18 +46,15 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
 	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-<<<<<<< HEAD
 
 	FMatrix ToCS      = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 
 	FVector FootTargetCS;
-=======
 	 
 	// Reachability is checked by max extension length only -- not ROM
 	FVector HipToTarget = (FootTargetCS - HipCS);
 	float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
 	float HipToTargetLengthSq = HipToTarget.SizeSquared();
->>>>>>> 752aa92b1a43c97a593516ef6a35254aa1142116
 
 	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_WorldLocation)
 	{
