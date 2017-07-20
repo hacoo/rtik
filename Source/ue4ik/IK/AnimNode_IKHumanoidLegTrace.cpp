@@ -14,6 +14,8 @@ DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Trace"), STAT_IKHumanoidLegTrace_Eva
 
 void FAnimNode_IKHumanoidLegTrace::UpdateInternal(const FAnimationUpdateContext & Context)
 {
+	// Mark trace data as stale
+	TraceData->bUpdatedThisTick = false;
 }
 
 void FAnimNode_IKHumanoidLegTrace::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, 
@@ -32,6 +34,8 @@ void FAnimNode_IKHumanoidLegTrace::EvaluateSkeletalControl_AnyThread(FComponentS
 
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, Leg->Chain,
 		PelvisBone->Bone, MaxPelvisAdjustSize, TraceData->TraceData, false);
+	
+	TraceData->bUpdatedThisTick = true;
 }
 
 

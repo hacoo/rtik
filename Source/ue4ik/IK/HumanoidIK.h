@@ -86,13 +86,40 @@ UCLASS(BlueprintType, EditInlineNew)
 class UE4IK_API UHumanoidIKTraceData_Wrapper : public UObject
 {
 	GENERATED_BODY()
+
+public: 
 	
-public:
+	UHumanoidIKTraceData_Wrapper(const FObjectInitializer& ObjectInitializer)
+		:
+		Super(ObjectInitializer),
+		bUpdatedThisTick(false)
+	{ }
 
-	// This object does not need to be initialized. FAnimNode_IKHumanoidLegTrace should be used before
-    // later nodes to obtain trace data.
+	// Data in this class should be updated each frame before use. This is handled
+	// by the IKLegTrace class, which will ensure that this wrapper is marked as stale
+	// until it is updated.
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	// Gets trace data stored in this wrapper. Trace data should be updated by
+	// before this is called by placing a trace node earlier in the animgraph. 
+	// If an update function is not called, and the data is stale, the stale data is returned
+	// and a warning is printed to console.	
+	UFUNCTION(BlueprintCallable, Category = IK)
+	FHumanoidIKTraceData& GetTraceData()
+	{
+#if ENABLE_IK_DEBUG
+		if (!bUpdatedThisTick)
+		{
+			UE_LOG(LogIK, Warning, TEXT("Warning -- Trace data was used before it was updated and may be stale. Use a trace node (e.g., IK Humanoid Leg Trace) to update your trace data early in the animgraph, before it is used!"));
+		}
+#endif // ENABLE_IK_DEBUG
+		return TraceData;
+	}
+
+	// Trace classes using this wrapper are declared as friends so they can directly update data and set bUpdatedThisTick
+	friend struct FAnimNode_IKHumanoidLegTrace;
+
+protected:
+	bool bUpdatedThisTick;
 	FHumanoidIKTraceData TraceData;
 };
 

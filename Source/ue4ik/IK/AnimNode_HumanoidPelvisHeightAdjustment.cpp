@@ -61,8 +61,8 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	bool bReturnToCenter = false;
 	float TargetPelvisDelta = 0.0f;
 
-	if (LeftLegTraceData->TraceData.FootHitResult.GetActor()     == nullptr
-		|| RightLegTraceData->TraceData.FootHitResult.GetActor() == nullptr) 
+	if (LeftLegTraceData->GetTraceData().FootHitResult.GetActor()     == nullptr
+		|| RightLegTraceData->GetTraceData().FootHitResult.GetActor() == nullptr) 
 	{
 		bReturnToCenter = true;
 	}
@@ -70,8 +70,8 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	{
 		// Check in component space; this way charcter rotation doens't matter
 		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
-		FVector LeftFootFloor    = LeftLegTraceData->TraceData.FootHitResult.ImpactPoint;
-		FVector RightFootFloor   = RightLegTraceData->TraceData.FootHitResult.ImpactPoint;
+		FVector LeftFootFloor    = LeftLegTraceData->GetTraceData().FootHitResult.ImpactPoint;
+		FVector RightFootFloor   = RightLegTraceData->GetTraceData().FootHitResult.ImpactPoint;
 		FVector LeftFootFloorCS  = ToCS.TransformPosition(LeftFootFloor);
 		FVector RightFootFloorCS = ToCS.TransformPosition(RightFootFloor);
 		
@@ -132,10 +132,10 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(0, 0, 255));
 		}
 
-		FVector LeftTraceWorld = LeftLegTraceData->TraceData.FootHitResult.ImpactPoint; 
+		FVector LeftTraceWorld = LeftLegTraceData->GetTraceData().FootHitResult.ImpactPoint; 
 		FDebugDrawUtil::DrawSphere(World, LeftTraceWorld, FColor(0, 255, 0), 20.0f); 
 
-		FVector RightTraceWorld = RightLegTraceData->TraceData.FootHitResult.ImpactPoint; 
+		FVector RightTraceWorld = RightLegTraceData->GetTraceData().FootHitResult.ImpactPoint; 
 		FDebugDrawUtil::DrawSphere(World, RightTraceWorld, FColor(255, 0, 0), 20.0f); 
 
 	}
