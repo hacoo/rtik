@@ -8,7 +8,7 @@ public class ue4ik : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraph", "BlueprintGraph", "AnimGraphRuntime"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraph", "BlueprintGraph", "AnimGraphRuntime", "AnimationCore"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

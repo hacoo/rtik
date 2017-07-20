@@ -35,6 +35,21 @@ FIKPoseContext(const FComponentSpacePoseContext& SourceContext)
 };
 */
 
+/*
+* Specifies what IK should do if the target is unreachable
+*/
+UENUM(BlueprintType)
+enum class EIKUnreachableRule : uint8
+{
+	// Abort IK, return to pre-IK pose
+	IK_Abort        UMETA(DisplayName = "Abort IK"),
+
+	// Reach as far toward the target as possible without moving the root bone
+	IK_Reach        UMETA(DisplayName = "Reach for Target"),
+	
+	// Drag the root bone toward the target so it can be reached (caution, this is likely to give weird results)
+	IK_DragRoot     UMETA(DisplayName = "Drag Chain Root")
+};
 
 /*
 * A bone used in IK

@@ -3,6 +3,7 @@
 #include "AnimNode_HumanoidLegIK.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "Runtime/AnimationCore/Public/TwoBoneIK.h"
 #include "Utility/AnimUtil.h"
 #include "IK/IK.h"
 #include "HumanoidIK.h"
@@ -34,17 +35,44 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 
-	FMatrix ToCS = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
+	FMatrix ToCS         = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 	FVector FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
 	
-	FVector HipPositionCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.HipBone.BoneIndex);
-	FVector KneePositionCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ThighBone.BoneIndex);
-	FVector FootPositionCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ShinBone.BoneIndex);
-	
-	// Attempt to IK the effector onto the target. The hip is fixed and will not move.
-   
+	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.HipBone.BoneIndex);
+	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ThighBone.BoneIndex);
+	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg.ShinBone.BoneIndex);
+	 
+	// Ensure that the target is reachable; if not do not apply IK
+    // This only tests distance to the target. Future work: check ROM as well
 
+	FVector HipToTarget = (FootTargetCS - HipCS);
+	float LegLengthSq = FMath::Square(Leg.GetTotalChainLength());
+	float HipToTargetLengthSq = HipToTarget.SizeSquared();
+
+	if (HipToTargetLengthSq > LegLengthSq)
+	{
+		switch (UnreachableRule)
+		{
+		case EIKUnreachableRule::IK_Abort : 
+			return;
+		case EIKUnreachableRule::IK_DragRoot : 
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Humanoid Leg IK Solver does not support IK Unreachable Rule Drag Root"));
+#endif // ENABLE_IK_DEBUG			
+			return;
+		case EIKUnreachableRule::IK_Reach : 
+			break;
+		}
+	}
 	
+	FTransform EffectorTransform(FootTargetCS);	
+
+	FabrikSolver.EffectorTransformSpace = EBoneControlSpace::BCS_ComponentSpace;
+	FabrikSolver.EffectorTransform = EffectorTransform;
+
+	// Internal fabrik solver will fill in OutBoneTransforms. Stock solver does not handle ROMs
+	FabrikSolver.EvaluateSkeletalControl_AnyThread(Output, OutBoneTransforms);
+   
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
@@ -65,6 +93,15 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 	}
 #endif // ENABLE_ANIM_DEBUG
 
+	
+	bValid &= FabrikSolver.IsValidToEvaluate(Skeleton, RequiredBones);
+#if ENABLE_IK_DEBUG_VERBOSE
+	if (!bValid)
+	{
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg -- internal FABRIK solver was not ready to evaluate"));
+	}
+#endif // ENABLE_ANIM_DEBUG
+   
 	return bValid;
 }
 
@@ -76,6 +113,13 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
 #endif // ENABLE_IK_DEBUG
 	}
+
+	// Set up FABRIK solver
+	FabrikSolver.ActualAlpha = 1.0f;
+	FabrikSolver.TipBone = Leg.ShinBone.BoneRef;
+	FabrikSolver.RootBone = Leg.HipBone.BoneRef;
+	FabrikSolver.Precision = Precision;
+	FabrikSolver.MaxIterations = MaxIterations;	
 }
 
 

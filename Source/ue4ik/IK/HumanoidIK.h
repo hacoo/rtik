@@ -31,30 +31,29 @@ public:
 	
 	// Distance between the bottom of the shin bone and the bottom surface of the foot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		float FootRadius;
+	float FootRadius;
 	
 	// Distance between
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		float ToeRadius;
+	float ToeRadius;
 	
 	// Connects from pelvis to upper leg bone
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FIKBone HipBone;
+	FIKBone HipBone;
 	
 	// Connects from end of hip to top of knee
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FIKBone ThighBone;
+	FIKBone ThighBone;
 	
 	// Connects from bottom of knee to top of foot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FIKBone ShinBone;
+	FIKBone ShinBone;
 	
 	// Connects from bottom of shin to start of the toe
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		FIKBone FootBone;
+	FIKBone FootBone;
 	
 	float GetTotalChainLength() const;
-	
 	
 protected:
 	bool bInitOk;

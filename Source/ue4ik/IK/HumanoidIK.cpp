@@ -86,12 +86,10 @@ bool FHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBones)
 	return bValid;
 }
 
-
 float FHumanoidLegChain::GetTotalChainLength() const
 {
 	return TotalChainLength;
 }
-
 
 bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 {
@@ -137,13 +135,21 @@ bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 	if (bInitOk)
 	{
 		const TArray<FTransform>& RefTransforms = RequiredBones.GetRefPoseArray();
-		FVector ThighVec = RefTransforms[HipBone.BoneRef.BoneIndex].GetLocation() -
-				RefTransforms[ThighBone.BoneRef.BoneIndex].GetLocation();
-		FVector ShinVec = RefTransforms[ThighBone.BoneRef.BoneIndex].GetLocation() -
-			RefTransforms[ShinBone.BoneRef.BoneIndex].GetLocation();
-		FVector FootVec = RefTransforms[ShinBone.BoneRef.BoneIndex].GetLocation() -
-			RefTransforms[FootBone.BoneRef.BoneIndex].GetLocation();
-		TotalChainLength = ThighVec.Size() + ShinVec.Size() + FootVec.Size();
+
+		FVector HipLoc   = RefTransforms[HipBone.BoneRef.BoneIndex].GetLocation();
+		FVector KneeLoc  = RefTransforms[ThighBone.BoneRef.BoneIndex].GetLocation();
+		FVector AnkleLoc = RefTransforms[ShinBone.BoneRef.BoneIndex].GetLocation();
+		FVector ToeLoc   = RefTransforms[FootBone.BoneRef.BoneIndex].GetLocation();
+		
+		FVector ThighVec = KneeLoc - HipLoc;
+		FVector ShinVec  = AnkleLoc - KneeLoc;
+		FVector FootVec  = ToeLoc - AnkleLoc;
+
+		float ThighSize  = ThighVec.Size();
+		float ShinSize   = ShinVec.Size();
+		float FootSize   = FootVec.Size();
+
+		TotalChainLength = ThighSize + ShinSize + FootSize;
 	}
 	
 	return bInitOk;
