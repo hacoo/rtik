@@ -35,7 +35,7 @@ public:
 	UHumanoidLegChain_Wrapper* RightLeg;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
-	FIKBone PelvisBone;
+	UIKBoneWrapper* PelvisBone;
 
 	// How quickly the pelvis moves to match floor height. Set higher to make IK more responsive and prevent
     // floating/sinking feet; setting it too high will cause popping.

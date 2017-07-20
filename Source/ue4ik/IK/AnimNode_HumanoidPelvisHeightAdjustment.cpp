@@ -27,10 +27,10 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
-	if (LeftLeg == nullptr || RightLeg == nullptr)
+	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, one of the legs was null"));
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a bone wrapper was null"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
@@ -47,11 +47,11 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	FHumanoidIKTraceData LeftTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg->Chain,
-		PelvisBone, MaxPelvisAdjustSize, LeftTraceData, false);
+		PelvisBone->Bone, MaxPelvisAdjustSize, LeftTraceData, false);
 
 	FHumanoidIKTraceData RightTraceData;
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg->Chain,
-		PelvisBone, MaxPelvisAdjustSize, RightTraceData, false);
+		PelvisBone->Bone, MaxPelvisAdjustSize, RightTraceData, false);
 	
 	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
 	// is where it would be, over flat ground.
@@ -98,7 +98,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
    
 	FVector TargetPelvisDeltaVec(0.0f, 0.0f, TargetPelvisDelta);
 	
-	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone.BoneIndex);	
+	FTransform PelvisTransformCS = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, PelvisBone->Bone.BoneIndex);	
 	FVector PelvisTargetCS       = PelvisTransformCS.GetLocation();
 	PelvisTargetCS += TargetPelvisDeltaVec;
 
@@ -109,12 +109,12 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	PelvisTransformCS.SetLocation(NewPelvisLoc);
 
-	OutBoneTransforms.Add(FBoneTransform(PelvisBone.BoneIndex, PelvisTransformCS));
+	OutBoneTransforms.Add(FBoneTransform(PelvisBone->Bone.BoneIndex, PelvisTransformCS));
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
-		FVector PelvisLocWorld = FAnimUtil::GetBoneWorldLocation(*SkelComp, Output.Pose, PelvisBone.BoneIndex);
+		FVector PelvisLocWorld = FAnimUtil::GetBoneWorldLocation(*SkelComp, Output.Pose, PelvisBone->Bone.BoneIndex);
 		FVector PelvisTarget = PelvisLocWorld + TargetPelvisDeltaVec;
 		
 		FDebugDrawUtil::DrawSphere(World, PelvisLocWorld, FColor(0, 255, 255), 20.0f);
@@ -136,17 +136,17 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
 	
-	if (LeftLeg == nullptr || RightLeg == nullptr)
+	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid -- one of the legs was null"));				
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid -- one of the bone wrappers was null"));				
 #endif // ENABLE_ANIM_DEBUG
 		return false;
 	}
 
 	bool bValid = LeftLeg->InitIfInvalid(RequiredBones)
 		&& RightLeg->InitIfInvalid(RequiredBones)
-		&& PelvisBone.InitIfInvalid(RequiredBones);
+		&& PelvisBone->InitIfInvalid(RequiredBones);
 
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
@@ -161,10 +161,10 @@ bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton
 void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
 
-	if (LeftLeg == nullptr || RightLeg == nullptr)
+	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize biped hip adjustment -- one of the legs was null"));
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize biped hip adjustment -- one of the bone wrappers was null"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
@@ -183,7 +183,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FB
 #endif // ENABLE_IK_DEBUG
 	}
 
-	if (!PelvisBone.Init(RequiredBones))
+	if (!PelvisBone->Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize pelvis bone for biped hip adjustment"));

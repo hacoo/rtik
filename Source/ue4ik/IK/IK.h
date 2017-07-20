@@ -99,9 +99,77 @@ public:
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return bValid;
 	}
-	
-	
 };
+
+/*
+* Allows bones to be passed around in BP
+*/
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API UIKBoneWrapper : public UObject
+{
+	
+	GENERATED_BODY()
+
+public: 
+
+	UIKBoneWrapper(const FObjectInitializer& ObjectInitializer)
+		: 
+		Super(ObjectInitializer),
+		bInitialized(false)
+	{ }
+
+	UFUNCTION(BlueprintCallable, Category = IK)
+	void Initialize(FIKBone InBone)
+	{
+		Bone = InBone;
+		bInitialized = true;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FIKBone Bone;
+	
+	bool InitIfInvalid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+
+		return Bone.InitIfInvalid(RequiredBones);
+	}
+
+	bool Init(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+
+		return Bone.Init(RequiredBones);
+	}
+
+
+	bool IsValid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+			return false;
+		}
+
+		return Bone.IsValid(RequiredBones);
+	}
+	
+protected:
+
+	bool bInitialized;
+};
+
 
 /*
 * A basic IK chain. Requires only a root bone and effector.
@@ -186,6 +254,5 @@ public:
 	}
 	
 protected:
-
 	bool bInitialized;
 };
