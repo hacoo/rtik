@@ -45,7 +45,7 @@ public:
 	// Maximum height above the floor to do pelvis adjustment. Will transition back to base pose if the 
 	// required hip adjustment is larger than this value. Should probably be something 1 / 3 character capsule height
     // (more if you're brave)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
 	float MaxPelvisAdjustSize;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)

@@ -21,35 +21,39 @@ void FAnimNode_IKHumanoidLegTrace::EvaluateComponentSpace(FComponentSpacePoseCon
 {
 	SCOPE_CYCLE_COUNTER(STAT_IKHumanoidLegTrace_Eval);
 
-	if (Leg == nullptr)
+	USkeletalMeshComponent* SkelComp    = Output.AnimInstanceProxy->GetSkelMeshComponent();
+	ACharacter* Character               = Cast<ACharacter>(SkelComp->GetOwner());
+	const FBoneContainer& RequiredBones = Output.AnimInstanceProxy->GetRequiredBones();
+
+	if (!IsValidToEvaluate(RequiredBones))
 	{
-#if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK Trace, Leg was null"));
-#endif // ENABLE_IK_DEBUG_VERBOSE
+		// IsValidToEvaluate checks if input pointers are null
 		return;
 	}
 	
-	USkeletalMeshComponent* SkelComp    = Output.AnimInstanceProxy->GetSkelMeshComponent();
-	USkeleton* Skeleton                 = Output.AnimInstanceProxy->GetSkeleton();
-	const FBoneContainer& RequiredBones = Output.AnimInstanceProxy->GetRequiredBones();
-
-	if (!IsValidToEvaluate(Skeleton, RequiredBones))
-	{
-		return;
-	}
+	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, Leg->Chain,
+		PelvisBone->Bone, MaxPelvisAdjustSize, TraceData->TraceData, false);
 }
 
 
-bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
+bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const FBoneContainer & RequiredBones)
 {
-	if (Leg == nullptr)
+	if (Leg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- Leg was null"));		
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- a bone wrapper was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
-	
+
+	if (TraceData == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- Trace data was null"));		
+#endif ENABLE_IK_DEBUG_VERBOSE
+		return false;
+	}
+		
 	bool bValid = Leg->InitIfInvalid(RequiredBones);
 
 	return bValid;

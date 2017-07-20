@@ -80,6 +80,23 @@ public:
 };
 
 /*
+* Wrapper for passing trace data around in BP. The trace node may write into the struct contained within!
+*/
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API UHumanoidIKTraceData_Wrapper : public UObject
+{
+	GENERATED_BODY()
+	
+public:
+
+	// This object does not need to be initialized. FAnimNode_IKHumanoidLegTrace should be used before
+    // later nodes to obtain trace data.
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FHumanoidIKTraceData TraceData;
+};
+
+/*
 * Wrapper class for passing around in BP
 */
 UCLASS(BlueprintType, EditInlineNew)
