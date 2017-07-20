@@ -12,31 +12,30 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Trace"), STAT_IKHumanoidLegTrace_Eval, STATGROUP_Anim);
 
-void FAnimNode_IKHumanoidLegTrace::Update(const FAnimationUpdateContext & Context)
+void FAnimNode_IKHumanoidLegTrace::UpdateInternal(const FAnimationUpdateContext & Context)
 {
-	EvaluateGraphExposedInputs.Execute(Context);
 }
 
-void FAnimNode_IKHumanoidLegTrace::EvaluateComponentSpace(FComponentSpacePoseContext& Output)
+void FAnimNode_IKHumanoidLegTrace::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, 
+	TArray<FBoneTransform>& OutBoneTransforms) 
 {
 	SCOPE_CYCLE_COUNTER(STAT_IKHumanoidLegTrace_Eval);
+
+	if (Leg == nullptr || PelvisBone == nullptr) 
+	{
+		return;
+	}
 
 	USkeletalMeshComponent* SkelComp    = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	ACharacter* Character               = Cast<ACharacter>(SkelComp->GetOwner());
 	const FBoneContainer& RequiredBones = Output.AnimInstanceProxy->GetRequiredBones();
 
-	if (!IsValidToEvaluate(RequiredBones))
-	{
-		// IsValidToEvaluate checks if input pointers are null
-		return;
-	}
-	
 	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, Leg->Chain,
 		PelvisBone->Bone, MaxPelvisAdjustSize, TraceData->TraceData, false);
 }
 
 
-bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const FBoneContainer & RequiredBones)
+bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer & RequiredBones)
 {
 	if (Leg == nullptr || PelvisBone == nullptr)
 	{
@@ -60,9 +59,8 @@ bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const FBoneContainer & Requ
 }
 
 
-void FAnimNode_IKHumanoidLegTrace::Initialize(const FAnimationInitializeContext& Context)
+void FAnimNode_IKHumanoidLegTrace::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	const FBoneContainer& RequiredBones = Context.AnimInstanceProxy->GetRequiredBones();
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG

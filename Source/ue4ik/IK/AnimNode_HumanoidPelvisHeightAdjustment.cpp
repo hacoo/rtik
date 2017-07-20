@@ -18,7 +18,8 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::UpdateInternal(const FAnimationUp
 	DeltaTime = Context.GetDeltaTime();
 }
 
-void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
+void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, 
+	TArray<FBoneTransform>& OutBoneTransforms)
 {
 	SCOPE_CYCLE_COUNTER(STAT_HumanoidPelvisHeightAdjust_Eval);
 
@@ -35,6 +36,15 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 		return;
 	}
 
+	if (LeftLegTraceData == nullptr || RightLegTraceData == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a trace data input was null"));
+#endif // ENABLE_IK_DEBUG_VERBOSE
+		return;
+	}
+	
+
 	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
 	if(Character == nullptr)
@@ -45,22 +55,14 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 	UWorld* World = Character->GetWorld();
 
-	FHumanoidIKTraceData LeftTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, LeftLeg->Chain,
-		PelvisBone->Bone, MaxPelvisAdjustSize, LeftTraceData, false);
-
-	FHumanoidIKTraceData RightTraceData;
-	FHumanoidIK::HumanoidIKLegTrace(Character, Output.Pose, RightLeg->Chain,
-		PelvisBone->Bone, MaxPelvisAdjustSize, RightTraceData, false);
-	
 	// Find the foot that's farthest from the ground. Transition the hips downward so it's the height
 	// is where it would be, over flat ground.
 
 	bool bReturnToCenter = false;
 	float TargetPelvisDelta = 0.0f;
 
-	if (LeftTraceData.FootHitResult.GetActor()     == nullptr
-		|| RightTraceData.FootHitResult.GetActor() == nullptr) 
+	if (LeftLegTraceData->TraceData.FootHitResult.GetActor()     == nullptr
+		|| RightLegTraceData->TraceData.FootHitResult.GetActor() == nullptr) 
 	{
 		bReturnToCenter = true;
 	}
@@ -68,8 +70,8 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	{
 		// Check in component space; this way charcter rotation doens't matter
 		FMatrix ToCS             = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
-		FVector LeftFootFloor    = LeftTraceData.FootHitResult.ImpactPoint;
-		FVector RightFootFloor   = RightTraceData.FootHitResult.ImpactPoint;
+		FVector LeftFootFloor    = LeftLegTraceData->TraceData.FootHitResult.ImpactPoint;
+		FVector RightFootFloor   = RightLegTraceData->TraceData.FootHitResult.ImpactPoint;
 		FVector LeftFootFloorCS  = ToCS.TransformPosition(LeftFootFloor);
 		FVector RightFootFloorCS = ToCS.TransformPosition(RightFootFloor);
 		
@@ -129,6 +131,13 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 			FDebugDrawUtil::DrawSphere(World, PelvisTarget, FColor(0, 0, 255), 20.0f);
 			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(0, 0, 255));
 		}
+
+		FVector LeftTraceWorld = LeftLegTraceData->TraceData.FootHitResult.ImpactPoint; 
+		FDebugDrawUtil::DrawSphere(World, LeftTraceWorld, FColor(0, 255, 0), 20.0f); 
+
+		FVector RightTraceWorld = RightLegTraceData->TraceData.FootHitResult.ImpactPoint; 
+		FDebugDrawUtil::DrawSphere(World, RightTraceWorld, FColor(255, 0, 0), 20.0f); 
+
 	}
 #endif // WITH_EDITOR
 }

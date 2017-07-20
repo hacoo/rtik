@@ -15,12 +15,11 @@
   * Knee rotation is not enforced in this node.
 */
 USTRUCT()
-struct UE4IK_API FAnimNode_IKHumanoidLegTrace : public FAnimNode_Base
+struct UE4IK_API FAnimNode_IKHumanoidLegTrace : public FAnimNode_SkeletalControlBase
 {
 	GENERATED_USTRUCT_BODY()
 
-public:
-	
+public:	
 	// The leg to trace from
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidLegChain_Wrapper* Leg;
@@ -49,11 +48,13 @@ public:
 		MaxPelvisAdjustSize(40.0f)
 	{ }
 
-	// FAnimNode_Base interface
-	virtual void Update(const FAnimationUpdateContext& Context) override;
-	virtual void EvaluateComponentSpace(FComponentSpacePoseContext& Output) override;
-	virtual void Initialize(const FAnimationInitializeContext& Context) override;
-	// End FAnimNode_Base Interface
+protected: 
 
-	virtual bool IsValidToEvaluate(const FBoneContainer & RequiredBones);
+	// FAnimNode_SkeletalControlBase interface
+	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
+	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
+	virtual void InitializeBoneReferences(const FBoneContainer& RequiredBones) override;
+	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
+	// End FAnimNode_SkeletalControlBase Interface
+
 };
