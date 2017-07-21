@@ -36,6 +36,10 @@ struct UE4IK_API FAnimNode_HumanoidLegIK : public FAnimNode_SkeletalControlBase
 
 public:
 
+	// Pose before any IK or IK pre-processing (e.g., pelvis adjustment) is applied
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
+	FComponentSpacePoseLink BaseComponentPose;
+
 	// The leg on which IK is applied
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidLegChain_Wrapper* Leg;
@@ -88,6 +92,10 @@ public:
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
+	virtual void Initialize(const FAnimationInitializeContext& Context) override;
+	virtual void CacheBones(const FAnimationCacheBonesContext& Context) override;
+
+
 	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
 	//virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Output) override;

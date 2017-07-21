@@ -2,7 +2,9 @@
 
 #include "AnimNode_HumanoidLegIK.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "AnimationRuntime.h"
 #include "Runtime/AnimationCore/Public/TwoBoneIK.h"
 #include "Utility/AnimUtil.h"
 
@@ -12,9 +14,22 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Eval"), STAT_HumanoidLegIK_Eval, STATGROUP_Anim);
 
+void FAnimNode_HumanoidLegIK::Initialize(const FAnimationInitializeContext & Context)
+{
+	Super::Initialize(Context);
+	BaseComponentPose.Initialize(Context);
+}
+
+void FAnimNode_HumanoidLegIK::CacheBones(const FAnimationCacheBonesContext & Context)
+{
+	Super::CacheBones(Context);
+	BaseComponentPose.CacheBones(Context);
+}
+
 void FAnimNode_HumanoidLegIK::UpdateInternal(const FAnimationUpdateContext & Context)
 {
-	DeltaTime = Context.GetDeltaTime();
+	BaseComponentPose.Update(Context);
+	DeltaTime = Context.GetDeltaTime();	
 }
 
 void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext & Output, TArray<FBoneTransform>& OutBoneTransforms)
@@ -26,56 +41,44 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
-/*
-	if (Leg == nullptr || TraceData == nullptr)
-	{
-#if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Leg IK, Leg was null"));
-#endif // ENABLE_IK_DEBUG_VERBOSE
-		return;
-	}
+	// Input pin pointers are checked in IsValid -- don't need to check here
 
-	if (!bEnable)
-	{
-		return;
-	}
-*/
+	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	
-	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
-	
+	FMatrix ToCS      = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
 	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
 	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-
-	FMatrix ToCS      = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
+	FVector FloorCS   = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
 
 	FVector FootTargetCS;
-	 
-	// Reachability is checked by max extension length only -- not ROM
-	FVector HipToTarget = (FootTargetCS - HipCS);
-	float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
-	float HipToTargetLengthSq = HipToTarget.SizeSquared();
-
-	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_WorldLocation)
+	
+	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
 	{
-		FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
+		// Use trace data to figure out where the foot should go.
+		FComponentSpacePoseContext BasePose(Output);
+		BaseComponentPose.EvaluateComponentSpace(BasePose);
+
+		FVector BaseRootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, FCompactPoseBoneIndex(0));
+		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
+
+		// If foot is X cm above animroot before adjustment, it should be X cm above the floor trace impact after adjustment
+		// FVector CapLocationCS = ToCS.TransformPosition(CapsuleComponent->GetComponentLocation());
+		// float CapsuleBottomHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
+		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
+
+		FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius);
 	}
 	else
 	{
-		// Use trace data to figure out where the foot should go.
-		// If foot is X cm above animroot before adjustment, it should be X cm above the floor trace impact after adjustment
-		
-		FVector RootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
-		FVector FloorCS = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
-		float HeightAboveRoot = FootCS.Z - RootCS.Z;
-		FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot);
+		FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
 	}
 
 	if (Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
 	{
 		// Ensure that the target is reachable; if not do not apply IK
 		// This only tests distance to the target. Future work: check ROM as well
-		// No need to check if in locomotion mode; target shoudl always be reachable.
+		// No need to check if in locomotion mode; target should always be reachable.
 
 		FVector HipToTarget = (FootTargetCS - HipCS);
 		float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
@@ -107,8 +110,11 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
-		UWorld* World = SkelComp->GetWorld();
-		FDebugDrawUtil::DrawSphere(World, FootTargetWorld, FColor(0, 255, 255));
+		UWorld* World = SkelComp->GetWorld();		
+		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FVector EffectorWorld = ToWorld.TransformPosition(FootTargetCS);
+		FDebugDrawUtil::DrawSphere(World, EffectorWorld, FColor(255, 0, 255));
+		FDebugDrawUtil::DrawSphere(World, ToWorld.TransformPosition(FloorCS), FColor(255, 0, 0));
 	}
 #endif // WITH_EDITOR
 }
