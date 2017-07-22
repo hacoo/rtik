@@ -26,5 +26,5 @@ FString UAnimGraphNode_HumanoidLegIK::GetNodeCategory() const
 
 FText UAnimGraphNode_HumanoidLegIK::GetControllerDescription() const
 {
-	return FText::FromString(FString("IK a humanoid two-bone leg to a location, enforcing knee rotation as a hinge joint"));
+	return FText::FromString(FString("IK a humanoid two-bone leg to a location"));
 }

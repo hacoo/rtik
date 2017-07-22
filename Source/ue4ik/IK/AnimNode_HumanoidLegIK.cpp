@@ -2,10 +2,8 @@
 
 #include "AnimNode_HumanoidLegIK.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "AnimationRuntime.h"
-#include "Runtime/AnimationCore/Public/TwoBoneIK.h"
 #include "Utility/AnimUtil.h"
 
 #if WITH_EDITOR
@@ -178,5 +176,3 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 		FabrikSolver.MaxIterations = MaxIterations;
 	}
 }
-
-
