@@ -6,7 +6,7 @@ UAnimGraphNode_HumanoidLegIK::UAnimGraphNode_HumanoidLegIK(const FObjectInitiali
 	:
 	Super(ObjectInitializer)
 {
-
+	
 }
 
 FText UAnimGraphNode_HumanoidLegIK::GetNodeTitle(ENodeTitleType::Type TitleType) const

@@ -39,6 +39,98 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 #endif
 	check(OutBoneTransforms.Num() == 0);
 
+	USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
+
+	FComponentSpacePoseContext BasePose(Output);
+	BaseComponentPose.EvaluateComponentSpace(BasePose);
+
+	// Pre-IK positions
+	FVector HipCSPre      = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.HipBone.BoneIndex);
+	FVector KneeCSPre     = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.ThighBone.BoneIndex);
+	FVector FootCSPre     = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.ShinBone.BoneIndex);
+	FVector ToeCSPre      = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
+
+	// Post-IK positions
+	FVector HipCSPost     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
+	FVector KneeCSPost    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
+	FVector FootCSPost    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
+	FVector ToeCSPost     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.FootBone.BoneIndex);
+
+		
+	// To correct the knee:
+	// - Project everything onto the plane normal to the vector from thigh to foot
+	// - Find the angle, in the base pose, between the direction of the foot and the direction of the knee. If the leg is fully extended, assume this angle is 0.	
+	// - Rotate the IKed knee angle so that it maintains the same angle with the IKed foot	
+
+	// Project everything onto the plane defined by the axis between the hip and the foot. The knee can be rotated
+	// around this axis without changing the position of the effector (the foot).	
+	
+	// Define each plane	
+	FVector HipFootAxisPre  = FootCSPre - HipCSPre;
+	if (!HipFootAxisPre.Normalize())
+	{
+		HipFootAxisPre      = FVector(0.0f, 0.0f, 1.0f);
+	}
+	FVector CenterPre       = KneeCSPre.ProjectOnTo(HipFootAxisPre);
+
+	FVector HipFootAxisPost = FootCSPost - HipCSPost;
+	if (!HipFootAxisPost.Normalize())
+	{
+		HipFootAxisPost     = FVector(0.0f, 0.0f, 1.0f);
+	}
+	FVector CenterPost      = KneeCSPost.ProjectOnTo(HipFootAxisPost);
+
+	// Ensure both axes point in the same direction
+	if (FVector::DotProduct(HipFootAxisPre, HipFootAxisPost) < 0.0f)
+	{
+		HipFootAxisPost *= -1;
+	}
+
+	// Get the projected foot-toe vectors
+	FVector FootPre         = FVector::PointPlaneProject(FootCSPre, CenterPre, HipFootAxisPre);
+	FVector ToePre          = FVector::PointPlaneProject(ToeCSPre, CenterPre, HipFootAxisPre);
+	FVector FootToePre      = (ToePre - FootPre);
+	if (!FootToePre.Normalize())
+	{
+		FootToePre          = FVector(1.0f, 0.0f, 0.0f);
+	}
+
+	FVector FootPost        = FVector::PointPlaneProject(FootCSPost, CenterPost, HipFootAxisPost);
+	FVector ToePost         = FVector::PointPlaneProject(ToeCSPost, CenterPost, HipFootAxisPost);
+	FVector FootToePost     = (ToePost - FootPost);
+	if (!FootToePost.Normalize())
+	{
+		FootToePost         = FVector(1.0f, 0.0f, 0.0f);
+	}
+	
+	// Get the projected knee vectors. If the knee vector can't be normalize -- meaning the leg is completely straight, 
+	// and there is no knee direction -- failsafe by using the direction of the toe	(i.e, the knee tracks perfectly above the toe)
+
+	FVector KneePre         = KneeCSPre - CenterPre;
+	if (!KneePre.Normalize())
+	{
+		KneePre             = FootToePre;
+	}
+	
+	FVector KneePost        = KneeCSPost - CenterPost;
+	if (!KneePost.Normalize())
+	{
+		KneePost                = FootToePost;
+	}
+	
+	FQuat FootKneeRotPre        = FQuat::FindBetweenNormals(FootPre, KneePre);	
+	float FootKneeRad           = 2 * FMath::Acos(FootKneeRotPre.W);
+
+	FQuat KneeToFoot            = FQuat::FindBetween(KneePost, FootPost);
+	FQuat FootToKneeTarget      = FQuat(HipFootAxisPost, FootKneeRad);
+	FQuat OverallRotation       = FootToKneeTarget * KneeToFoot;
+
+	FVector KneeTargetPost      = OverallRotation.RotateVector(KneeCSPost);
+	FTransform NewKneeTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
+	NewKneeTransform.SetLocation(KneeTargetPost);
+
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, NewKneeTransform));
+
 }
 
 bool FAnimNode_HumanoidLegIKKneeCorrection::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
