@@ -125,21 +125,31 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	if (bEnableDebugDraw)
 	{
 		FVector PelvisLocWorld = FAnimUtil::GetBoneWorldLocation(*SkelComp, Output.Pose, PelvisBone->Bone.BoneIndex);
-		FTransform PelvisTarget(PelvisTransformCS.GetLocation());
-		FAnimationRuntime::ConvertCSTransformToBoneSpace(PelvisTransformCS, Output.Pose, PelvisTarget, PelvisBone->Bone.BoneIndex, BCS_WorldSpace);
+		FTransform PelvisTarget(PelvisTransformCS);
+		FAnimationRuntime::ConvertCSTransformToBoneSpace(SkelComp->GetComponentTransform(), Output.Pose,
+			PelvisTarget, PelvisBone->Bone.BoneIndex, BCS_WorldSpace);
 		
 		FDebugDrawUtil::DrawSphere(World, PelvisLocWorld, FColor(255, 0, 0), 20.0f);
 
 		if (bReturnToCenter)
 		{
 			FDebugDrawUtil::DrawSphere(World, PelvisTarget.GetLocation(), FColor(255, 255, 0), 20.0f);
-			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(255, 255, 0));
+			FDebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget.GetLocation(), FColor(255, 255, 0));
+			FVector TextOffset = FVector(0.0f, 0.0f, 100.0f);
+			float AdjustHeight = (PelvisLocWorld - PelvisTarget.GetLocation()).Size();
+			FString AdjustStr = FString::Printf(TEXT("Pelvis Offset: %f"), AdjustHeight);
+			FDebugDrawUtil::DrawString(World, TextOffset, AdjustStr, Character, FColor(255, 255, 0));
 		} 
 		else
 		{
 			FDebugDrawUtil::DrawSphere(World, PelvisTarget.GetLocation(), FColor(0, 0, 255), 20.0f);
-			//DebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget, FColor(0, 0, 255));
-		}
+			FDebugDrawUtil::DrawLine(World, PelvisLocWorld, PelvisTarget.GetLocation(), FColor(0, 0, 255));
+			FVector TextOffset = FVector(0.0f, 0.0f, 100.0f);
+			float AdjustHeight = (PelvisLocWorld - PelvisTarget.GetLocation()).Size();
+			FString AdjustStr = FString::Printf(TEXT("Pelvis Offset: %f"), AdjustHeight);
+			FDebugDrawUtil::DrawString(World, TextOffset, AdjustStr, Character, FColor(0, 0, 255));
+
+		}		
 
 		FVector LeftTraceWorld = LeftLegTraceData->GetTraceData().FootHitResult.ImpactPoint; 
 		FDebugDrawUtil::DrawSphere(World, LeftTraceWorld, FColor(0, 255, 0), 20.0f); 
