@@ -61,11 +61,18 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
 
 		// If foot is X cm above animroot before adjustment, it should be X cm above the floor trace impact after adjustment
-		// FVector CapLocationCS = ToCS.TransformPosition(CapsuleComponent->GetComponentLocation());
-		// float CapsuleBottomHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
 		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
+		float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;
 
-		FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius);
+		// Don't apply IK unless the foot is below the target height
+		if (FootCS.Z < MinimumHeight)
+		{
+			FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius);
+		}
+		else
+		{
+			return;
+		}
 	}
 	else
 	{
