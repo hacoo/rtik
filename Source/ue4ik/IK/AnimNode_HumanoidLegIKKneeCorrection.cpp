@@ -155,8 +155,12 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	NewThighTransform.SetRotation(NewThighRotation*NewThighTransform.GetRotation());
 	NewThighTransform.SetLocation(NewKneeCS);
 
+	// Update the shin transform, otherwise its component space rotation will change (messing up rotation of the foot)
+	FTransform NewShinTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
+
 	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, NewHipTransform));
 	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, NewThighTransform));
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, NewShinTransform));
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
