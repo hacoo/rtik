@@ -80,6 +80,8 @@ public:
 	// How to handle rotation of the effector (the foot). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
+	//
+	// For leg IK, this should usually be set to No Change.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
    
@@ -95,7 +97,7 @@ public:
 		bEnable(true),
 		UnreachableRule(EIKUnreachableRule::IK_Abort),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
-		EffectorRotationSource(EBoneRotationSource::BRS_KeepLocalSpaceRotation)
+		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
