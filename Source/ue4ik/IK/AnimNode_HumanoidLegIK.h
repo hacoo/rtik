@@ -76,6 +76,12 @@ public:
 	// Set to 'locomotion' for normal movement; 'world location' to manually IK the leg onto a world location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
 	EHumanoidLegIKMode Mode;
+	
+	// How to handle rotation of the effector (the foot). If set to No Change, the foot will maintain the same
+	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
+	// as before IK. Copy Target Rotation is the same as No Change for now.	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
    
 public:
 
@@ -88,7 +94,8 @@ public:
 		MaxIterations(10),
 		bEnable(true),
 		UnreachableRule(EIKUnreachableRule::IK_Abort),
-		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
+		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
+		EffectorRotationSource(EBoneRotationSource::BRS_KeepLocalSpaceRotation)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface

@@ -43,11 +43,12 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	
-	FMatrix ToCS      = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
-	FVector HipCS     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
-	FVector KneeCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
-	FVector FootCS    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-	FVector FloorCS   = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
+	FMatrix ToCS               = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
+	FVector HipCS              = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
+	FVector KneeCS             = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
+	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
+	FVector FootCS             = FootCSTransform.GetLocation();
+	FVector FloorCS            = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
 
 	FVector FootTargetCS;
 	
@@ -107,11 +108,16 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	}
 	
 	FabrikSolver.EffectorTransformSpace = EBoneControlSpace::BCS_ComponentSpace;
-	FabrikSolver.EffectorTransform = FTransform(FootTargetCS);
+	FabrikSolver.EffectorRotationSource = EffectorRotationSource;
+	FTransform EffectorTransform(FootCSTransform);
+	EffectorTransform.SetLocation(FootTargetCS);
+	FabrikSolver.EffectorTransform = EffectorTransform;
+
+	FTransform FootLocalTransform = Output.Pose.GetLocalSpaceTransform(Leg->Chain.FootBone.BoneIndex);
 
 	// Internal fabrik solver will fill in OutBoneTransforms. Stock solver does not handle ROMs
 	FabrikSolver.EvaluateSkeletalControl_AnyThread(Output, OutBoneTransforms);
-   
+	
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
