@@ -74,7 +74,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPre      = FVector(0.0f, 0.0f, 1.0f);
 	}
-	FVector CenterPre       = HipCSPre + KneeCSPre.ProjectOnToNormal(HipFootAxisPre);
+	FVector CenterPre       = HipCSPre + (KneeCSPre - HipCSPre).ProjectOnToNormal(HipFootAxisPre);
 
 	FVector HipFootAxisPost = FootCSPost - HipCSPost;
 	if (!HipFootAxisPost.Normalize())
@@ -84,7 +84,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPost     = FVector(0.0f, 0.0f, 1.0f);
 	}
-	FVector CenterPost      = HipCSPost + KneeCSPost.ProjectOnToNormal(HipFootAxisPost);
+	FVector CenterPost      = HipCSPost + (KneeCSPost - HipCSPost).ProjectOnToNormal(HipFootAxisPost);
 
 	// Ensure both axes point in the same direction
 	if (FVector::DotProduct(HipFootAxisPre, HipFootAxisPost) < 0.0f)
