@@ -5,6 +5,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Runtime/Engine/Public/BonePose.h"
 #include "AnimUtil.generated.h"
 
 /**
