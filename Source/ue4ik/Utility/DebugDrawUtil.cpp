@@ -25,4 +25,10 @@ void FDebugDrawUtil::DrawString(UWorld * World, const FVector & Location, const 
 	});
 }
 
-
+void FDebugDrawUtil::DrawPlane(UWorld* World, const FVector& PlaneBase, const FVector& PlaneNormal, float Size, const FLinearColor& Color, float Duration)
+{
+	FPlane Plane(PlaneBase, PlaneNormal);
+	AsyncTask(ENamedThreads::GameThread, [World, Plane, PlaneBase, Size, Color, Duration]() {		
+		UKismetSystemLibrary::DrawDebugPlane(Cast<UObject>(World), Plane, PlaneBase, Size, Color, Duration);
+	});
+}

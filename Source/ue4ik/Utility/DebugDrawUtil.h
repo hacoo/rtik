@@ -27,4 +27,7 @@ public:
 
 	static void DrawString(UWorld* World, const FVector& Location, const FString& Text,
 		AActor* BaseActor, const FColor& Color, float Duration = 0.0f);
+
+	static void DrawPlane(UWorld * World, const FVector& PlaneBase, const FVector& PlaneNormal, float Size = 100.0f,
+		const FLinearColor& Color = FColor(255, 0, 255), float Duration = -1.0f);
 };
