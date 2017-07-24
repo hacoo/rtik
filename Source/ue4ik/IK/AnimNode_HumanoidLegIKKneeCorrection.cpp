@@ -56,7 +56,16 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector FootCSPost    = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
 	FVector ToeCSPost     = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.FootBone.BoneIndex);
 
-		
+	// Thigh and shin before correction
+	FVector OldThighVec = (KneeCSPost - HipCSPost).GetUnsafeNormal();
+	FVector OldShinVec  = (FootCSPost - KneeCSPost).GetUnsafeNormal();
+	
+	// If the leg is fully extended or fully folded, early out (correction is never needed)
+	if (FMath::IsNearlyEqual(FMath::Abs(FVector::DotProduct(OldThighVec, OldShinVec)), 1.0f))
+	{
+		return;
+	}
+  
 	// To correct the knee:
 	// - Project everything onto the plane normal to the vector from thigh to foot
 	// - Find the angle, in the base pose, between the direction of the foot and the direction of the knee. If the leg is fully extended, assume this angle is 0.	
@@ -66,84 +75,75 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	// around this axis without changing the position of the effector (the foot).	
 	
 	// Define each plane	
-	FVector HipFootAxisPre  = FootCSPre - HipCSPre;
+	FVector HipFootAxisPre    = FootCSPre - HipCSPre;
 	if (!HipFootAxisPre.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Knee Correction - HipFootAxisPre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
-		HipFootAxisPre      = FVector(0.0f, 0.0f, 1.0f);
+		HipFootAxisPre        = FVector(0.0f, 0.0f, 1.0f);
 	}
-	FVector CenterPre       = HipCSPre + (KneeCSPre - HipCSPre).ProjectOnToNormal(HipFootAxisPre);
+	FVector CenterPre         = HipCSPre + (KneeCSPre - HipCSPre).ProjectOnToNormal(HipFootAxisPre);
+	FVector KneeDirectionPre  = (KneeCSPre - CenterPre).GetUnsafeNormal();
 
-	FVector HipFootAxisPost = FootCSPost - HipCSPost;
+	FVector HipFootAxisPost   = FootCSPost - HipCSPost;
 	if (!HipFootAxisPost.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Knee Correction - HipFootAxisPost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
-		HipFootAxisPost     = FVector(0.0f, 0.0f, 1.0f);
+		HipFootAxisPost       = FVector(0.0f, 0.0f, 1.0f);
 	}
-	FVector CenterPost      = HipCSPost + (KneeCSPost - HipCSPost).ProjectOnToNormal(HipFootAxisPost);
+	FVector CenterPost        = HipCSPost + (KneeCSPost - HipCSPost).ProjectOnToNormal(HipFootAxisPost);
+	FVector KneeDirectionPost = (KneeCSPost - CenterPost).GetUnsafeNormal();
 
 	// Ensure both axes point in the same direction
 	if (FVector::DotProduct(HipFootAxisPre, HipFootAxisPost) < 0.0f)
 	{
 		HipFootAxisPost *= -1;
 	}
-
+	
 	// Get the projected foot-toe vectors
-	FVector FootPre     = FVector::PointPlaneProject(FootCSPre, CenterPre, HipFootAxisPre);
-	FVector ToePre      = FVector::PointPlaneProject(ToeCSPre, CenterPre, HipFootAxisPre);
-	FVector FootToePre  = (ToePre - FootPre);
+	FVector FootToePre = FVector::VectorPlaneProject((ToeCSPre - FootCSPre), HipFootAxisPre);
 	if (!FootToePre.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Knee Correction - FootToePre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
-		FootToePre      = FVector(1.0f, 0.0f, 0.0f);
+		FootToePre = KneeDirectionPre;
 	}
 	
-	FVector FootPost    = FVector::PointPlaneProject(FootCSPost, CenterPost, HipFootAxisPost);
-	FVector ToePost     = FVector::PointPlaneProject(ToeCSPost, CenterPost, HipFootAxisPost);
-	FVector FootToePost = (ToePost - FootPost);
+	FVector FootToePost = FVector::VectorPlaneProject((ToeCSPost - FootCSPost), HipFootAxisPost);
 	if (!FootToePost.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Knee Correction - FootToePost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
-		FootToePost     = FVector(1.0f, 0.0f, 0.0f);
+		FootToePost = KneeDirectionPost;
 	}
 	
 	// Get the projected knee vectors. If the knee vector can't be normalize -- meaning the leg is completely straight, 
-	// and there is no knee direction -- failsafe by using the direction of the toe	(i.e, the knee tracks perfectly above the toe)
-
-	FVector KneePre               = KneeCSPre - CenterPre;
+	// and there is no knee direction -- failsafe by using the direction of the toe	(i.e, the knee tracks perfectly above the toe)	
+	FVector KneePre = KneeCSPre - CenterPre;
 	if (!KneePre.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Knee Correction - KneePre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
-		KneePre                   = FootToePre;
+		KneePre     = FootToePre;
 	}
 	
-	FVector KneePost              = KneeCSPost - CenterPost;
-	
-	FQuat FootKneeRotPre          = FQuat::FindBetweenNormals(FootToePre, KneePre);	
-
 	// Rotate the post-IK foot to find the corrected knee direction (on the hip-foot plane)
-	FQuat FootKneeRotPost         = FQuat(HipFootAxisPost,  2 * FMath::Acos(FootKneeRotPre.W));
-	FVector NewKneeDirection      = FootKneeRotPost.RotateVector(FootToePost);
+	float FootKneeAngle      = FMath::Acos(FVector::DotProduct(FootToePre, KneePre));
+	FQuat FootKneeRotPost    = FQuat(HipFootAxisPost, FootKneeAngle);
+	FVector NewKneeDirection = FootKneeRotPost.RotateVector(FootToePost);
 	
 	// Transform back to component space
-	FVector NewKneeCS             = CenterPost + (NewKneeDirection * KneePost.Size());
+	FVector NewKneeCS = CenterPost + (NewKneeDirection * (KneeCSPost - CenterPost).Size());
 
 	// Update rotations for thigh and shin bones
-	FVector OldThighVec = (KneeCSPost - HipCSPost).GetUnsafeNormal();
-	FVector OldShinVec  = (FootCSPost - KneeCSPost).GetUnsafeNormal();
-
-	FVector NewThighVec = (NewKneeCS - HipCSPost).GetUnsafeNormal();
-	FVector NewShinVec  = (FootCSPost - NewKneeCS).GetUnsafeNormal();
+	FVector NewThighVec          = (NewKneeCS - HipCSPost).GetUnsafeNormal();
+	FVector NewShinVec           = (FootCSPost - NewKneeCS).GetUnsafeNormal();
 	
 	FQuat NewHipRotation         = FQuat::FindBetweenNormals(OldThighVec, NewThighVec);
 	FQuat NewThighRotation       = FQuat::FindBetweenNormals(OldShinVec, NewShinVec);
@@ -172,6 +172,8 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 		FVector PrePlaneBase = ToWorld.TransformPosition(CenterPre);
 		FVector PrePlaneNormal = ToWorld.TransformVector(HipFootAxisPre);
 		FDebugDrawUtil::DrawPlane(World, PrePlaneBase, PrePlaneNormal, 100.0f, FColor(255, 0, 255, 40));
+		FDebugDrawUtil::DrawVector(World, PrePlaneBase, ToWorld.TransformVector(KneePre), FColor(255, 0, 255));
+		FDebugDrawUtil::DrawVector(World, PrePlaneBase, ToWorld.TransformVector(FootToePre), FColor(255, 0, 0));
 		
 		// Draw post-IK leg, in blue
 		FDebugDrawUtil::DrawBoneChain(World, *SkelComp, Output.Pose, 
@@ -190,6 +192,9 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 		FDebugDrawUtil::DrawBoneChain(World, *SkelComp, CopiedPose, 
 			Leg->Chain.FootBone.BoneIndex, Leg->Chain.HipBone.BoneIndex,
 			FColor(0, 255, 0));
+		
+		FDebugDrawUtil::DrawVector(World, PostPlaneBase, ToWorld.TransformVector(NewKneeDirection), FColor(0, 255, 255));
+		FDebugDrawUtil::DrawVector(World, PostPlaneBase, ToWorld.TransformVector(FootToePost), FColor(0, 0, 255));
 	}
 #endif // WITH_EDITOR
 	
@@ -201,7 +206,7 @@ bool FAnimNode_HumanoidLegIKKneeCorrection::IsValidToEvaluate(const USkeleton * 
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate -- an input wrapper object was null"));		
-#endif ENABLE_IK_DEBUG_VERBOSE
+#endif // ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
 	
@@ -212,7 +217,7 @@ bool FAnimNode_HumanoidLegIKKneeCorrection::IsValidToEvaluate(const USkeleton * 
 	{
 		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate"));
 	}
-#endif // ENABLE_ANIM_DEBUG
+#endif // ENABLE_IK_DEBUG_VERBOSE
 	
 	return bValid;
 }
