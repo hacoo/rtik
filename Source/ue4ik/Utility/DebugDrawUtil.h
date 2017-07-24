@@ -29,7 +29,7 @@ public:
 		AActor* BaseActor, const FColor& Color, float Duration = 0.0f);
 
 	static void DrawPlane(UWorld * World, const FVector& PlaneBase, const FVector& PlaneNormal, float Size = 100.0f,
-		const FLinearColor& Color = FColor(255, 0, 255), bool bDrawNormal = true, float Duration = -1.0f);
+		const FLinearColor& Color = FColor(255, 0, 255, 90), bool bDrawNormal = true, float Duration = -1.0f);
 
 	// Draws a direction vector, starting at base, with some pre-decided length. Set length to a negative
 	static void DrawVector(UWorld* World, const FVector& Base, FVector Direction,
