@@ -20,10 +20,10 @@ struct UE4IK_API FDebugDrawUtil
 public: 
 
 	static void DrawLine(UWorld* World, const FVector& Start, const FVector& Finish,
-		const FLinearColor& Color= FColor(0, 255, 0), float Duration = -1.0f, float Thickness = 1.5f);
+		const FLinearColor& Color= FColor(0, 255, 0), float Duration = -1.0f, float Thickness = 1.0f);
 
 	static void DrawSphere(UWorld* World, const FVector& Center, const FLinearColor& Color = FColor(0, 255, 0),
-		float Radius = 15.0f, int32 Segments = 12, float Duration = -1.0f, float Thickness = 1.0f);
+		float Radius = 15.0f, int32 Segments = 12, float Duration = -1.0f, float Thickness = 0.75f);
 
 	static void DrawString(UWorld* World, const FVector& Location, const FString& Text,
 		AActor* BaseActor, const FColor& Color, float Duration = 0.0f);
@@ -34,16 +34,16 @@ public:
 	// Draws a direction vector, starting at base, with some pre-decided length. Set length to a negative
 	static void DrawVector(UWorld* World, const FVector& Base, FVector Direction,
 		const FLinearColor& Color = FColor(255, 0, 0), float Length = 50.0f, 
-		float Duration = -1.0f, float Thickness = 1.5f);
+		float Duration = -1.0f, float Thickness = 1.0f);
 
 	// Draw a line from bone to its skeletal parent
 	static void DrawBone(UWorld * World, USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& Pose,
 		const FCompactPoseBoneIndex& ChildBone, const FLinearColor& Color = FColor(0, 255, 255), 
-		float Duration = -1.0f, float Thickness = 1.5f);
+		float Duration = -1.0f, float Thickness = 1.0f);
 
 	// Draw bones from ChainStartChild to ChainEndParent. ChainStartChild must be a parent of ChainEndParent,
 	// otherwise nothing will happen.
 	static void DrawBoneChain(UWorld* World, USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& Pose,
 		const FCompactPoseBoneIndex & ChainStartChild, const FCompactPoseBoneIndex& ChainEndParent,
-		const FLinearColor& Color = FColor(0, 255, 255), float Duration = -1.0f, float Thickness = 1.5f);
+		const FLinearColor& Color = FColor(0, 255, 255), float Duration = -1.0f, float Thickness = 1.0f);
 };
