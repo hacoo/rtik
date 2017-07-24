@@ -54,8 +54,17 @@ void FDebugDrawUtil::DrawVector(UWorld * World, const FVector& Base, FVector Dir
 void FDebugDrawUtil::DrawBone(UWorld* World, USkeletalMeshComponent& SkelComp, FCSPose<FCompactPose>& Pose,
 	const FCompactPoseBoneIndex& ChildBone, const FLinearColor& Color, float Duration, float Thickness)
 {
+
 	int32 ChildIndex = ChildBone.GetInt();
-	int32 ParentIndex = SkelComp.GetMasterBoneMap()[ChildIndex];
+	FName ChildName = SkelComp.GetBoneName(ChildIndex);
+	FName ParentName = SkelComp.GetParentBone(ChildName);
+
+	if (ParentName == NAME_None)
+	{
+		return;
+	}
+
+	int32 ParentIndex = SkelComp.GetBoneIndex(ParentName);
 	FCompactPoseBoneIndex ParentBone(ParentIndex);
 
 	FVector ChildLocation = FAnimUtil::GetBoneWorldLocation(SkelComp, Pose, ChildBone);
@@ -79,12 +88,12 @@ void FDebugDrawUtil::DrawBoneChain(UWorld* World, USkeletalMeshComponent& SkelCo
 		return;
 	}
 
-	int32 CurrChild = ChildIndex;
-	const TArray<int32>& BoneMap = SkelComp.GetMasterBoneMap();
+	FName CurrChild = ChildName;
 
-	while (CurrChild != ParentIndex && CurrChild != INDEX_NONE) 
+	while (CurrChild != ParentName && CurrChild != NAME_None) 
 	{
-		DrawBone(World, SkelComp, Pose, FCompactPoseBoneIndex(CurrChild), Color, Duration, Thickness);
-		CurrChild = BoneMap[CurrChild];
+		FCompactPoseBoneIndex CurrBone(SkelComp.GetBoneIndex(CurrChild));
+		DrawBone(World, SkelComp, Pose, CurrBone, Color, Duration, Thickness);
+		CurrChild = SkelComp.GetParentBone(CurrChild);
 	}
 }
