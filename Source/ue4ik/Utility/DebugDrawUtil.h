@@ -7,14 +7,9 @@
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
 #include "DebugDrawUtil.generated.h"
 /*
-* Thread-safe debug drawing utilities. Animgraph code may be multithreaded; hence the need for locks.
+* Thread-safe debug drawing utilities. Animgraph code may be multithreaded; debug-drawing on animation threads 
+* seems to cause crashes. Functions in this class use AsyncTasks to draw on the game thread, instead. 
 */
-
-#if PLATFORM_USE_PTHREADS
-#include "HAL/PThreadCriticalSection.h"
-#else
-#include "Windows/WindowsPlatformProcess.h"
-#endif
 
 USTRUCT()
 struct UE4IK_API FDebugDrawUtil
@@ -32,12 +27,4 @@ public:
 
 	static void DrawString(UWorld* World, const FVector& Location, const FString& Text,
 		AActor* BaseActor, const FColor& Color, float Duration = 0.0f);
-
-protected:
-
-#if PLATFORM_USE_PTHREADS
-	static FPThreadsCriticalSection CriticalSection;
-#else
-	static FCriticalSection CriticalSection;
-#endif
 };
