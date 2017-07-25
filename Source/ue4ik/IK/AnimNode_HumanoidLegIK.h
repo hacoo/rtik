@@ -69,10 +69,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	bool bEnable;	
 
-	// How to handle an unreachable IK target
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
-	EIKUnreachableRule UnreachableRule;
-
 	// Set to 'locomotion' for normal movement; 'world location' to manually IK the leg onto a world location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	EHumanoidLegIKMode Mode;
@@ -81,7 +77,7 @@ public:
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
 	//
-	// For leg IK, this should usually be set to No Change.
+	// You should almost certainly set this to No Change and handle foot rotation separately. Change at your own risk!	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
@@ -107,7 +103,6 @@ public:
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
-		UnreachableRule(EIKUnreachableRule::IK_Abort),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorInterpSpeed(50.0f),

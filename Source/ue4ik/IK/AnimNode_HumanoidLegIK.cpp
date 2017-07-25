@@ -105,22 +105,6 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector HipToTarget = (FootTargetCS - HipCS);
 		float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
 		float HipToTargetLengthSq = HipToTarget.SizeSquared();
-
-		if (HipToTargetLengthSq > LegLengthSq)
-		{
-			switch (UnreachableRule)
-			{
-			case EIKUnreachableRule::IK_Abort:
-				return;
-			case EIKUnreachableRule::IK_DragRoot:
-#if ENABLE_IK_DEBUG
-				UE_LOG(LogIK, Warning, TEXT("Humanoid Leg IK Solver does not support IK Unreachable Rule Drag Root"));
-#endif // ENABLE_IK_DEBUG			
-				return;
-			case EIKUnreachableRule::IK_Reach:
-				break;
-			}
-		}
 	}
 	
 	FabrikSolver.EffectorTransformSpace = EBoneControlSpace::BCS_ComponentSpace;
