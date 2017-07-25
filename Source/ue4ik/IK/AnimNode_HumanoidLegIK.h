@@ -84,6 +84,19 @@ public:
 	// For leg IK, this should usually be set to No Change.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
+
+	// How quickly the effector moves. This parameter is used only is Effector Moves Instantly is set to false.
+	// Increase to make IK more responsive but snappier. This value should probably be fairly high (definitly higher 
+	// than hip adjustment velocity)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+		float EffectorVelocity;
+
+	// If true, the effector will snap instantly to the target location. If false, the effector will
+	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
+	// For most applications, you should probably set this to false.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	bool bEffectorMovesInstantly;
+
    
 public:
 
@@ -97,7 +110,10 @@ public:
 		bEnable(true),
 		UnreachableRule(EIKUnreachableRule::IK_Abort),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
-		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation)
+		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
+		EffectorVelocity(200.0f),
+		bEffectorMovesInstantly(false),
+		LastEffectorOffset(0.0f, 0.0f, 0.0f)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
@@ -114,5 +130,6 @@ public:
 
 protected:
 	float DeltaTime;
+	FVector LastEffectorOffset;
 	FAnimNode_Fabrik FabrikSolver;
 };

@@ -72,12 +72,32 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		}
 		else
 		{
-			return;
+			FootTargetCS = FootCS;
 		}
 	}
 	else
 	{
 		FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
+	}
+
+	// Interpolate the foot target (if needed)
+	if (bEffectorMovesInstantly)
+	{
+		LastEffectorOffset = FVector(0.0f, 0.0f, 0.0f);		
+	}
+	else
+	{
+		FVector CurrentFootPosition = FootCS + LastEffectorOffset;
+		FVector RequiredDelta       = FootTargetCS - CurrentFootPosition;
+		float DeltaSq               = RequiredDelta.SizeSquared();
+
+		if (DeltaSq > (EffectorVelocity * EffectorVelocity * DeltaTime))
+		{
+			RequiredDelta = RequiredDelta.GetClampedToMaxSize(EffectorVelocity * DeltaTime);			
+		}
+
+		FootTargetCS                = CurrentFootPosition + RequiredDelta;
+		LastEffectorOffset          = LastEffectorOffset + RequiredDelta;
 	}
 
 	if (Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
