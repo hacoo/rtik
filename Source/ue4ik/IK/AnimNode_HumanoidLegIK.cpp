@@ -81,7 +81,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	}
 
 	// Interpolate the foot target (if needed)
-	if (bEffectorMovesInstantly)
+	if (bEffectorMovesInstantly || Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
 	{
 		LastEffectorOffset = FVector(0.0f, 0.0f, 0.0f);		
 	}

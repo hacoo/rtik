@@ -83,12 +83,16 @@ public:
 
 	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
 	// Increase to make IK more responsive but snappier. Uses smooth interpolation, not constant.
+	//
+	// This is only used in Normal Locomotion mode. In World Target mode, the effector always moves instantly.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	float EffectorInterpSpeed;
 
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
 	// For most applications, you should probably set this to false.
+	//
+	// This is only used if IK mode is 'Normal Locomotion' -- World Target IK always behaves as if this is set to true and moves instantly.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEffectorMovesInstantly;
 
