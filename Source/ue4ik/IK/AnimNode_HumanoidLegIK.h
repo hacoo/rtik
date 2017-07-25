@@ -66,15 +66,15 @@ public:
 	int32 MaxIterations;
 
 	// If set to false, will return to base pose instead of attempting to IK
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	bool bEnable;	
 
 	// How to handle an unreachable IK target
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	EIKUnreachableRule UnreachableRule;
 
 	// Set to 'locomotion' for normal movement; 'world location' to manually IK the leg onto a world location
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	EHumanoidLegIKMode Mode;
 	
 	// How to handle rotation of the effector (the foot). If set to No Change, the foot will maintain the same
@@ -82,7 +82,7 @@ public:
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
 	//
 	// For leg IK, this should usually be set to No Change.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
    
 public:

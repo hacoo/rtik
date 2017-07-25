@@ -213,7 +213,6 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 			ToWorld.TransformPosition(HipCSPost) + (PostPlaneNormal * (FootCSPost - HipCSPost).Size()),
 			FColor(0, 255, 0));
 
-
 		// Draw the post-correction leg, in green
 		FCSPose<FCompactPose> CopiedPose;
 		CopiedPose.CopyPose(Output.Pose);

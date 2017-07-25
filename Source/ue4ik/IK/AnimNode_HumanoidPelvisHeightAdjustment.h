@@ -45,7 +45,7 @@ public:
 
 	// How quickly the pelvis moves to match floor height. Set higher to make IK more responsive and prevent
     // floating/sinking feet; setting it too high will cause popping.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	float PelvisAdjustVelocity;
 
 	// Maximum height above the floor to do pelvis adjustment. Will transition back to base pose if the 
