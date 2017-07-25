@@ -96,13 +96,17 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	}
 	FVector CenterPost        = HipCSPost + (KneeCSPost - HipCSPost).ProjectOnToNormal(HipFootAxisPost);
 	FVector KneeDirectionPost = (KneeCSPost - CenterPost).GetUnsafeNormal();
+
 /*
 	// Ensure both axes point in the same direction
 	if (FVector::DotProduct(HipFootAxisPre, HipFootAxisPost) < 0.0f)
 	{
 		HipFootAxisPost *= -1;
 	}
-*/		
+*/	
+
+
+
 	// Get the projected foot-toe vectors
 	FVector FootToePre = FVector::VectorPlaneProject((ToeCSPre - FootCSPre), HipFootAxisPre);
 	if (!FootToePre.Normalize())
@@ -112,8 +116,23 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePre = KneeDirectionPre;
 	}
-	
-	FVector FootToePost = FVector::VectorPlaneProject((ToeCSPost - FootCSPost), HipFootAxisPost);
+
+	// Rotate the foot according to how the hip-foot axis is changed. Without this, the foot direction
+	// may be reversed when projected onto the rotation plane	
+	float HipAxisRad = FMath::Acos(FVector::DotProduct(HipFootAxisPre, HipFootAxisPost));
+	FVector FootToeRotationAxis = FVector::CrossProduct(HipFootAxisPre, HipFootAxisPost);
+	FVector FootCSPostRotated = FootCSPost;
+	FVector ToeCSPostRotated = ToeCSPost;
+	if (FootToeRotationAxis.Normalize())
+	{
+		FQuat FootToeRotation(FootToeRotationAxis, HipAxisRad);
+		FVector FootDirection = FootCSPost - HipCSPost;
+		FVector ToeDirection = ToeCSPost - HipCSPost;
+		FootCSPostRotated = HipCSPost + FootToeRotation.RotateVector(FootDirection);
+		ToeCSPostRotated = HipCSPost + FootToeRotation.RotateVector(ToeDirection);
+	}
+   	
+	FVector FootToePost = FVector::VectorPlaneProject((ToeCSPostRotated - FootCSPostRotated), HipFootAxisPost);
 	if (!FootToePost.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
@@ -121,20 +140,12 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePost = KneeDirectionPost;
 	}
-	
-	// Get the projected knee vectors. If the knee vector can't be normalize -- meaning the leg is completely straight, 
-	// and there is no knee direction -- failsafe by using the direction of the toe	(i.e, the knee tracks perfectly above the toe)	
-	FVector KneePre = KneeCSPre - CenterPre;
-	if (!KneePre.Normalize())
-	{
-#if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Knee Correction - KneePre Normalization Failure"));
-#endif // ENABLE_IK_DEBUG_VERBOSE
-		KneePre     = FootToePre;
-	}
+
+	// No need to failsafe -- we've already checked that the leg isn't completely straight
+	FVector KneePre = (KneeCSPre - CenterPre).GetUnsafeNormal();
 	
 	// Rotate the post-IK foot to find the corrected knee direction (on the hip-foot plane)
-	float FootKneeAngle  = FMath::Acos(FVector::DotProduct(FootToePre, KneePre));
+	float FootKneeRad  = FMath::Acos(FVector::DotProduct(FootToePre, KneePre));
 	FVector RotationAxis = FVector::CrossProduct(FootToePre, KneePre);
 
 	if (!RotationAxis.Normalize())
@@ -143,17 +154,17 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 		{
 			// Knee and foot point in opposite directions
 			RotationAxis  = HipFootAxisPost;
-			FootKneeAngle = 180.0f;
+			FootKneeRad = 180.0f;
 		}
 		else
 		{
 			// Foot any knee point in same direction (no rotation needed)
 			RotationAxis  = HipFootAxisPost;
-			FootKneeAngle = 0.0f;
+			FootKneeRad = 0.0f;
 		}
 	}
 
-	FQuat FootKneeRotPost    = FQuat(RotationAxis, FootKneeAngle);
+	FQuat FootKneeRotPost    = FQuat(RotationAxis, FootKneeRad);
 	FVector NewKneeDirection = FootKneeRotPost.RotateVector(FootToePost);
 	
 	// Transform back to component space
@@ -193,7 +204,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 
 		FVector PrePlaneBase = ToWorld.TransformPosition(CenterPre);
 		FVector PrePlaneNormal = ToWorld.TransformVector(HipFootAxisPre);
-		FDebugDrawUtil::DrawPlane(World, PrePlaneBase, PrePlaneNormal, 100.0f, FColor(255, 0, 255, 40), false);
+		FDebugDrawUtil::DrawPlane(World, PrePlaneBase, PrePlaneNormal, 100.0f, FColor(255, 0, 255, 40), true);
 		FDebugDrawUtil::DrawVector(World, PrePlaneBase, ToWorld.TransformVector(KneePre), FColor(255, 0, 255));
 		FDebugDrawUtil::DrawVector(World, PrePlaneBase, ToWorld.TransformVector(FootToePre), FColor(255, 0, 0));
 		FDebugDrawUtil::DrawLine(World, ToWorld.TransformPosition(HipCSPre), 
@@ -208,7 +219,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 
 		FVector PostPlaneBase = ToWorld.TransformPosition(CenterPost);
 		FVector PostPlaneNormal = ToWorld.TransformVector(HipFootAxisPost);
-		FDebugDrawUtil::DrawPlane(World, PostPlaneBase, PostPlaneNormal, 100.0f, FColor(0, 255, 255, 40), false);
+		FDebugDrawUtil::DrawPlane(World, PostPlaneBase, PostPlaneNormal, 100.0f, FColor(0, 255, 255, 40), true);
 		FDebugDrawUtil::DrawLine(World, ToWorld.TransformPosition(HipCSPost), 
 			ToWorld.TransformPosition(HipCSPost) + (PostPlaneNormal * (FootCSPost - HipCSPost).Size()),
 			FColor(0, 255, 0));
