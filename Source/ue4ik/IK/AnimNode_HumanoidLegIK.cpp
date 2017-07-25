@@ -87,17 +87,13 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	}
 	else
 	{
-		FVector CurrentFootPosition = FootCS + LastEffectorOffset;
-		FVector RequiredDelta       = FootTargetCS - CurrentFootPosition;
-		float DeltaSq               = RequiredDelta.SizeSquared();
+		FVector OffsetFootPos = FootCS + LastEffectorOffset;
+		FVector RequiredDelta = FootTargetCS - OffsetFootPos;
 
-		if (DeltaSq > (EffectorVelocity * EffectorVelocity * DeltaTime))
-		{
-			RequiredDelta = RequiredDelta.GetClampedToMaxSize(EffectorVelocity * DeltaTime);			
-		}
-
-		FootTargetCS                = CurrentFootPosition + RequiredDelta;
-		LastEffectorOffset          = LastEffectorOffset + RequiredDelta;
+		RequiredDelta         = FMath::VInterpTo(LastEffectorOffset, RequiredDelta, DeltaTime, EffectorInterpSpeed);
+		
+		FootTargetCS          = OffsetFootPos + RequiredDelta;
+		LastEffectorOffset    = LastEffectorOffset + RequiredDelta;
 	}
 
 	if (Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)

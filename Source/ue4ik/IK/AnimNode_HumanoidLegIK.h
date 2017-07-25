@@ -85,11 +85,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
-	// How quickly the effector moves. This parameter is used only is Effector Moves Instantly is set to false.
-	// Increase to make IK more responsive but snappier. This value should probably be fairly high (definitly higher 
-	// than hip adjustment velocity)
+	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
+	// Increase to make IK more responsive but snappier. Uses smooth interpolation, not constant.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-		float EffectorVelocity;
+	float EffectorInterpSpeed;
 
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
@@ -111,7 +110,7 @@ public:
 		UnreachableRule(EIKUnreachableRule::IK_Abort),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
-		EffectorVelocity(200.0f),
+		EffectorInterpSpeed(50.0f),
 		bEffectorMovesInstantly(false),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f)
 	{ }
