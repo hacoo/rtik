@@ -28,9 +28,7 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
  
 ## Status
 
-   WEEK 4 UPDATE: Rudimentary leg IK is now working, though it is not integrated with trace data. However, legs can be IKed onto arbitrary world locations. 
-   
-   I have figured out how to elegantly pass shared data around in the animgraph. This means that all nodes can share IK chain definitions, instead of having to set them individually. Additionally, expensive trace data can be computed once and shared between all nodes. The setup is fully within the animgraph; no additional data need be added to the Character. Woohoo!
+Leg IK is in very good shape. It still needs foot rotation controllers and trace points should be tweaked.
  
 ## License
 
