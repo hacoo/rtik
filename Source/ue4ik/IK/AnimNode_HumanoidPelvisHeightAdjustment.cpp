@@ -152,7 +152,6 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 			float AdjustHeight = (PelvisLocWorld - PelvisTarget.GetLocation()).Size();
 			FString AdjustStr = FString::Printf(TEXT("Pelvis Offset: %f"), AdjustHeight);
 			FDebugDrawUtil::DrawString(World, TextOffset, AdjustStr, Character, FColor(0, 0, 255));
-
 		}		
 
 		FVector LeftTraceWorld = LeftLegTraceData->GetTraceData().FootHitResult.ImpactPoint; 

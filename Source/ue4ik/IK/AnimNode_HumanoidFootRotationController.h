@@ -33,9 +33,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidIKTraceData_Wrapper* TraceData;
 
-	// How quickly the foot rotates. Increase for closer tracking and less clipping, but snappier movement
+	// How quickly the foot rotates (using Slerp).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinHiddenByDefault))
-	float RotationSpeed;
+	float RotationSlerpSpeed;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
@@ -47,7 +47,7 @@ public:
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
 		LastRotationOffset(FQuat::Identity),
-		RotationSpeed(20.0f)
+		RotationSlerpSpeed(20.0f)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
