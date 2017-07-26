@@ -105,7 +105,7 @@ bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent
 	FVector FloorFlatVec(FloorSlopeVec);
 	FloorFlatVec.Z = 0.0f;
 	
-	if(!FloorSlopeVec.Normalize() || FloorFlatVec.Normalize())
+	if(!FloorSlopeVec.Normalize() || !FloorFlatVec.Normalize())
 	{
 		OutAngleRad = 0.0f;
 		return false;
