@@ -91,11 +91,7 @@ float FHumanoidLegChain::GetTotalChainLength() const
 	return TotalChainLength;
 }
 
-bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp,
-	const FHumanoidIKTraceData& TraceData,
-	const FVector& FootCS, 
-	const FVector& BaseFootCS,
-	const FVector& BaseRootCS) const
+bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp, const FHumanoidIKTraceData& TraceData) const
 {
 
 	FVector ToCS = -1 * SkelComp.GetComponentLocation();
@@ -124,9 +120,6 @@ bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent
 
 bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp,
 	const FHumanoidIKTraceData& TraceData,
-	const FVector& FootCS,
-	const FVector& BaseFootCS,
-	const FVector& BaseRootCS,
 	FVector& OutTraceLocationCS) const 
 {
 	FVector ToCS        = -1 * SkelComp.GetComponentLocation();
@@ -134,7 +127,7 @@ bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp
 	FVector ToeFloorCS  = ToCS + TraceData.ToeHitResult.ImpactPoint;
 
 	// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
-	bool bWithinRotationLimit = FindWithinFootRotationLimit(SkelComp, TraceData, FootCS, BaseFootCS, BaseRootCS);
+	bool bWithinRotationLimit = FindWithinFootRotationLimit(SkelComp, TraceData);
 	
 	if (bWithinRotationLimit)
 	{

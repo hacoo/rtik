@@ -63,33 +63,20 @@ public:
 	// Gets fully-extended length of entire chain (including foot bone)
 	float GetTotalChainLength() const;
 
-	// Deteremines whether the slope of the floor (sampled at foot / toe trace points) is 
+	// Determines whether the slope of the floor (sampled at foot / toe trace points) is 
 	// within MaxFootRotationDegrees.
 	// @param TraceData - Trace data for this leg. Must have been updated this tick.
-	// @param FootCS - CS location of the foot after any skeletal transformations.
-	// @param BaseFootCS - CS location of the foot before any transformations (i.e., at the start of the animgraph)
-	// @param BaseRootCS - CS location of the animroot before any transformations (i.e., at the start of the animgraph)
 	// @return - true if floor slope is within rotation limit and the foot should rotate, else false.	
 	bool FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp,
-		const FHumanoidIKTraceData& TraceData,
-		const FVector& FootCS,
-		const FVector& BaseFootCS,
-		const FVector& BaseRootCS) const;
+		const FHumanoidIKTraceData& TraceData) const;
 	
 	// Gets the relevant trace floor point for IK, converts it to component space, and returns in OutFloorLocationCS.
 	// @param TraceData - Trace data for this leg. Must have been updated this tick.
-	// @param FootCS - CS location of the foot after any skeletal transformations.
-	// @param BaseFootCS - CS location of the foot before any transformations (i.e., at the start of the animgraph)
-	// @param BaseRootCS - CS location of the animroot before any transformations (i.e., at the start of the animgraph)
 	// @param OutTraceLocationCS - The trace point (either below the foot or the toe) to use.
 	// @return - True if the low IK target was returned, and the foot should rotate to match floor slope. False
 	// if the high IK target was returned, and the foot shouldn't rotate.
 	bool GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp,
-		const FHumanoidIKTraceData& TraceData,
-		const FVector& FootCS,
-		const FVector& BaseFootCS,
-		const FVector& BaseRootCS,
-		FVector& OutFloorLocationCS) const;
+		const FHumanoidIKTraceData& TraceData, FVector& OutFloorLocationCS) const;
    	
 protected:
 	bool bInitOk;
