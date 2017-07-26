@@ -26,7 +26,8 @@ public:
 		FootRadius(10.0f),
 		ToeRadius(5.0f),
 		TotalChainLength(0.0f),
-		bInitOk(false)
+		bInitOk(false),
+		MaxFootRotationDegrees(30.0f)
 	{ }
 	
 	// Distance between the bottom of the shin bone and the bottom surface of the foot
@@ -52,8 +53,45 @@ public:
 	// Connects from bottom of shin to start of the toe
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FIKBone FootBone;
-	
+
+	// Maximum rotation, in degrees, that the foot will make in order to match the floor angle.
+	// If a greater rotation than this is required, the foot will remain flat and prefer
+	// to IK onto the higher ground point.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float MaxFootRotationDegrees;
+
+	// Gets fully-extended length of entire chain (including foot bone)
 	float GetTotalChainLength() const;
+
+	// Deteremines whether the slope of the floor (sampled at foot / toe trace points) is 
+	// within MaxFootRotationDegrees.
+	// @param TraceData - Trace data for this leg. Must have been updated this tick.
+	// @param FootCS - CS location of the foot after any skeletal transformations.
+	// @param BaseFootCS - CS location of the foot before any transformations (i.e., at the start of the animgraph)
+	// @param BaseRootCS - CS location of the animroot before any transformations (i.e., at the start of the animgraph)
+	// @return - true if floor slope is within rotation limit and the foot should rotate, else false.	
+	bool FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp,
+		const FHumanoidIKTraceData& TraceData,
+		const FVector& FootCS,
+		const FVector& BaseFootCS,
+		const FVector& BaseRootCS) const;
+	
+	// Finds the component-space location where the foot should go during locomotion IK.
+	// @param TraceData - Trace data for this leg. Must have been updated this tick.
+	// @param FootCS - CS location of the foot after any skeletal transformations.
+	// @param BaseFootCS - CS location of the foot before any transformations (i.e., at the start of the animgraph)
+	// @param BaseRootCS - CS location of the animroot before any transformations (i.e., at the start of the animgraph)
+	// @param OutIKTarget - Returns the component-space location where the foot should go for locomotion IK
+	// @return - True if the low IK target was returned, and the foot should rotate to match floor slope. False
+	// if the high IK target was returned, and the foot shouldn't rotate.
+/*
+	bool FindFootIKTargetCS(const USkeletalMeshComponent& SkelComp,
+		const FHumanoidIKTraceData& TraceData,
+		const FVector& FootCS,
+		const FVector& BaseFootCS,
+		const FVector& BaseRootCS,
+		FVector& OutIKTargetCS) const;
+*/	
 	
 protected:
 	bool bInitOk;

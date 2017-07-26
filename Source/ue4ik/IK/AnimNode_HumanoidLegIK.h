@@ -82,11 +82,11 @@ public:
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
 	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
-	// Increase to make IK more responsive but snappier. Uses smooth interpolation, not constant.
+	// Increase to make IK more responsive but snappier. Uses constant interpolation.
 	//
 	// This is only used in Normal Locomotion mode. In World Target mode, the effector always moves instantly.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-	float EffectorInterpSpeed;
+	float EffectorVelocity;
 
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
@@ -96,7 +96,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEffectorMovesInstantly;
 
-   
 public:
 
 	FAnimNode_HumanoidLegIK()
@@ -109,7 +108,7 @@ public:
 		bEnable(true),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
-		EffectorInterpSpeed(50.0f),
+		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f)
 	{ }
@@ -117,7 +116,6 @@ public:
 	// FAnimNode_SkeletalControlBase Interface
 	virtual void Initialize(const FAnimationInitializeContext& Context) override;
 	virtual void CacheBones(const FAnimationCacheBonesContext& Context) override;
-
 
 	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;

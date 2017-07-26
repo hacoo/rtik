@@ -91,6 +91,55 @@ float FHumanoidLegChain::GetTotalChainLength() const
 	return TotalChainLength;
 }
 
+bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp,
+	const FHumanoidIKTraceData& TraceData,
+	const FVector& FootCS, 
+	const FVector& BaseFootCS,
+	const FVector& BaseRootCS) const
+{
+
+	FVector ToCS = -1 * SkelComp.GetComponentLocation();
+
+	FVector FootFloorCS = ToCS + TraceData.FootHitResult.ImpactPoint;
+	FVector ToeFloorCS  = ToCS + TraceData.ToeHitResult.ImpactPoint;
+	
+	FVector FloorSlopeVec = ToeFloorCS - FootFloorCS;
+	FVector FloorFlatVec(FloorSlopeVec);
+	FloorFlatVec.Z = 0.0f;
+	
+	if(!FloorSlopeVec.Normalize() || FloorFlatVec.Normalize())
+	{
+		return false;
+	}
+   
+	float RequiredRotationDeg = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(FloorFlatVec, FloorSlopeVec)));
+
+	if (RequiredRotationDeg > MaxFootRotationDegrees)
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+/*
+bool FHumanoidLegChain::FindFootIKTargetCS(const USkeletalMeshComponent& SkelComp,
+	const FHumanoidIKTraceData& TraceData,
+	const FVector& FootCS,
+	const FVector& BaseFootCS,
+	const FVector& BaseRootCS,
+	FVector& OutIKTargetCS) const
+{
+	
+	FVector ToCS = -1 * SkelComp.GetComponentLocation();
+
+	
+
+	return false;
+
+}
+*/
+
 bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 {
 	TotalChainLength = 0.0f;

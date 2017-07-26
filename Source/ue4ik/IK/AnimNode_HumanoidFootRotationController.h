@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "HumanoidIK.h"
-#include "BoneControllers/AnimNode_Fabrik.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_HumanoidFootRotationController.generated.h"
 
@@ -33,7 +32,11 @@ public:
 	// Trace data for this leg (use IKHumanoidLegTrace to update it)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidIKTraceData_Wrapper* TraceData;
-			
+
+	// How quickly the foot rotates. Increase for closer tracking and less clipping, but snappier movement
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinHiddenByDefault))
+	float RotationSpeed;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
    
@@ -42,7 +45,9 @@ public:
 	FAnimNode_HumanoidFootRotationController()
 		:
 		bEnableDebugDraw(false),
-		DeltaTime(0.0f)
+		DeltaTime(0.0f),
+		LastRotation(FQuat::Identity),
+		RotationSpeed(20.0f)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
@@ -59,4 +64,6 @@ public:
 
 protected:
 	float DeltaTime;
+	FQuat LastRotation;
+
 };

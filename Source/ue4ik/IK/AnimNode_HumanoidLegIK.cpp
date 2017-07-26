@@ -48,10 +48,10 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	FVector KneeCS             = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
 	FVector FootCS             = FootCSTransform.GetLocation();
-	FVector FloorCS            = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
 
 	FVector FootTargetCS;
-	
+	FVector FloorCS;
+		
 	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
 	{
 		// Use trace data to figure out where the foot should go.
@@ -61,7 +61,25 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector BaseRootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, FCompactPoseBoneIndex(0));
 		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
 
-		// If foot is X cm above animroot before adjustment, it should be X cm above the floor trace impact after adjustment
+
+		FVector FootFloorCS = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
+		FVector ToeFloorCS = ToCS.TransformPosition(TraceData->GetTraceData().ToeHitResult.ImpactPoint);
+		
+		// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
+		bool bWithinRotationLimit = Leg->Chain.FindWithinFootRotationLimit(*SkelComp, TraceData->GetTraceData(),
+			FootCS, BaseFootCS, BaseRootCS);
+
+		if (bWithinRotationLimit)
+		{
+			// Use lower point
+			FloorCS = FootFloorCS.Z > ToeFloorCS.Z ? ToeFloorCS : FootFloorCS;
+		}
+		else
+		{
+			// Use higher point
+			FloorCS = FootFloorCS.Z > ToeFloorCS.Z ? FootFloorCS : ToeFloorCS;
+		}
+		
 		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
 		float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;
 
@@ -90,7 +108,10 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector OffsetFootPos = FootCS + LastEffectorOffset;
 		FVector RequiredDelta = FootTargetCS - OffsetFootPos;
 
-		RequiredDelta         = FMath::VInterpTo(LastEffectorOffset, RequiredDelta, DeltaTime, EffectorInterpSpeed);
+		if (RequiredDelta.Size() > EffectorVelocity * DeltaTime)
+		{
+			RequiredDelta = RequiredDelta.GetClampedToMaxSize(EffectorVelocity * DeltaTime);
+		}
 		
 		FootTargetCS          = OffsetFootPos + RequiredDelta;
 		LastEffectorOffset    = LastEffectorOffset + RequiredDelta;
@@ -126,6 +147,9 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector EffectorWorld = ToWorld.TransformPosition(FootTargetCS);
 		FDebugDrawUtil::DrawSphere(World, EffectorWorld, FColor(255, 0, 255));
 		FDebugDrawUtil::DrawSphere(World, ToWorld.TransformPosition(FloorCS), FColor(255, 0, 0));
+		FDebugDrawUtil::DrawSphere(World, TraceData->GetTraceData().FootHitResult.ImpactPoint, FColor(255, 255, 0), 10.0f);
+		FDebugDrawUtil::DrawSphere(World, TraceData->GetTraceData().ToeHitResult.ImpactPoint, FColor(255, 255, 0), 10.0f);
+		
 	}
 #endif // WITH_EDITOR
 }
