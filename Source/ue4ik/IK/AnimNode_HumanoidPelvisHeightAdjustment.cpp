@@ -76,18 +76,10 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 
 		FVector LeftFootCS       = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, LeftLeg->Chain.ShinBone.BoneIndex);
 		FVector RightFootCS      = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, RightLeg->Chain.ShinBone.BoneIndex);		
-
-		
-
-
-//		FVector LeftFootFloorCS = LeftLeg->Chain.GetIKFloorPointCS(*SkelComp,
-		//LeftLegTraceData->GetTraceData(),
-
-
-
-			
-			
 		FVector RootCS           = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, FCompactPoseBoneIndex(0));
+		
+		LeftLeg->Chain.GetIKFloorPointCS(*SkelComp, LeftLegTraceData->GetTraceData(), LeftFootFloorCS);
+		RightLeg->Chain.GetIKFloorPointCS(*SkelComp, RightLegTraceData->GetTraceData(), RightFootFloorCS);	
 		
 /*		
 		// The animroot, assumed to rest on the floor. The original animation assumed the floor was this high.
