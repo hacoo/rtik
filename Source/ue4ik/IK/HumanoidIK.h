@@ -76,23 +76,21 @@ public:
 		const FVector& BaseFootCS,
 		const FVector& BaseRootCS) const;
 	
-	// Finds the component-space location where the foot should go during locomotion IK.
+	// Gets the relevant trace floor point for IK, converts it to component space, and returns in OutFloorLocationCS.
 	// @param TraceData - Trace data for this leg. Must have been updated this tick.
 	// @param FootCS - CS location of the foot after any skeletal transformations.
 	// @param BaseFootCS - CS location of the foot before any transformations (i.e., at the start of the animgraph)
 	// @param BaseRootCS - CS location of the animroot before any transformations (i.e., at the start of the animgraph)
-	// @param OutIKTarget - Returns the component-space location where the foot should go for locomotion IK
+	// @param OutTraceLocationCS - The trace point (either below the foot or the toe) to use.
 	// @return - True if the low IK target was returned, and the foot should rotate to match floor slope. False
 	// if the high IK target was returned, and the foot shouldn't rotate.
-/*
-	bool FindFootIKTargetCS(const USkeletalMeshComponent& SkelComp,
+	bool GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp,
 		const FHumanoidIKTraceData& TraceData,
 		const FVector& FootCS,
 		const FVector& BaseFootCS,
 		const FVector& BaseRootCS,
-		FVector& OutIKTargetCS) const;
-*/	
-	
+		FVector& OutFloorLocationCS) const;
+   	
 protected:
 	bool bInitOk;
 	virtual bool IsValidInternal(const FBoneContainer& RequiredBones) override;

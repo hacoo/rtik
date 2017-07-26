@@ -122,23 +122,33 @@ bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent
 	return true;
 }
 
-/*
-bool FHumanoidLegChain::FindFootIKTargetCS(const USkeletalMeshComponent& SkelComp,
+bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp,
 	const FHumanoidIKTraceData& TraceData,
 	const FVector& FootCS,
 	const FVector& BaseFootCS,
 	const FVector& BaseRootCS,
-	FVector& OutIKTargetCS) const
+	FVector& OutTraceLocationCS) const 
 {
+	FVector ToCS        = -1 * SkelComp.GetComponentLocation();
+	FVector FootFloorCS = ToCS + TraceData.FootHitResult.ImpactPoint;
+	FVector ToeFloorCS  = ToCS + TraceData.ToeHitResult.ImpactPoint;
+
+	// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
+	bool bWithinRotationLimit = FindWithinFootRotationLimit(SkelComp, TraceData, FootCS, BaseFootCS, BaseRootCS);
 	
-	FVector ToCS = -1 * SkelComp.GetComponentLocation();
+	if (bWithinRotationLimit)
+	{
+		// Use lower point
+		OutTraceLocationCS = FootFloorCS.Z > ToeFloorCS.Z ? ToeFloorCS : FootFloorCS;
+	}
+	else
+	{
+		// Use higher point
+		OutTraceLocationCS = FootFloorCS.Z > ToeFloorCS.Z ? FootFloorCS : ToeFloorCS;
+	}
 
-	
-
-	return false;
-
+	return bWithinRotationLimit;
 }
-*/
 
 bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
 {
