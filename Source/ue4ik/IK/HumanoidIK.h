@@ -66,9 +66,11 @@ public:
 	// Determines whether the slope of the floor (sampled at foot / toe trace points) is 
 	// within MaxFootRotationDegrees.
 	// @param TraceData - Trace data for this leg. Must have been updated this tick.
+	// @param OutAngleRad - Returns the UNSIGNED angle, in radians, between the slope of the floor and flat ground. 
 	// @return - true if floor slope is within rotation limit and the foot should rotate, else false.	
 	bool FindWithinFootRotationLimit(const USkeletalMeshComponent& SkelComp,
-		const FHumanoidIKTraceData& TraceData) const;
+		const FHumanoidIKTraceData& TraceData,
+		float& OutAngleRad) const;
 	
 	// Gets the relevant trace floor point for IK, converts it to component space, and returns in OutFloorLocationCS.
 	// @param TraceData - Trace data for this leg. Must have been updated this tick.

@@ -40,10 +40,27 @@ void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread
 	check(OutBoneTransforms.Num() == 0);
 
 	// Input pin pointers are checked in IsValid -- don't need to check here
-
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
-	
-	
+
+	float RequiredRad = 0.0f;
+	bool bTargetRotationWithinLimit = Leg->Chain.FindWithinFootRotationLimit(*SkelComp, TraceData->GetTraceData(), RequiredRad);
+
+	FQuat TargetOffset = FQuat::Identity;
+
+	if (bTargetRotationWithinLimit)
+	{
+		// Compute required rotation
+		FMatrix ToCS = SkelComp->GetComponentToWorld().ToMatrixNoScale().Inverse();
+		
+		FVector FootFloorCS = TraceData->GetTraceData().FootHitResult.ImpactPoint;
+		FVector ToeFloorCS = TraceData->GetTraceData().ToeHitResult.ImpactPoint;
+
+	}
+
+
+
+
+   	
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{

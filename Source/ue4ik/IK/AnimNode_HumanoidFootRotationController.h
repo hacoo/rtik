@@ -46,7 +46,7 @@ public:
 		:
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
-		LastRotation(FQuat::Identity),
+		LastRotationOffset(FQuat::Identity),
 		RotationSpeed(20.0f)
 	{ }
 
@@ -64,6 +64,5 @@ public:
 
 protected:
 	float DeltaTime;
-	FQuat LastRotation;
-
+	FQuat LastRotationOffset;
 };
