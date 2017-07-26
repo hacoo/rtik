@@ -12,24 +12,6 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Foot Rotation Controller  Eval"), STAT_HumanoidFootRotationController_Eval, STATGROUP_Anim);
 
-void FAnimNode_HumanoidFootRotationController::Initialize(const FAnimationInitializeContext& Context)
-{
-	Super::Initialize(Context);
-	BaseComponentPose.Initialize(Context);
-}
-
-void FAnimNode_HumanoidFootRotationController::CacheBones(const FAnimationCacheBonesContext& Context)
-{
-	Super::CacheBones(Context);
-	BaseComponentPose.CacheBones(Context);
-}
-
-void FAnimNode_HumanoidFootRotationController::UpdateInternal(const FAnimationUpdateContext& Context)
-{
-	BaseComponentPose.Update(Context);
-	DeltaTime = Context.GetDeltaTime();	
-}
-
 void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
 	SCOPE_CYCLE_COUNTER(STAT_HumanoidFootRotationController_Eval);
