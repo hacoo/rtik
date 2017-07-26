@@ -34,8 +34,8 @@ void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread
 		// Compute required rotation
 		FMatrix ToCS = SkelComp->GetComponentToWorld().ToMatrixNoScale().Inverse();
 		
-		FVector FootFloor   = TraceData->GetTraceData().FootHitResult.ImpactPoint;
-		FVector ToeFloor    = TraceData->GetTraceData().ToeHitResult.ImpactPoint;
+		FVector FootFloor     = TraceData->GetTraceData().FootHitResult.ImpactPoint;
+		FVector ToeFloor      = TraceData->GetTraceData().ToeHitResult.ImpactPoint;
 		FVector FloorSlopeVec = ToCS.TransformVector(ToeFloor - FootFloor);
 
 		FVector FloorFlatVec(FloorSlopeVec);
@@ -65,7 +65,7 @@ void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread
 	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(RotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
 
 	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-	FQuat NewRotation = LastRotationOffset * FootCSTransform.GetRotation();
+	FQuat NewRotation          = LastRotationOffset * FootCSTransform.GetRotation();
 
 	FootCSTransform.SetRotation(NewRotation);
    
