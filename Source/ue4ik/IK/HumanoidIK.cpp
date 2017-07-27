@@ -131,13 +131,13 @@ bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp
 	FVector ToeFloorCS  = ToCS + TraceData.ToeHitResult.ImpactPoint;
 
 	float Unused;
-	// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
+	// If within foot rotation limit, always use the foot. Otherwise, use the higher point and the foot shouldn't rotate.
 	bool bWithinRotationLimit = FindWithinFootRotationLimit(SkelComp, TraceData, Unused);
 	
 	if (bWithinRotationLimit)
 	{
 		// Use lower point
-		OutTraceLocationCS = FootFloorCS.Z > ToeFloorCS.Z ? ToeFloorCS : FootFloorCS;
+		OutTraceLocationCS = FootFloorCS;
 	}
 	else
 	{
