@@ -29,7 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UHumanoidIKTraceData_Wrapper* TraceData;
 
-	// How quickly the foot rotates (using Slerp).
+	// How quickly the foot rotates (using Slerp). Decrease to keep the foot rotation from snapping. 
+	// You can probably set this pretty high -- foot rotation snapping usually isn't that noticable.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinHiddenByDefault))
 	float RotationSlerpSpeed;
 	
@@ -47,6 +48,7 @@ public:
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
+	virtual void UpdateInternal(const FAnimationUpdateContext & Context);
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
 	//virtual void EvaluateComponentSpaceInternal(FComponentSpacePoseContext& Output) override;
 	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;

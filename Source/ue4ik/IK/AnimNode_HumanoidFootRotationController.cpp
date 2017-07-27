@@ -12,6 +12,11 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Foot Rotation Controller  Eval"), STAT_HumanoidFootRotationController_Eval, STATGROUP_Anim);
 
+void FAnimNode_HumanoidFootRotationController::UpdateInternal(const FAnimationUpdateContext & Context)
+{
+	DeltaTime = Context.GetDeltaTime();	
+}
+
 void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
 	SCOPE_CYCLE_COUNTER(STAT_HumanoidFootRotationController_Eval);
@@ -62,12 +67,10 @@ void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread
 	}
 
 	// Interpolate to target rotation and apply 
+	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
 	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(RotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
 
-	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-	FQuat NewRotation          = LastRotationOffset * FootCSTransform.GetRotation();
-
-	FootCSTransform.SetRotation(NewRotation);
+	FootCSTransform.SetRotation(LastRotationOffset * FootCSTransform.GetRotation());
    
 	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, FootCSTransform));
    	
