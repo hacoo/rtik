@@ -68,7 +68,15 @@ void FAnimNode_HumanoidFootRotationController::EvaluateSkeletalControl_AnyThread
 
 	// Interpolate to target rotation and apply 
 	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
-	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(RotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
+	
+	if (bInterpolateRotation)
+	{
+		LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(RotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
+	}
+	else
+	{
+		LastRotationOffset = TargetOffset;
+	}
 
 	FootCSTransform.SetRotation(LastRotationOffset * FootCSTransform.GetRotation());
    

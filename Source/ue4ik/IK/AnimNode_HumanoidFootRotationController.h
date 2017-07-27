@@ -31,9 +31,15 @@ public:
 
 	// How quickly the foot rotates (using Slerp). Decrease to keep the foot rotation from snapping. 
 	// You can probably set this pretty high -- foot rotation snapping usually isn't that noticable.	
+	// Only used is bInterpolateRotation is true.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinHiddenByDefault))
 	float RotationSlerpSpeed;
-	
+
+	// If true, will smoothly interpolate to the target rotation accoridn to RotationSlerpSpeed.
+	// If false, will snap there instantly. 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	bool bInterpolateRotation;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
    
@@ -44,7 +50,8 @@ public:
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
 		LastRotationOffset(FQuat::Identity),
-		RotationSlerpSpeed(20.0f)
+		RotationSlerpSpeed(20.0f),
+		bInterpolateRotation(true)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
