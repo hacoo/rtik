@@ -28,8 +28,8 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
  
 ## Status
 
-Leg IK is in very good shape. It still needs foot rotation controllers and trace points should be tweaked.
- 
+Leg / Foot IK is working and hopefully done. Foot rotation controllers are up and running. On to the upper body...
+
 ## License
 
    This project is made available under the MIT license. See the file `LICENSE` in this distribution for license terms.
