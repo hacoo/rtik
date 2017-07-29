@@ -15,32 +15,13 @@
 
 	The following constraint modes are supported:
 
-	- Pitch and Yaw: a 'circular' constraint, with the same angular constraint in pitch and yaw directions
+	- Pitch and Yaw: a 'circular' constraint, with the same angular constraint in pitch and yaw directions.
+	Twist is not constrained.
 	- Yaw only: the joint may only yaw, within constraint angle.
 	- Pitch only: the joint may only pitch, within constraint angle.
+	- Twist only: the joint may only twist, within constraint angle	
 	- No constraint: The joint is not ROM-constrained.
-
 */
-
-/*
-	How the ROM constraint should behave.
-*/
-UENUM(BlueprintType)
-enum class EFABRIKROMConstraintMode : uint8
-{	
-	// Constrain both pitch and yaw rotations
-	FABROM_Pitch_And_Yaw UMETA(DisplayName = "Constraint Pitch and Yaw"),
-
-	// Constrain pitch rotation; allow no yaw rotation
-	FABROM_Pitch_Only UMETA(DisplayName = "Constrain and Allow Only Pitch Rotation"),
-	
-	// Constrain yaw rotation; allow no pitch rotation
-	FABROM_Yaw_Only UMETA(DisplayName = "Constrain and Allow Only Yaw Rotation"),
-
-	// Do not constrain rotation
-	FAMROM_No_Constraint UMETA(DisplayName = "No Constraint")
-};
-
 
 struct FRangeLimitedFABRIKChainLink
 {
