@@ -2,9 +2,8 @@
 
 #include "AnimNode_RangeLimitedFabrik.h"
 #include "AnimationRuntime.h"
-#include "Components/SkeletalMeshComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "Components/SkeletalMeshComponent.h"
 
 FAnimNode_RangeLimitedFabrik::FAnimNode_RangeLimitedFabrik()
 	: EffectorTransform(FTransform::Identity)
@@ -57,7 +56,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	OutBoneTransforms.AddUninitialized(NumTransforms);
 
 	// Gather chain links. These are non zero length bones.
-	TArray<FABRIKChainLink> Chain;
+	TArray<FRangeLimitedFABRIKChainLink> Chain;
 	Chain.Reserve(NumTransforms);
 
 	// Start with Root Bone
@@ -66,7 +65,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		const FTransform& BoneCSTransform = Output.Pose.GetComponentSpaceTransform(RootBoneIndex);
 
 		OutBoneTransforms[0] = FBoneTransform(RootBoneIndex, BoneCSTransform);
-		Chain.Add(FABRIKChainLink(BoneCSTransform.GetLocation(), 0.f, RootBoneIndex, 0));
+		Chain.Add(FRangeLimitedFABRIKChainLink(BoneCSTransform.GetLocation(), 0.f, RootBoneIndex, 0));
 	}
 
 	// Go through remaining transforms
@@ -84,14 +83,14 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 		if (!FMath::IsNearlyZero(BoneLength))
 		{
-			Chain.Add(FABRIKChainLink(BoneCSPosition, BoneLength, BoneIndex, TransformIndex));
+			Chain.Add(FRangeLimitedFABRIKChainLink(BoneCSPosition, BoneLength, BoneIndex, TransformIndex));
 			MaximumReach += BoneLength;
 		}
 		else
 		{
 			// Mark this transform as a zero length child of the last link.
 			// It will inherit position and delta rotation from parent link.
-			FABRIKChainLink & ParentLink = Chain[Chain.Num()-1];
+			FRangeLimitedFABRIKChainLink & ParentLink = Chain[Chain.Num()-1];
 			ParentLink.ChildZeroLengthTransformIndices.Add(TransformIndex);
 		}
 	}
@@ -106,8 +105,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	{
 		for (int32 LinkIndex = 1; LinkIndex < NumChainLinks; LinkIndex++)
 		{
-			FABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
-			FABRIKChainLink & CurrentLink = Chain[LinkIndex];
+			FRangeLimitedFABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
+			FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
 			CurrentLink.Position = ParentLink.Position + (CSEffectorLocation - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
 		}
 		bBoneLocationUpdated = true;
@@ -129,8 +128,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 				// "Forward Reaching" stage - adjust bones from end effector.
 				for (int32 LinkIndex = TipBoneLinkIndex - 1; LinkIndex > 0; LinkIndex--)
 				{
-					FABRIKChainLink & CurrentLink = Chain[LinkIndex];
-					FABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
+					FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
+					FRangeLimitedFABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
 
 					CurrentLink.Position = ChildLink.Position + (CurrentLink.Position - ChildLink.Position).GetUnsafeNormal() * ChildLink.Length;
 				}
@@ -138,8 +137,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 				// "Backward Reaching" stage - adjust bones from root.
 				for (int32 LinkIndex = 1; LinkIndex < TipBoneLinkIndex; LinkIndex++)
 				{
-					FABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
-					FABRIKChainLink & CurrentLink = Chain[LinkIndex];
+					FRangeLimitedFABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
+					FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
 
 					CurrentLink.Position = ParentLink.Position + (CurrentLink.Position - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
 				}
@@ -151,8 +150,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 			// Place tip bone based on how close we got to target.
 			{
-				FABRIKChainLink const & ParentLink = Chain[TipBoneLinkIndex - 1];
-				FABRIKChainLink & CurrentLink = Chain[TipBoneLinkIndex];
+				FRangeLimitedFABRIKChainLink const & ParentLink = Chain[TipBoneLinkIndex - 1];
+				FRangeLimitedFABRIKChainLink & CurrentLink = Chain[TipBoneLinkIndex];
 
 				CurrentLink.Position = ParentLink.Position + (CurrentLink.Position - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
 			}
@@ -167,7 +166,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		// First step: update bone transform positions from chain links.
 		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)
 		{
-			FABRIKChainLink const & ChainLink = Chain[LinkIndex];
+			FRangeLimitedFABRIKChainLink const & ChainLink = Chain[LinkIndex];
 			OutBoneTransforms[ChainLink.TransformIndex].Transform.SetTranslation(ChainLink.Position);
 
 			// If there are any zero length children, update position of those
@@ -181,8 +180,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		// FABRIK algorithm - re-orientation of bone local axes after translation calculation
 		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks - 1; LinkIndex++)
 		{
-			FABRIKChainLink const & CurrentLink = Chain[LinkIndex];
-			FABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
+			FRangeLimitedFABRIKChainLink const & CurrentLink = Chain[LinkIndex];
+			FRangeLimitedFABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
 
 			// Calculate pre-translation vector between this bone and child
 			FVector const OldDir = (GetCurrentLocation(Output.Pose, ChildLink.BoneIndex) - GetCurrentLocation(Output.Pose, CurrentLink.BoneIndex)).GetUnsafeNormal();
@@ -241,21 +240,6 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 		&& Precision > 0
 		&& RequiredBones.BoneIsChildOf(TipBone.BoneIndex, RootBone.BoneIndex)
 		);
-}
-
-void FAnimNode_RangeLimitedFabrik::ConditionalDebugDraw(FPrimitiveDrawInterface* PDI, USkeletalMeshComponent* PreviewSkelMeshComp) const
-{
-#if WITH_EDITOR
-
-	if(bEnableDebugDraw && PreviewSkelMeshComp && PreviewSkelMeshComp->GetWorld())
-	{
-		FVector const CSEffectorLocation = CachedEffectorCSTransform.GetLocation();
-
-		// Show end effector position.
-		DrawDebugBox(PreviewSkelMeshComp->GetWorld(), CSEffectorLocation, FVector(Precision), FColor::Green, true, 0.1f);
-		DrawDebugCoordinateSystem(PreviewSkelMeshComp->GetWorld(), CSEffectorLocation, CachedEffectorCSTransform.GetRotation().Rotator(), 5.f, true, 0.1f);
-	}
-#endif
 }
 
 void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer& RequiredBones)

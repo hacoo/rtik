@@ -16,17 +16,6 @@ FText UAnimGraphNode_RangeLimitedFabrik::GetControllerDescription() const
 	return LOCTEXT("Range limited Fabrik", "Range Limited FABRIK");
 }
 
-void UAnimGraphNode_RangeLimitedFabrik::Draw(FPrimitiveDrawInterface* PDI, USkeletalMeshComponent * PreviewSkelMeshComp) const
-{
-	if(PreviewSkelMeshComp)
-	{
-		if(FAnimNode_RangeLimitedFabrik* ActiveNode = GetActiveInstanceNode<FAnimNode_RangeLimitedFabrik>(PreviewSkelMeshComp->GetAnimInstance()))
-		{
-			ActiveNode->ConditionalDebugDraw(PDI, PreviewSkelMeshComp);
-		}
-	}
-}
-
 FText UAnimGraphNode_RangeLimitedFabrik::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	return GetControllerDescription();

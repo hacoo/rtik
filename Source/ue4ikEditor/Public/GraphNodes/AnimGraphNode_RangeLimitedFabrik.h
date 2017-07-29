@@ -27,7 +27,6 @@ public:
 	// UAnimGraphNode_Base interface
 	virtual void CopyNodeDataToPreviewNode(FAnimNode_Base* AnimNode) override;
 	virtual FEditorModeID GetEditorMode() const override;
-	virtual void Draw(FPrimitiveDrawInterface* PDI, USkeletalMeshComponent * PreviewSkelMeshComp) const override;
 	// End of UAnimGraphNode_Base interface
 
 protected:

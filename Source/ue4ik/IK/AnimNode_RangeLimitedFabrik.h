@@ -3,13 +3,73 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/ObjectMacros.h"
-#include "BoneIndices.h"
-#include "BoneContainer.h"
-#include "BonePose.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
-#include "BoneControllers/AnimNode_Fabrik.h"
 #include "AnimNode_RangeLimitedFabrik.generated.h"
+
+
+/*
+	Range-limited FABRIK solver. Based on FABRIK UE4 FABRIK solver (see AnimNode_Fabrik.h).
+
+	Bones may be given a range-of-motion (ROM) constraint, based either on the preceeding bone's direction,
+	or a direction in component space. 
+
+	The following constraint modes are supported:
+
+	- Pitch and Yaw: a 'circular' constraint, with the same angular constraint in pitch and yaw directions
+	- Yaw only: the joint may only yaw, within constraint angle.
+	- Pitch only: the joint may only pitch, within constraint angle.
+	- No constraint: The joint is not ROM-constrained.
+
+*/
+
+/*
+	How the ROM constraint should behave.
+*/
+UENUM(BlueprintType)
+enum class EFABRIKROMConstraintMode : uint8
+{	
+	// Constrain both pitch and yaw rotations
+	FABROM_Pitch_And_Yaw UMETA(DisplayName = "Constraint Pitch and Yaw"),
+
+	// Constrain pitch rotation; allow no yaw rotation
+	FABROM_Pitch_Only UMETA(DisplayName = "Constrain and Allow Only Pitch Rotation"),
+	
+	// Constrain yaw rotation; allow no pitch rotation
+	FABROM_Yaw_Only UMETA(DisplayName = "Constrain and Allow Only Yaw Rotation"),
+
+	// Do not constrain rotation
+	FAMROM_No_Constraint UMETA(DisplayName = "No Constraint")
+};
+
+
+struct FRangeLimitedFABRIKChainLink
+{
+public:
+	FVector Position;
+
+	float Length;
+
+	FCompactPoseBoneIndex BoneIndex;
+
+	int32 TransformIndex;
+
+	TArray<int32> ChildZeroLengthTransformIndices;
+
+	FRangeLimitedFABRIKChainLink()
+		: Position(FVector::ZeroVector),
+		Length(0.f),
+		BoneIndex(INDEX_NONE),
+		TransformIndex(INDEX_NONE)
+	{ }
+
+	FRangeLimitedFABRIKChainLink(const FVector& InPosition, float InLength,
+		const FCompactPoseBoneIndex& InBoneIndex, const int32& InTransformIndex)
+		: Position(InPosition),
+		Length(InLength),
+		BoneIndex(InBoneIndex),
+		TransformIndex(InTransformIndex)
+	{ }
+};
 
 USTRUCT()
 struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlBase
@@ -62,8 +122,6 @@ public:
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
 	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
 	// End of FAnimNode_SkeletalControlBase interface
-
-	virtual void ConditionalDebugDraw(FPrimitiveDrawInterface* PDI, USkeletalMeshComponent* PreviewSkelMeshComp) const;
 
 private:
 	// FAnimNode_SkeletalControlBase interface
