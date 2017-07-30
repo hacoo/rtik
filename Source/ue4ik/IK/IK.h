@@ -64,6 +64,9 @@ enum class EIKBoneAxis : uint8
 	IKBA_Z UMETA(DisplayName = "Z")
 };
 
+// Convert an EIKBoneAxis to an EAxis
+uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
+
 /*
 * A bone used in IK.
 *
@@ -98,8 +101,7 @@ public:
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FBoneReference BoneRef;
-	
-	
+		
 	// The axis that this bone twists around. Usually, this points in the same direction as the bone.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	EIKBoneAxis TwistAxis;
@@ -168,6 +170,9 @@ public:
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return bValid;
 	}
+
+protected:
+
 };
 
 /*
@@ -241,8 +246,7 @@ protected:
 
 
 /*
-* A basic IK chain. Requires only a root bone and effector.
-* The effector must be a skeletal child of the root.
+* A basic IK chain. Doesn't contain any data yet, just an interface for testing validity. 
 *
 * The InitBoneReferences function must be called by the using animnode before use.
 * This function should initialize bone references, and assign the RootBone and EffectorBone as needed.
@@ -258,30 +262,35 @@ public:
 		:
 		bInitSuccess(false)
 	{ }
-	
-	FIKBone RootBone;
-	FIKBone EffectorBone;
-   
+	   
 	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
     // Returns true if valid or initialization succeeds.
-	bool InitIfInvalid(const FBoneContainer& RequiredBones);
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones);
 	
 	// Initialize all bones used in this chain. Must be called before use.
-	bool InitBoneReferences(const FBoneContainer& RequiredBones);
+	// Subclasses must override this.
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones);
 	
 	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
-	bool IsValid(const FBoneContainer& RequiredBones);
+	// Subclasses must override this.
+	virtual bool IsValid(const FBoneContainer& RequiredBones);
 	
-protected:
-	// Subclasses must implement this function so that:
-    // - All additional bones are initialized
-    // - RootBone and EffectorBone are assigned as needed
-	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones);
-	
-	// Subclasses must implement this function so that all additional bones are tested for validity
-	virtual bool IsValidInternal(const FBoneContainer& RequiredBones);
-	
+protected:	
 	bool bInitSuccess;
+};
+
+/*
+* An IK chain with range limits.
+*/
+USTRUCT(BlueprintType)
+struct UE4IK_API FRangeLimitedIKChain : public FIKModChain
+{
+	
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+
 };
 
 /*

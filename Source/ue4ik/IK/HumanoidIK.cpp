@@ -76,7 +76,7 @@ void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 		bEnableDebugDraw);
 }
 
-bool FHumanoidLegChain::IsValidInternal(const FBoneContainer& RequiredBones)
+bool FHumanoidLegChain::IsValid(const FBoneContainer& RequiredBones)
 {
 	bool bValid = HipBone.IsValid(RequiredBones)
 		&& ThighBone.IsValid(RequiredBones)
@@ -148,14 +148,11 @@ bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp
 	return bWithinRotationLimit;
 }
 
-bool FHumanoidLegChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
+bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 {
 	TotalChainLength = 0.0f;
 	bInitOk = true;
-	
-	EffectorBone = ShinBone;
-	RootBone = HipBone;
-	
+		
 	if (!HipBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG

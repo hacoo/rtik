@@ -9,34 +9,36 @@ bool FIKModChain::InitIfInvalid(const FBoneContainer& RequiredBones)
 		return true;
 	}
 
-	InitAndAssignBones(RequiredBones);
+	InitBoneReferences(RequiredBones);
 	bool bValid = IsValid(RequiredBones);
 	return bValid;
 }
 
 bool FIKModChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 {
-	bool bInitSuccess = InitAndAssignBones(RequiredBones);
-	bInitSuccess = bInitSuccess && RootBone.Init(RequiredBones) && EffectorBone.Init(RequiredBones);
-	return bInitSuccess;
+	return false;
 }
 
 bool FIKModChain::IsValid(const FBoneContainer& RequiredBones)
 {
-	bool bValid = RootBone.IsValid(RequiredBones) && EffectorBone.IsValid(RequiredBones);
-	bValid &= IsValidInternal(RequiredBones);
-	return bValid;
-}
-
-bool FIKModChain::InitAndAssignBones(const FBoneContainer& RequiredBones)
-{
-	check(false);
 	return false;
 }
 
-// Subclasses must implement this function so that all additional bones are tested for validity
-bool FIKModChain::IsValidInternal(const FBoneContainer& RequiredBones)
+uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis)
 {
-	check(false);
-	return false;
+	if (InBoneAxis == EIKBoneAxis::IKBA_X)
+	{
+		return EAxis::X;
+	}
+	else if (InBoneAxis == EIKBoneAxis::IKBA_Y)
+	{
+		return EAxis::Y;
+	}
+	else if (InBoneAxis == EIKBoneAxis::IKBA_Z)
+	{
+		return EAxis::Z;
+	}
+	{
+		return EAxis::None;
+	}
 }

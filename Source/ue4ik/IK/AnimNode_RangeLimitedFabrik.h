@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IK/IK.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_RangeLimitedFabrik.generated.h"
 
@@ -23,6 +24,7 @@
 	- No constraint: The joint is not ROM-constrained.
 */
 
+ // Internal structure for evaluating the IK chain
 struct FRangeLimitedFABRIKChainLink
 {
 public:
@@ -35,6 +37,9 @@ public:
 	int32 TransformIndex;
 
 	TArray<int32> ChildZeroLengthTransformIndices;
+
+	// The corresponding IK Bone. 
+	FIKBone IKBone;
 
 	FRangeLimitedFABRIKChainLink()
 		: Position(FVector::ZeroVector),

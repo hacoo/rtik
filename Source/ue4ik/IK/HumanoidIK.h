@@ -79,12 +79,14 @@ public:
 	// if the high IK target was returned, and the foot shouldn't rotate.
 	bool GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp,
 		const FHumanoidIKTraceData& TraceData, FVector& OutFloorLocationCS) const;
+
+	// FIKModChain interface
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones) override;
+	virtual bool IsValid(const FBoneContainer& RequiredBones) override;
+// end FIKModChain interface
    	
 protected:
-	bool bInitOk;
-	virtual bool IsValidInternal(const FBoneContainer& RequiredBones) override;
-	virtual bool InitAndAssignBones(const FBoneContainer& RequiredBones) override;
-	
+	bool bInitOk;	
 	// Total length of all bones in the chain (thigh, shin, and foot bones).
     // Does not include foot or toe radius.
 	float TotalChainLength;
