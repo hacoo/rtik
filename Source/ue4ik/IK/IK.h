@@ -286,11 +286,21 @@ public:
 	// Each bone must be the skeletal parent of the preceeding bone. 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	TArray<FIKBone> BonesEffectorToRoot;
-	
+
+	// Maps bone indices to their corresponding FIKBone entries in BonesEffectorToRoot
+	TArray<size_t> BoneIndexToChainIndexMap;
+
+	FIKBone& operator[](size_t i);
+
+	size_t Num();
+
 	// Begin FIKModChain interface
 	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones) override;
 	virtual bool IsValid(const FBoneContainer& RequiredBones) override;
 	// End FIKModChain interface
+
+protected:
+
 };
 
 /*
@@ -334,3 +344,58 @@ public:
 protected:
 	bool bInitialized;
 };
+
+
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API URangeLimitedIKChainWrapper : public UIKChainWrapper
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FRangeLimitedIKChain Chain;
+
+	UFUNCTION(BlueprintCallable, Category = IK)
+	void Initialize(FRangeLimitedIKChain InChain) 
+	{		
+		Chain = InChain;
+		bInitialized = true;
+	}
+
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Initialize all bones used in this chain. Must be called before use.
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
+	virtual bool IsValid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+			return false;
+		}
+		return Chain.IsValid(RequiredBones);
+	}
+};
+

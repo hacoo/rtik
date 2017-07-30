@@ -46,7 +46,9 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis)
 bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBones)
 {
 	bool bValid = true;
-	for (int32 i = 1; i < BonesEffectorToRoot.Num(); ++i)
+	
+	size_t LargestBoneIndex = 0;
+	for (size_t i = 1; i < BonesEffectorToRoot.Num(); ++i)
 	{
 		FIKBone& Bone = BonesEffectorToRoot[i];
 		if (!Bone.Init(RequiredBones))
@@ -64,6 +66,13 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 		}
 	}
 
+	BoneIndexToChainIndexMap.AddDefaulted(LargestBoneIndex);
+	for (size_t i = 0; i < BonesEffectorToRoot.Num(); ++i)
+	{
+		FIKBone& Bone = BonesEffectorToRoot[i];
+		BoneIndexToChainIndexMap[Bone.BoneIndex.GetInt()] = i;
+	}
+
 	return bValid;
 }
 
@@ -76,3 +85,15 @@ bool FRangeLimitedIKChain::IsValid(const FBoneContainer & RequiredBones)
 	}
 	return bValid;
 }
+
+
+FIKBone& FRangeLimitedIKChain::operator[](size_t i)
+{
+	return BonesEffectorToRoot[i];
+}
+
+size_t FRangeLimitedIKChain::Num()
+{
+	return BonesEffectorToRoot.Num();
+}
+
