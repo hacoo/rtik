@@ -28,13 +28,12 @@
 struct FRangeLimitedFABRIKChainLink
 {
 public:
-	FVector Position;
 
 	float Length;
 
 	FCompactPoseBoneIndex BoneIndex;
 
-	int32 TransformIndex;
+	FTransform BoneCSTransform;
 
 	TArray<int32> ChildZeroLengthTransformIndices;
 
@@ -42,18 +41,16 @@ public:
 	FIKBone IKBone;
 
 	FRangeLimitedFABRIKChainLink()
-		: Position(FVector::ZeroVector),
-		Length(0.f),
+		: Length(0.f),
 		BoneIndex(INDEX_NONE),
-		TransformIndex(INDEX_NONE)
+		BoneCSTransform(FTransform::Identity)
 	{ }
 
-	FRangeLimitedFABRIKChainLink(const FVector& InPosition, float InLength,
-		const FCompactPoseBoneIndex& InBoneIndex, const int32& InTransformIndex)
-		: Position(InPosition),
-		Length(InLength),
+	FRangeLimitedFABRIKChainLink(float InLength, const FCompactPoseBoneIndex& InBoneIndex,
+		const FTransform& InTransform)
+		: Length(InLength),
 		BoneIndex(InBoneIndex),
-		TransformIndex(InTransformIndex)
+		BoneCSTransform(InTransform)
 	{ }
 };
 
@@ -73,6 +70,9 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 	/** If EffectorTransformSpace is a bone, this is the bone to use. **/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	FBoneReference EffectorTransformBone;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones)
+	URangeLimitedIKChainWrapper* Chain;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	TEnumAsByte<enum EBoneRotationSource> EffectorRotationSource;
@@ -108,6 +108,9 @@ public:
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;
 	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
 	// End of FAnimNode_SkeletalControlBase interface
+
+	void EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
+		FRangeLimitedFABRIKChainLink& ChildLink, FIKBone& ChildBone);
 
 private:
 	// FAnimNode_SkeletalControlBase interface

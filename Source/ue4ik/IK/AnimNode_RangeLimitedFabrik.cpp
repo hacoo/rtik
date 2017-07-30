@@ -53,7 +53,6 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 	// Gather transforms
 	int32 const NumTransforms = BoneIndices.Num();
-	OutBoneTransforms.AddUninitialized(NumTransforms);
 
 	// Gather chain links. These are non zero length bones.
 	TArray<FRangeLimitedFABRIKChainLink> Chain;
@@ -62,42 +61,30 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	// Start with Root Bone
 	{
 		const FCompactPoseBoneIndex& RootBoneIndex = BoneIndices[0];
-		const FTransform& BoneCSTransform = Output.Pose.GetComponentSpaceTransform(RootBoneIndex);
+		const FTransform& BoneCSTransform          = Output.Pose.GetComponentSpaceTransform(RootBoneIndex);
 
-		OutBoneTransforms[0] = FBoneTransform(RootBoneIndex, BoneCSTransform);
-		Chain.Add(FRangeLimitedFABRIKChainLink(BoneCSTransform.GetLocation(), 0.f, RootBoneIndex, 0));
+		Chain.Add(FRangeLimitedFABRIKChainLink(0.f, RootBoneIndex, BoneCSTransform));
 	}
 
 	// Go through remaining transforms
+	FRangeLimitedFABRIKChainLink& Previous = Chain[0];
 	for (int32 TransformIndex = 1; TransformIndex < NumTransforms; TransformIndex++)
 	{
 		const FCompactPoseBoneIndex& BoneIndex = BoneIndices[TransformIndex];
-
-		const FTransform& BoneCSTransform = Output.Pose.GetComponentSpaceTransform(BoneIndex);
-		FVector const BoneCSPosition = BoneCSTransform.GetLocation();
-
-		OutBoneTransforms[TransformIndex] = FBoneTransform(BoneIndex, BoneCSTransform);
+		const FTransform& BoneCSTransform      = Output.Pose.GetComponentSpaceTransform(BoneIndex);
 
 		// Calculate the combined length of this segment of skeleton
-		float const BoneLength = FVector::Dist(BoneCSPosition, OutBoneTransforms[TransformIndex-1].Transform.GetLocation());
+		const float BoneLength = FVector::Dist(BoneCSTransform.GetLocation(), Previous.BoneCSTransform.GetLocation());
 
-		if (!FMath::IsNearlyZero(BoneLength))
-		{
-			Chain.Add(FRangeLimitedFABRIKChainLink(BoneCSPosition, BoneLength, BoneIndex, TransformIndex));
-			MaximumReach += BoneLength;
-		}
-		else
-		{
-			// Mark this transform as a zero length child of the last link.
-			// It will inherit position and delta rotation from parent link.
-			FRangeLimitedFABRIKChainLink & ParentLink = Chain[Chain.Num()-1];
-			ParentLink.ChildZeroLengthTransformIndices.Add(TransformIndex);
-		}
+		// No need to check for zero-length bones -- already checked in initiallization of RangeLimitedIKChain
+		int32 NewIndex = Chain.Add(FRangeLimitedFABRIKChainLink(BoneLength, BoneIndex, BoneCSTransform));
+		MaximumReach += BoneLength;
+		Previous = Chain[NewIndex];
 	}
 
 	bool bBoneLocationUpdated = false;
-	float const RootToTargetDistSq = FVector::DistSquared(Chain[0].Position, CSEffectorLocation);
-	int32 const NumChainLinks = Chain.Num();
+	const float RootToTargetDistSq = FVector::DistSquared(Chain[0].BoneCSTransform.GetLocation(), CSEffectorLocation);
+	const int32 NumChainLinks = Chain.Num();
 
 	// FABRIK algorithm - bone translation calculation
 	// If the effector is further away than the distance from root to tip, simply move all bones in a line from root to effector location
@@ -107,7 +94,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		{
 			FRangeLimitedFABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
 			FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
-			CurrentLink.Position = ParentLink.Position + (CSEffectorLocation - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
+			CurrentLink.BoneCSTransform.SetLocation(ParentLink.BoneCSTransform.GetLocation() + 
+				(CSEffectorLocation - ParentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * CurrentLink.Length);
 		}
 		bBoneLocationUpdated = true;
 	}
@@ -116,11 +104,11 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		int32 const TipBoneLinkIndex = NumChainLinks - 1;
 
 		// Check distance between tip location and effector location
-		float Slop = FVector::Dist(Chain[TipBoneLinkIndex].Position, CSEffectorLocation);
+		float Slop = FVector::Dist(Chain[TipBoneLinkIndex].BoneCSTransform.GetLocation(), CSEffectorLocation);
 		if (Slop > Precision)
 		{
 			// Set tip bone at end effector location.
-			Chain[TipBoneLinkIndex].Position = CSEffectorLocation;
+			Chain[TipBoneLinkIndex].BoneCSTransform.SetLocation(CSEffectorLocation);
 
 			int32 IterationCount = 0;
 			while ((Slop > Precision) && (IterationCount++ < MaxIterations))
@@ -128,24 +116,27 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 				// "Forward Reaching" stage - adjust bones from end effector.
 				for (int32 LinkIndex = TipBoneLinkIndex - 1; LinkIndex > 0; LinkIndex--)
 				{
-					FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
-					FRangeLimitedFABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
+					FRangeLimitedFABRIKChainLink& CurrentLink = Chain[LinkIndex];
+					FRangeLimitedFABRIKChainLink& ChildLink = Chain[LinkIndex + 1];
 
-					CurrentLink.Position = ChildLink.Position + (CurrentLink.Position - ChildLink.Position).GetUnsafeNormal() * ChildLink.Length;
+					CurrentLink.BoneCSTransform.SetLocation(ChildLink.BoneCSTransform.GetLocation() +
+						(CurrentLink.BoneCSTransform.GetLocation() - ChildLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * ChildLink.Length);
 				}
 
 				// "Backward Reaching" stage - adjust bones from root.
 				for (int32 LinkIndex = 1; LinkIndex < TipBoneLinkIndex; LinkIndex++)
 				{
-					FRangeLimitedFABRIKChainLink const & ParentLink = Chain[LinkIndex - 1];
-					FRangeLimitedFABRIKChainLink & CurrentLink = Chain[LinkIndex];
+					FRangeLimitedFABRIKChainLink& ParentLink = Chain[LinkIndex - 1];
+					FRangeLimitedFABRIKChainLink& CurrentLink = Chain[LinkIndex];
 
-					CurrentLink.Position = ParentLink.Position + (CurrentLink.Position - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
+					CurrentLink.BoneCSTransform.SetLocation(ParentLink.BoneCSTransform.GetLocation() +
+						(CurrentLink.BoneCSTransform.GetLocation() - ParentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * CurrentLink.Length);
 				}
 
 				// Re-check distance between tip location and effector location
 				// Since we're keeping tip on top of effector location, check with its parent bone.
-				Slop = FMath::Abs(Chain[TipBoneLinkIndex].Length - FVector::Dist(Chain[TipBoneLinkIndex - 1].Position, CSEffectorLocation));
+				Slop = FMath::Abs(Chain[TipBoneLinkIndex].Length -
+					FVector::Dist(Chain[TipBoneLinkIndex - 1].BoneCSTransform.GetLocation(), CSEffectorLocation));
 			}
 
 			// Place tip bone based on how close we got to target.
@@ -153,7 +144,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 				FRangeLimitedFABRIKChainLink const & ParentLink = Chain[TipBoneLinkIndex - 1];
 				FRangeLimitedFABRIKChainLink & CurrentLink = Chain[TipBoneLinkIndex];
 
-				CurrentLink.Position = ParentLink.Position + (CurrentLink.Position - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
+				CurrentLink.BoneCSTransform.SetLocation(ParentLink.BoneCSTransform.GetLocation() + 
+					(CurrentLink.BoneCSTransform.GetLocation() - ParentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * CurrentLink.Length);
 			}
 
 			bBoneLocationUpdated = true;
@@ -163,31 +155,19 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	// If we moved some bones, update bone transforms.
 	if (bBoneLocationUpdated)
 	{
-		// First step: update bone transform positions from chain links.
-		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)
-		{
-			FRangeLimitedFABRIKChainLink const & ChainLink = Chain[LinkIndex];
-			OutBoneTransforms[ChainLink.TransformIndex].Transform.SetTranslation(ChainLink.Position);
-
-			// If there are any zero length children, update position of those
-			int32 const NumChildren = ChainLink.ChildZeroLengthTransformIndices.Num();
-			for (int32 ChildIndex = 0; ChildIndex < NumChildren; ChildIndex++)
-			{
-				OutBoneTransforms[ChainLink.ChildZeroLengthTransformIndices[ChildIndex]].Transform.SetTranslation(ChainLink.Position);
-			}
-		}
-
 		// FABRIK algorithm - re-orientation of bone local axes after translation calculation
 		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks - 1; LinkIndex++)
 		{
-			FRangeLimitedFABRIKChainLink const & CurrentLink = Chain[LinkIndex];
-			FRangeLimitedFABRIKChainLink const & ChildLink = Chain[LinkIndex + 1];
+			FRangeLimitedFABRIKChainLink& CurrentLink = Chain[LinkIndex];
+			FRangeLimitedFABRIKChainLink& ChildLink = Chain[LinkIndex + 1];
 
 			// Calculate pre-translation vector between this bone and child
-			FVector const OldDir = (GetCurrentLocation(Output.Pose, ChildLink.BoneIndex) - GetCurrentLocation(Output.Pose, CurrentLink.BoneIndex)).GetUnsafeNormal();
+			FVector const OldDir = (GetCurrentLocation(Output.Pose, ChildLink.BoneIndex) -
+				GetCurrentLocation(Output.Pose, CurrentLink.BoneIndex)).GetUnsafeNormal();
 
 			// Get vector from the post-translation bone to it's child
-			FVector const NewDir = (ChildLink.Position - CurrentLink.Position).GetUnsafeNormal();
+			FVector const NewDir = (ChildLink.BoneCSTransform.GetLocation() -
+				CurrentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal();
 
 			// Calculate axis of rotation from pre-translation vector to post-translation vector
 			FVector const RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
@@ -197,30 +177,20 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 			checkSlow(DeltaRotation.IsNormalized());
 
 			// Calculate absolute rotation and set it
-			FTransform& CurrentBoneTransform = OutBoneTransforms[CurrentLink.TransformIndex].Transform;
-			CurrentBoneTransform.SetRotation(DeltaRotation * CurrentBoneTransform.GetRotation());
-			CurrentBoneTransform.NormalizeRotation();
-
-			// Update zero length children if any
-			int32 const NumChildren = CurrentLink.ChildZeroLengthTransformIndices.Num();
-			for (int32 ChildIndex = 0; ChildIndex < NumChildren; ChildIndex++)
-			{
-				FTransform& ChildBoneTransform = OutBoneTransforms[CurrentLink.ChildZeroLengthTransformIndices[ChildIndex]].Transform;
-				ChildBoneTransform.SetRotation(DeltaRotation * ChildBoneTransform.GetRotation());
-				ChildBoneTransform.NormalizeRotation();
-			}
+			CurrentLink.BoneCSTransform.SetRotation(DeltaRotation * CurrentLink.BoneCSTransform.GetRotation());
+			CurrentLink.BoneCSTransform.NormalizeRotation();
 		}
 	}
 
 	// Special handling for tip bone's rotation.
-	int32 const TipBoneTransformIndex = OutBoneTransforms.Num() - 1;
+	const int32 TipBoneTransformIndex = OutBoneTransforms.Num() - 1;
 	switch (EffectorRotationSource)
 	{
 	case BRS_KeepLocalSpaceRotation:
-		OutBoneTransforms[TipBoneTransformIndex].Transform = Output.Pose.GetLocalSpaceTransform(BoneIndices[TipBoneTransformIndex]) * OutBoneTransforms[TipBoneTransformIndex - 1].Transform;
+		Chain[TipBoneTransformIndex].BoneCSTransform = Output.Pose.GetLocalSpaceTransform(BoneIndices[TipBoneTransformIndex]) * OutBoneTransforms[TipBoneTransformIndex - 1].Transform;
 		break;
 	case BRS_CopyFromTarget:
-		OutBoneTransforms[TipBoneTransformIndex].Transform.SetRotation(CSEffectorTransform.GetRotation());
+		Chain[TipBoneTransformIndex].BoneCSTransform.SetRotation(CSEffectorTransform.GetRotation());
 		break;
 	case BRS_KeepComponentSpaceRotation:
 		// Don't change the orientation at all
@@ -228,22 +198,81 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	default:
 		break;
 	}
+
+	// Commit the changes
+	if (bBoneLocationUpdated)
+	{
+		OutBoneTransforms.Reserve(Chain.Num());
+		for (FRangeLimitedFABRIKChainLink& Link : Chain)
+		{
+			OutBoneTransforms.Add(FBoneTransform(Link.BoneIndex, Link.BoneCSTransform));
+		}
+	}
+	else if (EffectorRotationSource != BRS_KeepComponentSpaceRotation)
+	{
+		// update effector only
+		FRangeLimitedFABRIKChainLink& TipLink = Chain[Chain.Num() - 1];
+		OutBoneTransforms.Add(FBoneTransform(TipLink.BoneIndex, TipLink.BoneCSTransform));
+	}
 }
+
+void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
+	FRangeLimitedFABRIKChainLink& ChildLink, FIKBone& ChildBone)
+{
+	if (ChildBone.ConstraintMode == EIKROMConstraintMode::IKROM_No_Constraint)
+	{
+		return;
+	}	
+}
+
 
 bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones)
 {
+	if (Chain == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("AnimNode_RangeLimitedFabrik was not valid to evaluate -- an input wrapper object was null"));		
+#endif ENABLE_IK_DEBUG_VERBOSE
+		return false;
+	}
+
+	if (Chain->Chain.Num() < 2)
+	{
+		return false;
+	}
+
 	// Allow evaluation if all parameters are initialized and TipBone is child of RootBone
 	return
 		(
-		TipBone.IsValid(RequiredBones)
-		&& RootBone.IsValid(RequiredBones)
-		&& Precision > 0
-		&& RequiredBones.BoneIsChildOf(TipBone.BoneIndex, RootBone.BoneIndex)
+			TipBone.IsValid(RequiredBones)
+			&& RootBone.IsValid(RequiredBones)
+			&& Precision > 0
+			&& RequiredBones.BoneIsChildOf(TipBone.BoneIndex, RootBone.BoneIndex)
+			&& Chain->IsValid(RequiredBones)
 		);
 }
 
 void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
+	if (Chain == nullptr)
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize FAnimNode_RangeLimitedFabrik -- An input wrapper object was null"));
+#endif // ENABLE_IK_DEBUG
+		return;
+	}
+
+	Chain->InitIfInvalid(RequiredBones);
+	size_t NumBones = Chain->Chain.Num();
+
+	if (NumBones < 2)
+	{
+		return;
+	}
+	
+	TipBone  = Chain->Chain[0].BoneRef;
+	RootBone = Chain->Chain[NumBones - 1].BoneRef;
+	
 	TipBone.Initialize(RequiredBones);
 	RootBone.Initialize(RequiredBones);
 	EffectorTransformBone.Initialize(RequiredBones);

@@ -282,6 +282,11 @@ struct UE4IK_API FRangeLimitedIKChain : public FIKModChain
 
 public:
 
+	FRangeLimitedIKChain()
+		:
+		bValid(false)
+	{ }
+
 	// Bones in the chain, ordered from the effector bone to the root.
 	// Each bone must be the skeletal parent of the preceeding bone. 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -292,6 +297,12 @@ public:
 
 	FIKBone& operator[](size_t i);
 
+	// access the ith bone, starting from the effector (identical to operator [])
+	FIKBone& AccessFromEffector(size_t i);
+
+	// access the ith bone from the root - i.e., accesses bones in reverse order
+	FIKBone& AccessFromRoot(size_t i);
+	
 	size_t Num();
 
 	// Begin FIKModChain interface
@@ -300,6 +311,8 @@ public:
 	// End FIKModChain interface
 
 protected:
+
+	bool bValid;
 
 };
 

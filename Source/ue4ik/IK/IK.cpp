@@ -45,7 +45,7 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis)
 
 bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBones)
 {
-	bool bValid = true;
+	bValid = true;
 	
 	size_t LargestBoneIndex = 0;
 	for (size_t i = 1; i < BonesEffectorToRoot.Num(); ++i)
@@ -64,6 +64,19 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 #endif // ENABLE_IK_DEBUG
 			bValid = false;
 		}
+
+		// Check that the bone has nonzero length
+		FTransform BoneTransform = RequiredBones.GetRefPoseTransform(Bone.BoneIndex);
+		FTransform ParentTransform = RequiredBones.GetRefPoseTransform(PreviousBone.BoneIndex);
+		if (FVector::Dist(BoneTransform.GetLocation(), ParentTransform.GetLocation()) < KINDA_SMALL_NUMBER)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Could not initialized range limited IK chain - bone named %s has zero length"),
+				*(Bone.BoneRef.BoneName.ToString()));
+			
+			bValid = false;
+#endif // ENABLE_IK_DEBUG
+		}
 	}
 
 	BoneIndexToChainIndexMap.AddDefaulted(LargestBoneIndex);
@@ -78,7 +91,6 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 
 bool FRangeLimitedIKChain::IsValid(const FBoneContainer & RequiredBones)
 {
-	bool bValid = true;
 	for (FIKBone& Bone : BonesEffectorToRoot)
 	{
 		bValid &= Bone.IsValid(RequiredBones);
@@ -90,6 +102,17 @@ bool FRangeLimitedIKChain::IsValid(const FBoneContainer & RequiredBones)
 FIKBone& FRangeLimitedIKChain::operator[](size_t i)
 {
 	return BonesEffectorToRoot[i];
+}
+
+FIKBone & FRangeLimitedIKChain::AccessFromEffector(size_t i)
+{
+	return BonesEffectorToRoot[i];
+}
+
+FIKBone & FRangeLimitedIKChain::AccessFromRoot(size_t i)
+{
+	size_t NumBones = BonesEffectorToRoot.Num();
+	return BonesEffectorToRoot[NumBones - 1 - i];
 }
 
 size_t FRangeLimitedIKChain::Num()
