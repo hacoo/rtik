@@ -257,12 +257,7 @@ struct UE4IK_API FIKModChain
 	GENERATED_USTRUCT_BODY()
 		
 public:
-	
-	FIKModChain()
-		:
-		bInitSuccess(false)
-	{ }
-	   
+		   
 	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
     // Returns true if valid or initialization succeeds.
 	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones);
@@ -273,10 +268,7 @@ public:
 	
 	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
 	// Subclasses must override this.
-	virtual bool IsValid(const FBoneContainer& RequiredBones);
-	
-protected:	
-	bool bInitSuccess;
+	virtual bool IsValid(const FBoneContainer& RequiredBones);	
 };
 
 /*
@@ -290,7 +282,15 @@ struct UE4IK_API FRangeLimitedIKChain : public FIKModChain
 
 public:
 
-
+	// Bones in the chain, ordered from the effector bone to the root.
+	// Each bone must be the skeletal parent of the preceeding bone. 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	TArray<FIKBone> BonesEffectorToRoot;
+	
+	// Begin FIKModChain interface
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones) override;
+	virtual bool IsValid(const FBoneContainer& RequiredBones) override;
+	// End FIKModChain interface
 };
 
 /*

@@ -83,7 +83,7 @@ public:
 	// FIKModChain interface
 	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones) override;
 	virtual bool IsValid(const FBoneContainer& RequiredBones) override;
-// end FIKModChain interface
+	// end FIKModChain interface
    	
 protected:
 	bool bInitOk;	
