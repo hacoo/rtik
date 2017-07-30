@@ -72,7 +72,7 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 	FBoneReference EffectorTransformBone;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones)
-	URangeLimitedIKChainWrapper* Chain;
+	URangeLimitedIKChainWrapper* IKChain;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	TEnumAsByte<enum EBoneRotationSource> EffectorRotationSource;

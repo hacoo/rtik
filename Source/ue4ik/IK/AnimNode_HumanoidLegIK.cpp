@@ -193,10 +193,10 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 	else
 	{
 		// Set up FABRIK solver
-		FabrikSolver.ActualAlpha = 1.0f;
-		FabrikSolver.TipBone = Leg->Chain.ShinBone.BoneRef;
-		FabrikSolver.RootBone = Leg->Chain.HipBone.BoneRef;
-		FabrikSolver.Precision = Precision;
+		FabrikSolver.ActualAlpha   = 1.0f;
+		FabrikSolver.TipBone       = Leg->Chain.ShinBone.BoneRef;
+		FabrikSolver.RootBone      = Leg->Chain.HipBone.BoneRef;
+		FabrikSolver.Precision     = Precision;
 		FabrikSolver.MaxIterations = MaxIterations;
 	}
 }

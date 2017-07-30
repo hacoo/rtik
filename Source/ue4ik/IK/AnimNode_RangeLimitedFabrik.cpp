@@ -67,19 +67,17 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	}
 
 	// Go through remaining transforms
-	FRangeLimitedFABRIKChainLink& Previous = Chain[0];
-	for (int32 TransformIndex = 1; TransformIndex < NumTransforms; TransformIndex++)
+	for (int32 i = 1; i < NumTransforms; ++i)
 	{
-		const FCompactPoseBoneIndex& BoneIndex = BoneIndices[TransformIndex];
+		const FCompactPoseBoneIndex& BoneIndex = BoneIndices[i];
 		const FTransform& BoneCSTransform      = Output.Pose.GetComponentSpaceTransform(BoneIndex);
 
 		// Calculate the combined length of this segment of skeleton
-		const float BoneLength = FVector::Dist(BoneCSTransform.GetLocation(), Previous.BoneCSTransform.GetLocation());
+		const float BoneLength = FVector::Dist(BoneCSTransform.GetLocation(), Chain[i-1].BoneCSTransform.GetLocation());
 
 		// No need to check for zero-length bones -- already checked in initiallization of RangeLimitedIKChain
-		int32 NewIndex = Chain.Add(FRangeLimitedFABRIKChainLink(BoneLength, BoneIndex, BoneCSTransform));
+		Chain.Add(FRangeLimitedFABRIKChainLink(BoneLength, BoneIndex, BoneCSTransform));
 		MaximumReach += BoneLength;
-		Previous = Chain[NewIndex];
 	}
 
 	bool bBoneLocationUpdated = false;
@@ -183,14 +181,19 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	}
 
 	// Special handling for tip bone's rotation.
-	const int32 TipBoneTransformIndex = OutBoneTransforms.Num() - 1;
+	const int32 TipBoneIndex = Chain.Num() - 1;
 	switch (EffectorRotationSource)
 	{
 	case BRS_KeepLocalSpaceRotation:
-		Chain[TipBoneTransformIndex].BoneCSTransform = Output.Pose.GetLocalSpaceTransform(BoneIndices[TipBoneTransformIndex]) * OutBoneTransforms[TipBoneTransformIndex - 1].Transform;
+		if (Chain.Num() > 1)
+		{
+			Chain[TipBoneIndex].BoneCSTransform =
+				Output.Pose.GetLocalSpaceTransform(BoneIndices[TipBoneIndex]) *
+				Chain[TipBoneIndex - 1].BoneCSTransform;
+		}
 		break;
 	case BRS_CopyFromTarget:
-		Chain[TipBoneTransformIndex].BoneCSTransform.SetRotation(CSEffectorTransform.GetRotation());
+		Chain[TipBoneIndex].BoneCSTransform.SetRotation(CSEffectorTransform.GetRotation());
 		break;
 	case BRS_KeepComponentSpaceRotation:
 		// Don't change the orientation at all
@@ -202,18 +205,28 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	// Commit the changes
 	if (bBoneLocationUpdated)
 	{
-		OutBoneTransforms.Reserve(Chain.Num());
-		for (FRangeLimitedFABRIKChainLink& Link : Chain)
+		size_t NumLinks = Chain.Num();
+		OutBoneTransforms.Reserve(NumLinks);
+
+		for (size_t i = 0; i < NumLinks - 1; ++i)
 		{
-			OutBoneTransforms.Add(FBoneTransform(Link.BoneIndex, Link.BoneCSTransform));
+			int32 Index = Chain[i].BoneIndex.GetInt();
+			OutBoneTransforms.Add(FBoneTransform(Chain[i].BoneIndex, Chain[i].BoneCSTransform));
 		}
-	}
-	else if (EffectorRotationSource != BRS_KeepComponentSpaceRotation)
-	{
-		// update effector only
+
+		// Update effector
 		FRangeLimitedFABRIKChainLink& TipLink = Chain[Chain.Num() - 1];
 		OutBoneTransforms.Add(FBoneTransform(TipLink.BoneIndex, TipLink.BoneCSTransform));
 	}
+	
+
+	UE_LOG(LogIK, Warning, TEXT("Chain: "));
+	for (size_t i = 0; i < OutBoneTransforms.Num(); ++i)
+	{
+		int32 Index = OutBoneTransforms[i].BoneIndex.GetInt();
+		UE_LOG(LogIK, Warning, TEXT("  %d"), Index);
+	}
+	
 }
 
 void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
@@ -228,7 +241,7 @@ void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FRangeLimitedFABRIKChain
 
 bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones)
 {
-	if (Chain == nullptr)
+	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("AnimNode_RangeLimitedFabrik was not valid to evaluate -- an input wrapper object was null"));		
@@ -236,7 +249,7 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 		return false;
 	}
 
-	if (Chain->Chain.Num() < 2)
+	if (IKChain->Chain.Num() < 2)
 	{
 		return false;
 	}
@@ -248,13 +261,13 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 			&& RootBone.IsValid(RequiredBones)
 			&& Precision > 0
 			&& RequiredBones.BoneIsChildOf(TipBone.BoneIndex, RootBone.BoneIndex)
-			&& Chain->IsValid(RequiredBones)
+	//		&& IKChain->IsValid(RequiredBones)
 		);
 }
 
 void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	if (Chain == nullptr)
+	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Could not initialize FAnimNode_RangeLimitedFabrik -- An input wrapper object was null"));
@@ -262,16 +275,16 @@ void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer
 		return;
 	}
 
-	Chain->InitIfInvalid(RequiredBones);
-	size_t NumBones = Chain->Chain.Num();
+	IKChain->InitIfInvalid(RequiredBones);
+	size_t NumBones = IKChain->Chain.Num();
 
 	if (NumBones < 2)
 	{
 		return;
 	}
 	
-	TipBone  = Chain->Chain[0].BoneRef;
-	RootBone = Chain->Chain[NumBones - 1].BoneRef;
+	TipBone  = IKChain->Chain[0].BoneRef;
+	RootBone = IKChain->Chain[NumBones - 1].BoneRef;
 	
 	TipBone.Initialize(RequiredBones);
 	RootBone.Initialize(RequiredBones);

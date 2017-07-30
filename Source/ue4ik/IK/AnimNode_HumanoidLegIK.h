@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IK.h"
 #include "HumanoidIK.h"
 #include "BoneControllers/AnimNode_Fabrik.h"
+#include "IK/AnimNode_RangeLimitedFabrik.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_HumanoidLegIK.generated.h"
 
@@ -128,4 +130,5 @@ protected:
 	float DeltaTime;
 	FVector LastEffectorOffset;
 	FAnimNode_Fabrik FabrikSolver;
+	//FAnimNode_RangeLimitedFabrik FabrikSolver;
 };
