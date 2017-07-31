@@ -109,8 +109,8 @@ protected:
 	// Convenience function to get current (pre-translation iteration) component space location of bone by bone index
 	FVector GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex);
 
-	void EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
-		FRangeLimitedFABRIKChainLink& ChildLink, FIKBone& ChildBone);
+	void EnforceROMConstraint(FCSPose<FCompactPose>& Pose, TArray<FRangeLimitedFABRIKChainLink>& Chain,
+		FIKBone& ChildBone, int32 ChildIndex);
 
 	void UpdateParentRotation(FRangeLimitedFABRIKChainLink& ParentLink,
 		const FRangeLimitedFABRIKChainLink& ChildLink, FCSPose<FCompactPose>& Pose);

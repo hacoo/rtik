@@ -79,6 +79,7 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 * - Twist (roll) constraints are NOT implemented yet; they are ignored.
 * - If a bone does not have a valid parent bone, then the DEfaultForwardDirectionComponentSpace vector is used in place of the parent direction.
 *   The rotation axes are simply specified pitch / yaw axes as component space vectors.
+* - Joint ROMS must be between 0 and 90 degrees. I may upgrade to allow larger ROMs later. Note that 90 degrees means 90 degrees in each direction (for a total of 180 degrees)
 * 
 * Note that pitch / yaw share a constraint angle for now. This is because it is much simpler and cheaper
 * to interect a vector with a circle than an elipsoid. I may change this if needed in the future.
@@ -96,7 +97,9 @@ public:
 		YawAxis(EIKBoneAxis::IKBA_Z),
 		PitchYawROMDegrees(45.0f),
 		ConstraintMode(EIKROMConstraintMode::IKROM_No_Constraint),
-		BoneIndex(INDEX_NONE)
+		BoneIndex(INDEX_NONE),
+		DefaultForwardDirectionComponentSpace(1.0f, 0.0f, 0.0f),
+		bUseParentBoneDirection(true)
 	{ }
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -115,9 +118,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FVector DefaultForwardDirectionComponentSpace;
    
-	// How far the bone may rotate in the pitch / yaw directions, if these ROM constraints are enforced.	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	// How far the bone may rotate in the pitch / yaw directions, if these ROM constraints are enforced.
+	// Currently, ROM must be 0-90 degrees; larger ROMS are not supported yet
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(UIMin = 0.0f, UIMax = 90.0f))
 	float PitchYawROMDegrees;
+
+	// If true, the forward direction will be determined by the direction of the parent bone. If not, 
+	// the DefaultForwardDirectionComponentSpace vector is used. For most bones, this should be set to true;
+	// however, there may be some (e.g., the pelvis), which do not have a meaninful parent bone.	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")	
+	bool bUseParentBoneDirection;
 
 	// How this bone's ROM constraint should be enforced.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -128,49 +138,12 @@ public:
 public:
 
     // Check if this bone is valid, if not, attempt to initialize it. Return whether the bone is (after re-initialization if needed)
-	bool InitIfInvalid(const FBoneContainer& RequiredBones)
-	{
-		if (IsValid(RequiredBones))
-		{
-			return true;
-		}
-
-		Init(RequiredBones);
-		bool bIsValid = Init(RequiredBones);
-		return bIsValid;
-	}
+	bool InitIfInvalid(const FBoneContainer& RequiredBones);
 	
 	// Initialize this IK Bone. Must be called before use.
-	bool Init(const FBoneContainer& RequiredBones)
-	{
-		if (BoneRef.Initialize(RequiredBones))
-		{
-			BoneIndex = BoneRef.GetCompactPoseIndex(RequiredBones);
-			return true;
-		}
-		else
-		{
-#if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("FIKBone::Init -- IK Bone initialization failed for bone: %s"),
-				*BoneRef.BoneName.ToString());
-#endif // ENABLE_ANIM_DEBUG
-			return false;
-		}
-	}
-	
-	bool IsValid(const FBoneContainer& RequiredBones)
-	{
-		bool bValid = BoneRef.IsValid(RequiredBones);
-		
-#if ENABLE_IK_DEBUG_VERBOSE
-		if (!bValid)
-		{
-			UE_LOG(LogIK, Warning, TEXT("FIKBone::IsValid -- IK Bone %s was invalid"),
-				*BoneRef.BoneName.ToString());
-		}
-#endif // ENABLE_IK_DEBUG_VERBOSE
-		return bValid;
-	}
+	bool Init(const FBoneContainer& RequiredBones);
+
+	bool IsValid(const FBoneContainer& RequiredBones);
 
 protected:
 
@@ -193,52 +166,20 @@ public:
 		bInitialized(false)
 	{ }
 
-	UFUNCTION(BlueprintCallable, Category = IK)
-	void Initialize(FIKBone InBone)
-	{
-		Bone = InBone;
-		bInitialized = true;
-	}
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	FIKBone Bone;
+
+public: 
+
+	UFUNCTION(BlueprintCallable, Category = IK)
+	void Initialize(FIKBone InBone);
+
+
+	bool InitIfInvalid(const FBoneContainer& RequiredBones);
 	
-	bool InitIfInvalid(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-#if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
-#endif // ENABLE_IK_DEBUG
-			return false;
-		}
-
-		return Bone.InitIfInvalid(RequiredBones);
-	}
-
-	bool Init(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-#if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
-#endif // ENABLE_IK_DEBUG
-			return false;
-		}
-
-		return Bone.Init(RequiredBones);
-	}
-
-
-	bool IsValid(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-			return false;
-		}
-
-		return Bone.IsValid(RequiredBones);
-	}
+	bool Init(const FBoneContainer& RequiredBones);
+	
+	bool IsValid(const FBoneContainer& RequiredBones);
 	
 protected:
 
@@ -338,23 +279,14 @@ public:
 
 	// Checks if this chain is valid; if not, attempts to initialize it and checks again.
     // Returns true if valid or initialization succeeds.
-	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones) 
-	{
-		return false;
-	}
-	
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones);
+
 	// Initialize all bones used in this chain. Must be called before use.
-	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
-	{
-		return false;
-	}
-	
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones);
+
 	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
-	virtual bool IsValid(const FBoneContainer& RequiredBones)
-	{
-		return false;
-	}
-	
+	virtual bool IsValid(const FBoneContainer& RequiredBones);
+
 protected:
 	bool bInitialized;
 };
@@ -371,45 +303,14 @@ public:
 	FRangeLimitedIKChain Chain;
 
 	UFUNCTION(BlueprintCallable, Category = IK)
-	void Initialize(FRangeLimitedIKChain InChain) 
-	{		
-		Chain = InChain;
-		bInitialized = true;
-	}
+	void Initialize(FRangeLimitedIKChain InChain);
 
-	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-#if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
-#endif // ENABLE_IK_DEBUG
-			return false;
-		}
-		return Chain.InitIfInvalid(RequiredBones);
-	}
-	
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones);
+
 	// Initialize all bones used in this chain. Must be called before use.
-	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-#if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
-#endif // ENABLE_IK_DEBUG
-			return false;
-		}
-		return Chain.InitIfInvalid(RequiredBones);
-	}
-	
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones);
+
 	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
-	virtual bool IsValid(const FBoneContainer& RequiredBones)
-	{
-		if (!bInitialized)
-		{
-			return false;
-		}
-		return Chain.IsValid(RequiredBones);
-	}
+	virtual bool IsValid(const FBoneContainer& RequiredBones);
 };
 
