@@ -40,7 +40,7 @@ UENUM(BlueprintType)
 enum class EIKROMConstraintMode : uint8
 {	
 	// Constrain both pitch and yaw rotations
-	IKROM_Pitch_And_Yaw UMETA(DisplayName = "Constraint Pitch and Yaw"),
+	IKROM_Pitch_And_Yaw UMETA(DisplayName = "Constrain Pitch and Yaw"),
 
 	// Constrain pitch rotation; allow no yaw rotation
 	IKROM_Pitch_Only UMETA(DisplayName = "Constrain and Allow Only Pitch Rotation"),
@@ -49,7 +49,7 @@ enum class EIKROMConstraintMode : uint8
 	IKROM_Yaw_Only UMETA(DisplayName = "Constrain and Allow Only Yaw Rotation"),
 
 	// Constrain yaw rotation; allow no pitch rotation
-	IKROM_Twist_Only UMETA(DisplayName = "Constrain and Allow Only Twist Rotation"),
+	// IKROM_Twist_Only UMETA(DisplayName = "Constrain and Allow Only Twist Rotation"),
 
 	// Do not constrain rotation
 	IKROM_No_Constraint UMETA(DisplayName = "No Constraint")
@@ -74,10 +74,11 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 * with an IK method that supports them.
 *
 * Range-of-motion is determined as follows:
-* - The twist angle is measured by comparing the directions of the yaw axis in the parent and child bones
-* - Pitch and yaw angles are determined by comparing directions of the twist axis. The pitch / yaw axes
-*   of the PARENT bone determine rotation axes.
-* - If the parent bone axes cannot be determined, the twist component space twist / pitch / yaw axes are used.
+* - Pitch and yaw are determined by compaing directions of the bone with the direction of the parent bone. Bone direction is defined as the vector starting at the bone's skeletal parent, and ending at the bone.
+* - The pitch / yaw axes of the PARENT bone are used for rotations.
+* - Twist (roll) constraints are NOT implemented yet; they are ignored.
+* - If a bone does not have a valid parent bone, then the DEfaultForwardDirectionComponentSpace vector is used in place of the parent direction.
+*   The rotation axes are simply specified pitch / yaw axes as component space vectors.
 * 
 * Note that pitch / yaw share a constraint angle for now. This is because it is much simpler and cheaper
 * to interect a vector with a circle than an elipsoid. I may change this if needed in the future.
@@ -91,10 +92,9 @@ public:
 	
 	FIKBone()
 		:
-		TwistAxis(EIKBoneAxis::IKBA_X),
+		PitchAxis(EIKBoneAxis::IKBA_Y),
 		YawAxis(EIKBoneAxis::IKBA_Z),
 		PitchYawROMDegrees(45.0f),
-		TwistROMDegress(90.0f),
 		ConstraintMode(EIKROMConstraintMode::IKROM_No_Constraint),
 		BoneIndex(INDEX_NONE)
 	{ }
@@ -102,21 +102,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FBoneReference BoneRef;
 		
-	// The axis that this bone twists around. Usually, this points in the same direction as the bone.
+	// The axis that this bone pitches around. Usually, this points to the side (the Y axis)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	EIKBoneAxis TwistAxis;
+	EIKBoneAxis PitchAxis;
 
-	// The axis that this bone yaws around. 
+	// The axis that this bone yaws around. Usually, this points up (the Z axis)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	EIKBoneAxis YawAxis;
+
+	// A direction in component space, describing the default 'forward' direction of this bone.
+	// If this bone does not have a parent, this direction will be used in place of the parent bone direction.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FVector DefaultForwardDirectionComponentSpace;
    
 	// How far the bone may rotate in the pitch / yaw directions, if these ROM constraints are enforced.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float PitchYawROMDegrees;
-
-	// How much this bone may twist relative to the parent, if twist constraints are enforced.	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float TwistROMDegress;
 
 	// How this bone's ROM constraint should be enforced.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")

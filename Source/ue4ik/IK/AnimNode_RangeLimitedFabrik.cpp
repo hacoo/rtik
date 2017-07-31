@@ -28,7 +28,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	FTransform CSEffectorTransform = EffectorTransform;
 	FAnimationRuntime::ConvertBoneSpaceTransformToCS(Output.AnimInstanceProxy->GetComponentTransform(), Output.Pose, CSEffectorTransform, EffectorTransformBone.GetCompactPoseIndex(BoneContainer), EffectorTransformSpace);
 	
-	FVector const CSEffectorLocation = CSEffectorTransform.GetLocation();
+	const FVector CSEffectorLocation = CSEffectorTransform.GetLocation();
 
 #if WITH_EDITOR
 	CachedEffectorCSTransform = CSEffectorTransform;
@@ -52,7 +52,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	float MaximumReach = 0;
 
 	// Gather transforms
-	int32 const NumTransforms = BoneIndices.Num();
+	const int32 NumTransforms = BoneIndices.Num();
 
 	// Gather chain links. These are non zero length bones.
 	TArray<FRangeLimitedFABRIKChainLink> Chain;
@@ -99,7 +99,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	}
 	else // Effector is within reach, calculate bone translations to position tip at effector location
 	{
-		int32 const TipBoneLinkIndex = NumChainLinks - 1;
+		const int32 TipBoneLinkIndex = NumChainLinks - 1;
 
 		// Check distance between tip location and effector location
 		float Slop = FVector::Dist(Chain[TipBoneLinkIndex].BoneCSTransform.GetLocation(), CSEffectorLocation);
@@ -119,6 +119,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 					CurrentLink.BoneCSTransform.SetLocation(ChildLink.BoneCSTransform.GetLocation() +
 						(CurrentLink.BoneCSTransform.GetLocation() - ChildLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * ChildLink.Length);
+
+					UpdateParentRotation(CurrentLink, ChildLink, Output.Pose);
 				}
 
 				// "Backward Reaching" stage - adjust bones from root.
@@ -129,6 +131,9 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 					CurrentLink.BoneCSTransform.SetLocation(ParentLink.BoneCSTransform.GetLocation() +
 						(CurrentLink.BoneCSTransform.GetLocation() - ParentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal() * CurrentLink.Length);
+
+					UpdateParentRotation(ParentLink, CurrentLink, Output.Pose);
+					
 				}
 
 				// Re-check distance between tip location and effector location
@@ -147,36 +152,6 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 			}
 
 			bBoneLocationUpdated = true;
-		}
-	}
-
-	// If we moved some bones, update bone transforms.
-	if (bBoneLocationUpdated)
-	{
-		// FABRIK algorithm - re-orientation of bone local axes after translation calculation
-		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks - 1; LinkIndex++)
-		{
-			FRangeLimitedFABRIKChainLink& CurrentLink = Chain[LinkIndex];
-			FRangeLimitedFABRIKChainLink& ChildLink = Chain[LinkIndex + 1];
-
-			// Calculate pre-translation vector between this bone and child
-			FVector const OldDir = (GetCurrentLocation(Output.Pose, ChildLink.BoneIndex) -
-				GetCurrentLocation(Output.Pose, CurrentLink.BoneIndex)).GetUnsafeNormal();
-
-			// Get vector from the post-translation bone to it's child
-			FVector const NewDir = (ChildLink.BoneCSTransform.GetLocation() -
-				CurrentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal();
-
-			// Calculate axis of rotation from pre-translation vector to post-translation vector
-			FVector const RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
-			float const RotationAngle = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
-			FQuat const DeltaRotation = FQuat(RotationAxis, RotationAngle);
-			// We're going to multiply it, in order to not have to re-normalize the final quaternion, it has to be a unit quaternion.
-			checkSlow(DeltaRotation.IsNormalized());
-
-			// Calculate absolute rotation and set it
-			CurrentLink.BoneCSTransform.SetRotation(DeltaRotation * CurrentLink.BoneCSTransform.GetRotation());
-			CurrentLink.BoneCSTransform.NormalizeRotation();
 		}
 	}
 
@@ -202,31 +177,18 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		break;
 	}
 
-	// Commit the changes
+	// Commit the changes, if there were any
 	if (bBoneLocationUpdated)
 	{
 		size_t NumLinks = Chain.Num();
 		OutBoneTransforms.Reserve(NumLinks);
 
-		for (size_t i = 0; i < NumLinks - 1; ++i)
+		for (size_t i = 0; i < NumLinks; ++i)
 		{
 			int32 Index = Chain[i].BoneIndex.GetInt();
 			OutBoneTransforms.Add(FBoneTransform(Chain[i].BoneIndex, Chain[i].BoneCSTransform));
 		}
-
-		// Update effector
-		FRangeLimitedFABRIKChainLink& TipLink = Chain[Chain.Num() - 1];
-		OutBoneTransforms.Add(FBoneTransform(TipLink.BoneIndex, TipLink.BoneCSTransform));
 	}
-	
-
-	UE_LOG(LogIK, Warning, TEXT("Chain: "));
-	for (size_t i = 0; i < OutBoneTransforms.Num(); ++i)
-	{
-		int32 Index = OutBoneTransforms[i].BoneIndex.GetInt();
-		UE_LOG(LogIK, Warning, TEXT("  %d"), Index);
-	}
-	
 }
 
 void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
@@ -238,9 +200,35 @@ void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FRangeLimitedFABRIKChain
 	}	
 }
 
+void FAnimNode_RangeLimitedFabrik::UpdateParentRotation(FRangeLimitedFABRIKChainLink& ParentLink,
+	const FRangeLimitedFABRIKChainLink& ChildLink, FCSPose<FCompactPose>& Pose)
+{
+	
+	// Calculate pre-translation vector between this bone and child
+	FTransform OldParentTransform = Pose.GetComponentSpaceTransform(ParentLink.BoneIndex);
+	FTransform OldChildTransform = Pose.GetComponentSpaceTransform(ChildLink.BoneIndex);
+	FVector OldDir = (OldChildTransform.GetLocation() - OldParentTransform.GetLocation()).GetUnsafeNormal();
+
+	// Get vector from the post-translation bone to it's child
+	FVector NewDir = (ChildLink.BoneCSTransform.GetLocation() -
+		ParentLink.BoneCSTransform.GetLocation()).GetUnsafeNormal();
+	
+	// Calculate axis of rotation from pre-translation vector to post-translation vector
+	FVector RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
+	float RotationAngle = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
+	FQuat DeltaRotation = FQuat(RotationAxis, RotationAngle);
+	// We're going to multiply it, in order to not have to re-normalize the final quaternion, it has to be a unit quaternion.
+	checkSlow(DeltaRotation.IsNormalized());
+	
+	// Calculate absolute rotation and set it
+	ParentLink.BoneCSTransform.SetRotation(DeltaRotation * OldParentTransform.GetRotation());
+	ParentLink.BoneCSTransform.NormalizeRotation();
+}
+
 
 bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones)
 {
+/*
 	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
@@ -253,6 +241,7 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 	{
 		return false;
 	}
+*/
 
 	// Allow evaluation if all parameters are initialized and TipBone is child of RootBone
 	return
@@ -267,6 +256,7 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 
 void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
+/*
 	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG
@@ -285,6 +275,7 @@ void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer
 	
 	TipBone  = IKChain->Chain[0].BoneRef;
 	RootBone = IKChain->Chain[NumBones - 1].BoneRef;
+*/
 	
 	TipBone.Initialize(RequiredBones);
 	RootBone.Initialize(RequiredBones);

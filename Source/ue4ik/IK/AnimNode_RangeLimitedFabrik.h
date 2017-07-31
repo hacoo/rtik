@@ -9,19 +9,10 @@
 
 
 /*
-	Range-limited FABRIK solver. Based on FABRIK UE4 FABRIK solver (see AnimNode_Fabrik.h).
+	Range-limited FABRIK solver. Based on FABRIK UE4 FABRIK solver (see AnimNode_Fabrik.h), but will
+	additionally enforce range-of-motion constraints.
 
-	Bones may be given a range-of-motion (ROM) constraint, based either on the preceeding bone's direction,
-	or a direction in component space. 
-
-	The following constraint modes are supported:
-
-	- Pitch and Yaw: a 'circular' constraint, with the same angular constraint in pitch and yaw directions.
-	Twist is not constrained.
-	- Yaw only: the joint may only yaw, within constraint angle.
-	- Pitch only: the joint may only pitch, within constraint angle.
-	- Twist only: the joint may only twist, within constraint angle	
-	- No constraint: The joint is not ROM-constrained.
+	See IK.h for a description of ROM constraints.
 */
 
  // Internal structure for evaluating the IK chain
@@ -71,8 +62,8 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	FBoneReference EffectorTransformBone;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones)
-	URangeLimitedIKChainWrapper* IKChain;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones)
+	//URangeLimitedIKChainWrapper* IKChain;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	TEnumAsByte<enum EBoneRotationSource> EffectorRotationSource;
@@ -109,16 +100,20 @@ public:
 	virtual bool IsValidToEvaluate(const USkeleton* Skeleton, const FBoneContainer& RequiredBones) override;
 	// End of FAnimNode_SkeletalControlBase interface
 
-	void EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
-		FRangeLimitedFABRIKChainLink& ChildLink, FIKBone& ChildBone);
 
-private:
+protected:
 	// FAnimNode_SkeletalControlBase interface
 	virtual void InitializeBoneReferences(const FBoneContainer& RequiredBones) override;
 	// End of FAnimNode_SkeletalControlBase interface
 
 	// Convenience function to get current (pre-translation iteration) component space location of bone by bone index
 	FVector GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex);
+
+	void EnforceROMConstraint(FRangeLimitedFABRIKChainLink& ParentLink, FIKBone& ParentBone,
+		FRangeLimitedFABRIKChainLink& ChildLink, FIKBone& ChildBone);
+
+	void UpdateParentRotation(FRangeLimitedFABRIKChainLink& ParentLink,
+		const FRangeLimitedFABRIKChainLink& ChildLink, FCSPose<FCompactPose>& Pose);
 
 #if WITH_EDITOR
 	// Cached CS location when in editor for debug drawing
