@@ -133,6 +133,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	EIKROMConstraintMode ConstraintMode;
 
+	// Stores bone transform before committing to OutBoneTransforms. Not guaranteed to be valid.
+	FTransform CSTransform;
+
 	FCompactPoseBoneIndex BoneIndex;
 
 public:
@@ -232,7 +235,7 @@ public:
 	// Bones in the chain, ordered from the effector bone to the root.
 	// Each bone must be the skeletal parent of the preceeding bone. 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	TArray<FIKBone> BonesEffectorToRoot;
+	TArray<FIKBone> BonesRootToEffector;
 
 	// Maps bone indices to their corresponding FIKBone entries in BonesEffectorToRoot
 	TArray<size_t> BoneIndexToChainIndexMap;
