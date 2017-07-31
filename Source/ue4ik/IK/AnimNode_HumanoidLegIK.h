@@ -129,6 +129,5 @@ public:
 protected:
 	float DeltaTime;
 	FVector LastEffectorOffset;
-	//FAnimNode_Fabrik FabrikSolver;
-	FAnimNode_RangeLimitedFabrik FabrikSolver;
+	FAnimNode_Fabrik FabrikSolver;
 };

@@ -4,34 +4,29 @@
 #include "Animation/AnimInstance.h"
 #include "AnimNodeEditModes.h"
 
-#define LOCTEXT_NAMESPACE "RangeLimitedFabrik"
-
 UAnimGraphNode_RangeLimitedFabrik::UAnimGraphNode_RangeLimitedFabrik(const FObjectInitializer& ObjectInitializer)
-: Super(ObjectInitializer)
+	:
+	Super(ObjectInitializer)
 {
-}
 
-FText UAnimGraphNode_RangeLimitedFabrik::GetControllerDescription() const
-{
-	return LOCTEXT("Range limited Fabrik", "Range Limited FABRIK");
 }
 
 FText UAnimGraphNode_RangeLimitedFabrik::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return GetControllerDescription();
+	return FText::FromString(FString("Range Limited FABRIK"));
 }
 
-void UAnimGraphNode_RangeLimitedFabrik::CopyNodeDataToPreviewNode(FAnimNode_Base* InPreviewNode)
+FLinearColor UAnimGraphNode_RangeLimitedFabrik::GetNodeTitleColor() const
 {
-	FAnimNode_RangeLimitedFabrik* Fabrik = static_cast<FAnimNode_RangeLimitedFabrik*>(InPreviewNode);
-
-	// copies Pin values from the internal node to get data which are not compiled yet
-	Fabrik->EffectorTransform = Node.EffectorTransform;
+	return FLinearColor(0, 1, 1, 1);
 }
 
-FEditorModeID UAnimGraphNode_RangeLimitedFabrik::GetEditorMode() const
+FString UAnimGraphNode_RangeLimitedFabrik::GetNodeCategory() const
 {
-	return AnimNodeEditModes::Fabrik;
+	return FString("IK Nodes");
 }
 
-#undef LOCTEXT_NAMESPACE
+FText UAnimGraphNode_RangeLimitedFabrik::GetControllerDescription() const
+{
+	return FText::FromString(FString("FABRIK solver with range limits"));
+}

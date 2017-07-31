@@ -15,6 +15,7 @@
 	See IK.h for a description of ROM constraints.
 */
 
+/*
  // Internal structure for evaluating the IK chain
 struct FRangeLimitedFABRIKChainLink
 {
@@ -44,6 +45,7 @@ public:
 		BoneCSTransform(InTransform)
 	{ }
 };
+*/
 
 USTRUCT()
 struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlBase
@@ -62,19 +64,11 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	FBoneReference EffectorTransformBone;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones)
-	//URangeLimitedIKChainWrapper* IKChain;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
+	URangeLimitedIKChainWrapper* IKChain;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	TEnumAsByte<enum EBoneRotationSource> EffectorRotationSource;
-
-	/** Name of tip bone */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
-	FBoneReference TipBone;
-
-	/** Name of the root bone*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
-	FBoneReference RootBone;
 
 	/** Tolerance for final tip location delta from EffectorLocation*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
@@ -109,11 +103,10 @@ protected:
 	// Convenience function to get current (pre-translation iteration) component space location of bone by bone index
 	FVector GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex);
 
-	void EnforceROMConstraint(FCSPose<FCompactPose>& Pose, TArray<FRangeLimitedFABRIKChainLink>& Chain,
-		FIKBone& ChildBone, int32 ChildIndex);
+	void EnforceROMConstraint(FCSPose<FCompactPose>& Pose, FIKBone& ChildBone, int32 ChildIndex);
 
-	void UpdateParentRotation(FRangeLimitedFABRIKChainLink& ParentLink,
-		const FRangeLimitedFABRIKChainLink& ChildLink, FCSPose<FCompactPose>& Pose);
+	void UpdateParentRotation(FTransform& ParentTransform, const FIKBone& ParentBone,
+		FTransform& ChildTransform, const FIKBone& ChildBone, FCSPose<FCompactPose>& Pose) const;
 
 #if WITH_EDITOR
 	// Cached CS location when in editor for debug drawing

@@ -149,9 +149,9 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 			bValid = false;
 		}
 
-		FIKBone& PreviousBone = BonesRootToEffector[i-1];		
 		if (i > 0)
 		{ 
+			FIKBone& PreviousBone = BonesRootToEffector[i - 1];
 			if (PreviousBone.BoneIndex.GetInt() >= Bone.BoneIndex.GetInt())
 			{
 #if ENABLE_IK_DEBUG
@@ -179,14 +179,7 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 			LargestBoneIndex = Bone.BoneIndex.GetInt();
 		}
 	}
-
-	BoneIndexToChainIndexMap.AddDefaulted(LargestBoneIndex);
-	for (size_t i = 0; i < BonesRootToEffector.Num(); ++i)
-	{
-		FIKBone& Bone = BonesRootToEffector[i];
-		BoneIndexToChainIndexMap[Bone.BoneIndex.GetInt()] = i;
-	}
-
+	
 	return bValid;
 }
 

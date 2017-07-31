@@ -198,5 +198,5 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 		FabrikSolver.RootBone      = Leg->Chain.HipBone.BoneRef;
 		FabrikSolver.Precision     = Precision;
 		FabrikSolver.MaxIterations = MaxIterations;
-	}
+	}	
 }

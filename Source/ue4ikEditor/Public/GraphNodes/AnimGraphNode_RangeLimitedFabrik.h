@@ -20,14 +20,10 @@ class UAnimGraphNode_RangeLimitedFabrik : public UAnimGraphNode_SkeletalControlB
 	FAnimNode_RangeLimitedFabrik Node;
 
 public:
-	// UEdGraphNode interface
-	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	// End of UEdGraphNode interface
 
-	// UAnimGraphNode_Base interface
-	virtual void CopyNodeDataToPreviewNode(FAnimNode_Base* AnimNode) override;
-	virtual FEditorModeID GetEditorMode() const override;
-	// End of UAnimGraphNode_Base interface
+	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	FLinearColor GetNodeTitleColor() const override;
+	FString GetNodeCategory() const override;
 
 protected:
 	// UAnimGraphNode_SkeletalControlBase interface
