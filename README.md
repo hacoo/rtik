@@ -28,6 +28,8 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
  
 ## Status
 
+Updated 8/1/2017 
+
 Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
 
 I'm now working on upper body IK. I have simple IK working for the arms, but no torso movement yet (this is the tricky part).
