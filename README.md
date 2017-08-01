@@ -28,7 +28,15 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
  
 ## Status
 
-Leg / Foot IK is working and hopefully done. Foot rotation controllers are up and running. On to the upper body...
+Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
+
+I'm now working on upper body IK. I have simple IK working for the arms, but no torso movement yet (this is the tricky part).
+Getting this to work means integrating range-of-motion constraints into the FABRIK solver. The math on this isn't too hard
+but it's tricky to implement because - at least in Unreal - bone axes are not consistent. This makes it hard to specify
+a frame of reference to measure rotation.
+
+I'm trying to figure out the best approach. I think it's actually possible to implement upper-body (i.e., arm-and-torso) IK
+without 'true' ROM constraints, but supporting constraints within the solver would be simpler to work with.
 
 ## License
 
