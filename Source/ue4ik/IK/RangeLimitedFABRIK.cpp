@@ -1,8 +1,10 @@
+// Copyright (c) Henry Cooney 2017
+
 #include "RangeLimitedFABRIK.h"
 
 bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	const TArray<FTransform>& InCSTransforms,
-	const TArray<FIKBoneConstraint>& Constraints,
+	const TArray<UIKBoneConstraint*>& Constraints,
 	const FVector & EffectorTargetLocationCS,
 	TArray<FTransform>& OutCSTransforms,
 	float Precision,

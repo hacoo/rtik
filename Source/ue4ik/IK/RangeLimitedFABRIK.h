@@ -1,3 +1,5 @@
+// Copyright (c) Henry Cooney 2017
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,7 +17,7 @@ public:
 
 static bool SolveRangeLimitedFABRIK(
 	const TArray<FTransform>& InCSTransforms,
-	const TArray<FIKBoneConstraint>& Constraints,
+	const TArray<UIKBoneConstraint*>& Constraints,
 	const FVector& EffectorTargetLocationCS,
 	TArray<FTransform>& OutCSTransforms,
 	float Precision = 0.01f,
