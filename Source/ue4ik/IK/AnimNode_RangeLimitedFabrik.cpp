@@ -196,11 +196,11 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FCSPose<FCompactPose>& Pose, 
 	FIKBone& ChildBone, int32 ChildIndex)
 {
+	/*
 	if (ChildBone.ConstraintMode == EIKROMConstraintMode::IKROM_No_Constraint)
 	{
 		return;
 	}
-	/*
 	FRangeLimitedFABRIKChainLink& ChildLink = Chain[ChildIndex];
 	FVector ChildLoc = ChildLink.BoneCSTransform.GetLocation();
 

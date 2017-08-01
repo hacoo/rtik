@@ -68,11 +68,8 @@ enum class EIKBoneAxis : uint8
 uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 
 /*
-* A bone used in IK.
-*
-* Range of motion constraints can be specified, but are not necessary unless the bone is being used
-* with an IK method that supports them.
-*
+* A range-of-motion constraint on a bone used in IK.
+* 
 * Range-of-motion is determined as follows:
 * - Pitch and yaw are determined by compaing directions of the bone with the direction of the parent bone. Bone direction is defined as the vector starting at the bone's skeletal parent, and ending at the bone.
 * - The pitch / yaw axes of the PARENT bone are used for rotations.
@@ -84,27 +81,23 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 * Note that pitch / yaw share a constraint angle for now. This is because it is much simpler and cheaper
 * to interect a vector with a circle than an elipsoid. I may change this if needed in the future.
 */
+
 USTRUCT(BlueprintType)
-struct UE4IK_API FIKBone
+struct UE4IK_API FIKBoneConstraint
 {
-	GENERATED_USTRUCT_BODY()
-		
-public:
 	
-	FIKBone()
+	GENERATED_USTRUCT_BODY()
+
+	FIKBoneConstraint()
 		:
 		PitchAxis(EIKBoneAxis::IKBA_Y),
 		YawAxis(EIKBoneAxis::IKBA_Z),
 		PitchYawROMDegrees(45.0f),
 		ConstraintMode(EIKROMConstraintMode::IKROM_No_Constraint),
-		BoneIndex(INDEX_NONE),
 		DefaultForwardDirectionComponentSpace(1.0f, 0.0f, 0.0f),
 		bUseParentBoneDirection(true)
 	{ }
-		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FBoneReference BoneRef;
-		
+
 	// The axis that this bone pitches around. Usually, this points to the side (the Y axis)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	EIKBoneAxis PitchAxis;
@@ -133,6 +126,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	EIKROMConstraintMode ConstraintMode;
 
+
+};
+
+/*
+* A bone used in IK.
+*
+* Range of motion constraints can be specified, but are not used unless the bone is being used
+* with an IK method that supports them.
+*
+*/
+USTRUCT(BlueprintType)
+struct UE4IK_API FIKBone
+{
+	GENERATED_USTRUCT_BODY()
+		
+public:
+	
+	FIKBone()
+		:
+		BoneIndex(INDEX_NONE)
+	{ }
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FBoneReference BoneRef;
+		
 	FCompactPoseBoneIndex BoneIndex;
 
 public:
