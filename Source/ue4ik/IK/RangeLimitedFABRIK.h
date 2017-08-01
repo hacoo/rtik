@@ -14,7 +14,7 @@ struct UE4IK_API FRangeLimitedFABRIK
 public:
 
 static bool SolveRangeLimitedFABRIK(
-	const TArray<FTransform>& CSTransforms,
+	const TArray<FTransform>& InCSTransforms,
 	const TArray<FIKBoneConstraint>& Constraints,
 	const FVector& EffectorTargetLocationCS,
 	TArray<FTransform>& OutCSTransforms,
