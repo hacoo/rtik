@@ -55,7 +55,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	}
 
 	TArray<FTransform> DestCSTransforms;
-	TArray<FIKBoneConstraint> Constraints;
+	TArray<UIKBoneConstraint*> Constraints;
 
 	bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 		SourceCSTransforms,

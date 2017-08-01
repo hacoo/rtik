@@ -70,64 +70,44 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 /*
 * A range-of-motion constraint on a bone used in IK.
 * 
-* Range-of-motion is determined as follows:
-* - Pitch and yaw are determined by compaing directions of the bone with the direction of the parent bone. Bone direction is defined as the vector starting at the bone's skeletal parent, and ending at the bone.
-* - The pitch / yaw axes of the PARENT bone are used for rotations.
-* - Twist (roll) constraints are NOT implemented yet; they are ignored.
-* - If a bone does not have a valid parent bone, then the DEfaultForwardDirectionComponentSpace vector is used in place of the parent direction.
-*   The rotation axes are simply specified pitch / yaw axes as component space vectors.
-* - Joint ROMS must be between 0 and 90 degrees. I may upgrade to allow larger ROMs later. Note that 90 degrees means 90 degrees in each direction (for a total of 180 degrees)
+* ROM constraints have access to the entire bone chain, before and after IK, and
+* may modify and and all transforms in the chain. 
 * 
-* Note that pitch / yaw share a constraint angle for now. This is because it is much simpler and cheaper
-* to interect a vector with a circle than an elipsoid. I may change this if needed in the future.
+* The base constraint type does nothing.
 */
 
-USTRUCT(BlueprintType)
-struct UE4IK_API FIKBoneConstraint
+UCLASS(BlueprintType, Blueprintable, DefaultToInstanced, EditInlineNew, abstract)
+class UE4IK_API UIKBoneConstraint : public UObject
 {
 	
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
-	FIKBoneConstraint()
-		:
-		PitchAxis(EIKBoneAxis::IKBA_Y),
-		YawAxis(EIKBoneAxis::IKBA_Z),
-		PitchYawROMDegrees(45.0f),
-		ConstraintMode(EIKROMConstraintMode::IKROM_No_Constraint),
-		DefaultForwardDirectionComponentSpace(1.0f, 0.0f, 0.0f),
-		bUseParentBoneDirection(true)
-	{ }
+public:
 
-	// The axis that this bone pitches around. Usually, this points to the side (the Y axis)
+	// Constraint should only be enforced if this is set to true
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	EIKBoneAxis PitchAxis;
+	bool bEnabled = true;
 
-	// The axis that this bone yaws around. Usually, this points up (the Z axis)
+#if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	EIKBoneAxis YawAxis;
+	bool bEnableDebugDraw = false;
+#endif // WITH_EDITORONLY_DATA
 
-	// A direction in component space, describing the default 'forward' direction of this bone.
-	// If this bone does not have a parent, this direction will be used in place of the parent bone direction.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FVector DefaultForwardDirectionComponentSpace;
-   
-	// How far the bone may rotate in the pitch / yaw directions, if these ROM constraints are enforced.
-	// Currently, ROM must be 0-90 degrees; larger ROMS are not supported yet
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(UIMin = 0.0f, UIMax = 90.0f))
-	float PitchYawROMDegrees;
-
-	// If true, the forward direction will be determined by the direction of the parent bone. If not, 
-	// the DefaultForwardDirectionComponentSpace vector is used. For most bones, this should be set to true;
-	// however, there may be some (e.g., the pelvis), which do not have a meaninful parent bone.	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")	
-	bool bUseParentBoneDirection;
-
-	// How this bone's ROM constraint should be enforced.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	EIKROMConstraintMode ConstraintMode;
-
-
+public:
+	// Enforces the constraint. Will modify OutCSTransforms if needed.
+	// @param Index - The index of this constraint in Constraints; should correspond to the same bone in in InCSTransforms and OutCSTransforms
+	// @param InCSTransforms - Array of bone transforms before skeletal controls (e.g., IK) are applied
+	// @param Constraints - Array of constraints for each bone (including this one, at index Index)	
+	// @param OutCSTransforms - Array of transforms as skeletal controls (e.g., IK) are being applied; this array will be modified in place
+	virtual void EnforceConstraint(
+		int32 Index,
+		const TArray<FTransform>& InCSTransforms,
+		const TArray<UIKBoneConstraint*>& Constraints,
+		TArray<FTransform>& OutCSTransforms
+	) PURE_VIRTUAL(UIKBoneConstraint::EnforceConstriant, ;);	
 };
+
+
 
 /*
 * A bone used in IK.
@@ -150,6 +130,9 @@ public:
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FBoneReference BoneRef;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UIKBoneConstraint* Constraint;
 		
 	FCompactPoseBoneIndex BoneIndex;
 
