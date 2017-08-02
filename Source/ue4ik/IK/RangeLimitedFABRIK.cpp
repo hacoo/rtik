@@ -8,7 +8,8 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	const FVector & EffectorTargetLocationCS,
 	TArray<FTransform>& OutCSTransforms,
 	float Precision,
-	int32 MaxIterations)
+	int32 MaxIterations,
+	ACharacter* Character)
 {
 	OutCSTransforms.Empty();
 
@@ -43,6 +44,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 	float RootToTargetDistSq = FVector::DistSquared(OutCSTransforms[0].GetLocation(), EffectorTargetLocationCS);
 
+	/*
 	// FABRIK algorithm - bone translation calculation
 	// If the effector is further away than the distance from root to tip, simply move all bones in a line from root to effector location
 	if (RootToTargetDistSq > FMath::Square(MaximumReach))
@@ -59,6 +61,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	}
 	else // Effector is within reach, calculate bone translations to position tip at effector location
 	{
+	*/
 		int32 TipBoneLinkIndex = NumBones - 1;
 
 		// Check distance between tip location and effector location
@@ -81,9 +84,18 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 						(CurrentLink.GetLocation() - ChildLink.GetLocation()).GetUnsafeNormal() *
 						BoneLengths[LinkIndex]);
 
-					// UpdateParentRotation(CurrentLink, IKChain->Chain[LinkIndex],
-						// ChildLink, IKChain->Chain[LinkIndex + 1],
-						// Output.Pose);
+					// Enforce parent's constraint any time child is moved
+					UIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
+					if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
+					{
+						CurrentConstraint->EnforceConstraint(
+							LinkIndex - 1,
+							InCSTransforms,
+							Constraints,
+							OutCSTransforms,
+							Character
+						);
+					}
 				}
 
 				// "Backward Reaching" stage - adjust bones from root.
@@ -96,9 +108,18 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 						(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
 						BoneLengths[LinkIndex]);
 
-					// UpdateParentRotation(ParentLink, IKChain->Chain[LinkIndex - 1],
-						// CurrentLink, IKChain->Chain[LinkIndex],
-						// Output.Pose);
+					// Enforce parent's constraint any time child is moved
+					UIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
+					if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
+					{
+						CurrentConstraint->EnforceConstraint(
+							LinkIndex - 1,
+							InCSTransforms,
+							Constraints,
+							OutCSTransforms,
+							Character
+						);
+					}
 				}
 
 				// Re-check distance between tip location and effector location
@@ -123,7 +144,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 			bBoneLocationUpdated = true;
 		}
-	}
+//}
 
 	// Update bone rotations
 	if (bBoneLocationUpdated) 

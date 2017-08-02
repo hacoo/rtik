@@ -76,7 +76,7 @@ uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
 * The base constraint type does nothing.
 */
 
-UCLASS(BlueprintType, Blueprintable, DefaultToInstanced, EditInlineNew, abstract)
+UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
 class UE4IK_API UIKBoneConstraint : public UObject
 {
 	
@@ -96,15 +96,21 @@ public:
 public:
 	// Enforces the constraint. Will modify OutCSTransforms if needed.
 	// @param Index - The index of this constraint in Constraints; should correspond to the same bone in in InCSTransforms and OutCSTransforms
-	// @param InCSTransforms - Array of bone transforms before skeletal controls (e.g., IK) are applied
+	// @param ReferenceCSTransforms - Array of bone transforms before skeletal controls (e.g., IK) are applied. Not necessarily in the reference pose (although they might be, depending on your needs)
 	// @param Constraints - Array of constraints for each bone (including this one, at index Index)	
-	// @param OutCSTransforms - Array of transforms as skeletal controls (e.g., IK) are being applied; this array will be modified in place
+	// @param CSTransforms - Array of transforms as skeletal controls (e.g., IK) are being applied; this array will be modified in place
+	// @param Character - Optional owning Character; may to left to nullptr, but is required for debug drawing.
 	virtual void EnforceConstraint(
 		int32 Index,
-		const TArray<FTransform>& InCSTransforms,
+		const TArray<FTransform>& ReferenceCSTransforms,
 		const TArray<UIKBoneConstraint*>& Constraints,
-		TArray<FTransform>& OutCSTransforms
-	) PURE_VIRTUAL(UIKBoneConstraint::EnforceConstriant, ;);	
+		TArray<FTransform>& CSTransforms,
+		ACharacter* Character = nullptr
+	) { }
+
+
+
+		//		PURE_VIRTUAL(UIKBoneConstraint::EnforceConstriant, ;);	g
 };
 
 
@@ -131,7 +137,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FBoneReference BoneRef;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, NoClear, Export, Category = "Settings")
 	UIKBoneConstraint* Constraint;
 		
 	FCompactPoseBoneIndex BoneIndex;
@@ -153,7 +159,7 @@ protected:
 /*
 * Allows bones to be passed around in BP
 */
-UCLASS(BlueprintType, EditInlineNew)
+UCLASS(BlueprintType)
 class UE4IK_API UIKBoneWrapper : public UObject
 {
 	
@@ -259,7 +265,7 @@ protected:
 /*
 * Wraps an IK chain so it can be passed around in BPs
 */
-UCLASS(BlueprintType, EditInlineNew)
+UCLASS(BlueprintType)
 class UE4IK_API UIKChainWrapper : public UObject
 {
 	GENERATED_BODY()
@@ -290,7 +296,7 @@ protected:
 };
 
 
-UCLASS(BlueprintType, EditInlineNew)
+UCLASS(BlueprintType)
 class UE4IK_API URangeLimitedIKChainWrapper : public UIKChainWrapper
 {
 	GENERATED_BODY()

@@ -21,7 +21,8 @@ public:
 		const FVector& EffectorTargetLocationCS,
 		TArray<FTransform>& OutCSTransforms,
 		float Precision = 0.01f,
-		int32 MaxIterations = 20
+		int32 MaxIterations = 20,
+		ACharacter* Character = nullptr
 	);
 	
 	static void UpdateParentRotation(

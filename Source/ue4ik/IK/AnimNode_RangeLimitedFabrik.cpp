@@ -46,27 +46,30 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	// Maximum length of skeleton segment at full extension
 	float MaximumReach = 0;
 
-	// Gather bone transforms
+	// Gather bone transforms and constraints
 	TArray<FTransform> SourceCSTransforms;
+	TArray<UIKBoneConstraint*> Constraints;
 	SourceCSTransforms.Reserve(NumChainLinks);
+	Constraints.Reserve(NumChainLinks);
 	for (int32 i = 0; i < NumChainLinks; ++i)
 	{
 		SourceCSTransforms.Add(Output.Pose.GetComponentSpaceTransform(IKChain->Chain[i].BoneIndex));
+		Constraints.Add(IKChain->Chain[i].Constraint);
 	}
 
 	TArray<FTransform> DestCSTransforms;
-	TArray<UIKBoneConstraint*> Constraints;
 
+
+	ACharacter* Character = Cast<ACharacter>(Output.AnimInstanceProxy->GetSkelMeshComponent()->GetOwner());
 	bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 		SourceCSTransforms,
 		Constraints,
 		CSEffectorTransform.GetLocation(),
 		DestCSTransforms,
 		Precision,
-		MaxIterations
+		MaxIterations,
+		Character
 	);
-
-	
 
 	// Special handling for tip bone's rotation.
 	int32 TipBoneIndex = NumChainLinks - 1;
