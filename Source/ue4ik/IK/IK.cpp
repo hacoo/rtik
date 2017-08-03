@@ -71,7 +71,7 @@ bool FIKBone::IsValid(const FBoneContainer& RequiredBones)
 void UIKBoneWrapper::Initialize(FIKBone InBone)
 {
 	Bone = InBone;
-		bInitialized = true;
+	bInitialized = true;
 }
 
 bool UIKBoneWrapper::InitIfInvalid(const FBoneContainer& RequiredBones)

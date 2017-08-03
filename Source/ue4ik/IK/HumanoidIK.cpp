@@ -208,3 +208,29 @@ bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 	
 	return bInitOk;
 }
+
+/*
+bool FHumanoidArmChain::InitBoneReferences(const FBoneContainer & RequiredBones)
+{
+	// Automatically set up chain
+	BonesRootToEffector.Empty();
+	BonesRootToEffector.Reserve(2);
+	BonesRootToEffector.Add(UpperArmBone);
+	BonesRootToEffector.Add(LowerArmBone);
+
+	UpperArmBone.Init(RequiredBones);
+	LowerArmBone.Init(RequiredBones);
+	
+	Super::InitBoneReferences(RequiredBones);
+}
+
+bool FHumanoidArmChain::IsValid(const FBoneContainer & RequiredBones)
+{
+	bool bValid = true;
+	bValid &= UpperArmBone.IsValid(RequiredBones);
+	bValid &= LowerArmBone.IsValid(RequiredBones);
+	bValid &= Super::InitBoneReferences(RequiredBones);
+
+	return bValid;
+}
+*/

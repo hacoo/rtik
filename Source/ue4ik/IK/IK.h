@@ -238,7 +238,7 @@ public:
 
 	// Bones in the chain, ordered from the effector bone to the root.
 	// Each bone must be the skeletal parent of the preceeding bone. 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RangeLimitedIK")
 	TArray<FIKBone> BonesRootToEffector;
 
 	FIKBone& operator[](size_t i);

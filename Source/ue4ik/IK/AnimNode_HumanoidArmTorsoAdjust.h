@@ -8,13 +8,8 @@
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_HumanoidArmTorsoAdjust.generated.h"
 
-
-
 /*
-  * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
-  * Uses FABRIK IK solver.  
-  * 
-  * Knee rotation is not enforced in this node.
+* Rotates the torso and shoulders to prepare for IK.
 */
 USTRUCT()
 struct UE4IK_API FAnimNode_HumanoidArmTorsoAdjust : public FAnimNode_SkeletalControlBase
@@ -28,6 +23,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
 	FComponentSpacePoseLink BaseComponentPose;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
+	URangeLimitedIKChainWrapper* Arm;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
@@ -46,27 +43,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	bool bEnable;	
 
-	
+	// World-space target to place the effector
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
+	FVector EffectorWorldTarget;
+
 	// How to handle rotation of the effector (the the hand). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
-	//
-	// You should almost certainly set this to No Change and handle foot rotation separately. Change at your own risk!	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
 	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
 	// Increase to make IK more responsive but snappier. Uses constant interpolation.
-	//
-	// This is only used in Normal Locomotion mode. In World Target mode, the effector always moves instantly.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	float EffectorVelocity;
 
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
 	// For most applications, you should probably set this to false.
-	//
-	// This is only used if IK mode is 'Normal Locomotion' -- World Target IK always behaves as if this is set to true and moves instantly.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEffectorMovesInstantly;
 
@@ -79,6 +73,7 @@ public:
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
+		EffectorWorldTarget(0.0f, 0.0f, 0.0f),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),

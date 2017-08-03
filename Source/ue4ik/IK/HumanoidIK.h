@@ -93,6 +93,35 @@ protected:
 };
 
 /*
+// Represents a humanoid arm, with UpperArm (shoulder to elbow) and LowerArm (elbow to wrist) bones
+// Basically this is a convenience wrapper, hiding details of FRangeLimitedIKChain
+USTRUCT(BlueprintType, hidecategories = ("RangeLimitedIK"))
+struct UE4IK_API FHumanoidArmChain : public FRangeLimitedIKChain
+{
+	GENERATED_USTRUCT_BODY()
+
+	// Connects from shoulder to elbow
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HumanoidArmChain")
+	FIKBone UpperArmBone;
+	
+	// Connects from elbow to wrist
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HumanoidArmChain")
+	FIKBone LowerArmBone;
+	
+	// Range of motion of the shoulder joint. Shoulder functions as a Conic constraint
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HumanoidArmChain", meta = (UIMin = 0.0f, UIMax = 180.0f))
+	// float ShouldROMDegrees;
+
+	// Begin FRangeLimitedIKChain interface
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones) override;
+	virtual bool IsValid(const FBoneContainer& RequiredBones) override;
+	// End FRangeLimitedIKChain interface
+
+};
+*/
+
+
+/*
 * Holds trace data used in leg IK
 */
 USTRUCT(BlueprintType)
@@ -208,6 +237,66 @@ public:
 		return Chain.IsValid(RequiredBones);
 	}
 };
+
+/*
+* Wrapper class for passing around in BP
+UCLASS(BlueprintType, EditInlineNew)
+class UE4IK_API UHumanoidArmChain_Wrapper : public UIKChainWrapper
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FHumanoidArmChain Chain;
+
+	UFUNCTION(BlueprintCallable, Category = IK)
+	void Initialize(FHumanoidArmChain InChain) 
+	{		
+		Chain = InChain;
+		bInitialized = true;
+	}
+
+	virtual bool InitIfInvalid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+		
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Initialize all bones used in this chain. Must be called before use.
+	virtual bool InitBoneReferences(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+#if ENABLE_IK_DEBUG
+			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+#endif // ENABLE_IK_DEBUG
+			return false;
+		}
+
+		return Chain.InitIfInvalid(RequiredBones);
+	}
+	
+	// Check whether this chain is valid to use. Should be called in the IsValid method of your animnode.
+	virtual bool IsValid(const FBoneContainer& RequiredBones)
+	{
+		if (!bInitialized)
+		{
+			return false;
+		}
+
+		return Chain.IsValid(RequiredBones);
+	}
+};
+*/
+
 
 /*
 * Contains Humanoid IK utility functions
