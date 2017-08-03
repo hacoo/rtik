@@ -49,7 +49,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	// Check distance between tip location and effector location
 	float Slop = FVector::Dist(OutCSTransforms[TipBoneLinkIndex].GetLocation(), EffectorTargetLocationCS);
 	if (Slop > Precision)
-		{
+	{
 		// Set tip bone at end effector location.
 		OutCSTransforms[TipBoneLinkIndex].SetLocation(EffectorTargetLocationCS);
 		
@@ -116,7 +116,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 						Character
 					);
 				}
-				}
+			}
 
 			// Re-check distance between tip location and effector location
 			// Since we're keeping tip on top of effector location, check with its parent bone.
