@@ -48,13 +48,13 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 
 	// Gather bone transforms and constraints
 	TArray<FTransform> SourceCSTransforms;
-	TArray<UIKBoneConstraint*> Constraints;
+	TArray<FIKBoneConstraint*> Constraints;
 	SourceCSTransforms.Reserve(NumChainLinks);
 	Constraints.Reserve(NumChainLinks);
 	for (int32 i = 0; i < NumChainLinks; ++i)
 	{
 		SourceCSTransforms.Add(Output.Pose.GetComponentSpaceTransform(IKChain->Chain[i].BoneIndex));
-		Constraints.Add(IKChain->Chain[i].Constraint);
+		Constraints.Add(IKChain->Chain[i].GetConstraint());
 	}
 
 	TArray<FTransform> DestCSTransforms;

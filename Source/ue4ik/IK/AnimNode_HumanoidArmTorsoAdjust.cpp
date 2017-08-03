@@ -98,7 +98,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 #endif 
 
 	// Set up torso pitch constraint, allowing torso to bend forward / backward
-	UPlanarRotation TorsoPitchConstraint;
+	FPlanarRotation TorsoPitchConstraint;
 	TorsoPitchConstraint.RotationAxis = RightAxis;
 	TorsoPitchConstraint.ForwardDirection = UpAxis;
 	TorsoPitchConstraint.FailsafeDirection = UpAxis;
@@ -121,7 +121,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	TorsoPitchConstraint.bEnabled = true;
 
 	// Set up torso twist constraint, allowing a twist around the direction of the pivot-neck vector
-	UPlanarRotation TorsoTwistConstraint;
+	FPlanarRotation TorsoTwistConstraint;
 	TorsoTwistConstraint.ForwardDirection = RightAxis;	
 	TorsoTwistConstraint.FailsafeDirection = RightAxis;
 	TorsoTwistConstraint.MinDegrees = -MaxBackwardTwistDegrees;
@@ -132,7 +132,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	TorsoTwistConstraint.SetupFn = [&TorsoTwistConstraint](
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		TArray<FTransform>& CSTransforms
 		)
 	{
@@ -144,13 +144,13 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	};
 
 	// Add constraints
-	TArray<UIKBoneConstraint*> Constraints;
+	TArray<FIKBoneConstraint*> Constraints;
 	Constraints.Reserve(NumBones);
 	Constraints.Add(&TorsoPitchConstraint);
 	Constraints.Add(&TorsoTwistConstraint);
 	for (FIKBone& Bone : Arm->Chain.BonesRootToEffector)
 	{
-		Constraints.Add(Bone.Constraint);
+		Constraints.Add(Bone.GetConstraint());
 	}
 
 	// Run FABRIK and pray

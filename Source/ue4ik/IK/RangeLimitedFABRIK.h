@@ -16,7 +16,7 @@ public:
 
 	static bool SolveRangeLimitedFABRIK(
 		const TArray<FTransform>& InCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		const FVector& EffectorTargetLocationCS,
 		TArray<FTransform>& OutCSTransforms,
 		float Precision = 0.01f,

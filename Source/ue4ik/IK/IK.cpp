@@ -79,6 +79,17 @@ bool FIKBone::IsValid(const FBoneContainer& RequiredBones)
 #endif // ENABLE_IK_DEBUG_VERBOSE
 	return bValid;
 }
+
+FIKBoneConstraint* FIKBone::GetConstraint()
+{
+	if (Constraint == nullptr)
+	{
+		return nullptr;
+	}
+
+	return Constraint->GetConstraint();
+}
+
 #pragma endregion FIKBone
 
 #pragma region UIKBoneWrapper

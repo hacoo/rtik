@@ -4,7 +4,7 @@
 
 bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	const TArray<FTransform>& InCSTransforms,
-	const TArray<UIKBoneConstraint*>& Constraints,
+	const TArray<FIKBoneConstraint*>& Constraints,
 	const FVector & EffectorTargetLocationCS,
 	TArray<FTransform>& OutCSTransforms,
 	float Precision,
@@ -67,7 +67,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 					BoneLengths[LinkIndex]);
 				
 				// Enforce parent's constraint any time child is moved
-				UIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
+				FIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
 				if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
 				{
 					CurrentConstraint->SetupFn(
@@ -98,7 +98,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 					BoneLengths[LinkIndex]);
 				
 				// Enforce parent's constraint any time child is moved
-				UIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
+				FIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
 				if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
 				{
 					CurrentConstraint->SetupFn(

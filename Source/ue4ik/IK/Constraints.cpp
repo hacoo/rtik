@@ -8,21 +8,22 @@
 #endif // WITH_EDITOR
 
 
-#pragma region UIKNoBoneConstraint
-void UNoBoneConstraint::EnforceConstraint(
+#pragma region FIKNoBoneConstraint
+void FNoBoneConstraint::EnforceConstraint(
 	int32 Index,
 	const TArray<FTransform>& InCSTransforms,
-	const TArray<UIKBoneConstraint*>& Constraints,
+	const TArray<FIKBoneConstraint*>& Constraints,
 	TArray<FTransform>& OutCSTransforms,
 	ACharacter* Character
 )
 {
 	return;
 }
-#pragma endregion UIKNoBoneConstraint
+#pragma endregion FIKNoBoneConstraint
 
-#pragma region UPlanarRotation
-void UPlanarRotation::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) 
+#pragma region FPlanarRotation
+/*
+void FPlanarRotation::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) 
 {
 	// make sure axes are normalized; compute up axis
 	bool bAxesOK = true;
@@ -43,13 +44,14 @@ void UPlanarRotation::PostEditChangeProperty(struct FPropertyChangedEvent& Prope
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 } 
+*/
 
 
 
-void UPlanarRotation::EnforceConstraint(
+void FPlanarRotation::EnforceConstraint(
 	int32 Index,
 	const TArray<FTransform>& ReferenceCSTransforms,
-	const TArray<UIKBoneConstraint*>& Constraints,
+	const TArray<FIKBoneConstraint*>& Constraints,
 	TArray<FTransform>& CSTransforms,
 	ACharacter* Character
 ) 
@@ -82,7 +84,6 @@ void UPlanarRotation::EnforceConstraint(
 
 	if (!BoneDirection.Normalize())
 	{
-		UE_LOG(LogIK, Warning, TEXT("Failsafe!"));
 		BoneDirection = FailsafeDirection;
 	}
 	
@@ -133,4 +134,4 @@ void UPlanarRotation::EnforceConstraint(
 	}
 #endif
 }
-#pragma endregion UPlanarRotation
+#pragma endregion FPlanarRotation

@@ -15,24 +15,39 @@
 /*
 	The bone is unconstrainted and may move freely.
 */
-UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
-class UE4IK_API UNoBoneConstraint : public UIKBoneConstraint
+USTRUCT(BlueprintType)
+struct UE4IK_API FNoBoneConstraint : public FIKBoneConstraint
 {
 	
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 	
 public: 
   
-	UNoBoneConstraint() { }
+	FNoBoneConstraint() { }
 
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		TArray<FTransform>& CSTransforms,
 		ACharacter* Character = nullptr
 	) override;
 };
+
+UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
+class UNoBoneConstraintWrapper : public UIKBoneConstraintWrapper
+{ 
+	GENERATED_BODY()
+
+public: 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FNoBoneConstraint Constraint;
+
+	// Subclasses must override this to return the internal constraint struct
+	virtual FIKBoneConstraint* GetConstraint() override { return &Constraint; };
+};
+
 
 /*
 	The bone may only rotate around the specified Rotation Axis; i.e., it must stay in the plane normal to the rotation axis.	
@@ -45,10 +60,10 @@ public:
 
 	If the bone direction is normal to the rotation plane, it will be forced to point in FailsafeDirection.
 */
-UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
-class UE4IK_API UPlanarRotation : public UIKBoneConstraint
+USTRUCT(BlueprintType)
+struct UE4IK_API FPlanarRotation : public FIKBoneConstraint
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 public:
   
@@ -76,7 +91,7 @@ public:
 
 public:
 
-	UPlanarRotation()
+	FPlanarRotation()
 		:
 		RotationAxis(0.0f, 1.0f, 10.0f),
 		ForwardDirection(1.0f, 0.0f, 0.0f),
@@ -89,10 +104,24 @@ public:
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		TArray<FTransform>& CSTransforms,
 		ACharacter* Character = nullptr
 	) override;
 
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
+	// virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
+};
+
+UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
+class UPlanarConstraintWrapper : public UIKBoneConstraintWrapper
+{ 
+	GENERATED_BODY()
+
+public: 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	FPlanarRotation Constraint;
+
+	// Subclasses must override this to return the internal constraint struct
+	virtual FIKBoneConstraint* GetConstraint() override { return &Constraint; };
 };

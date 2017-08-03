@@ -91,11 +91,11 @@ public:
 * The base constraint type does nothing.
 */
 
-UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
-class UE4IK_API FIKBoneConstraint 
+USTRUCT(BlueprintType)
+struct UE4IK_API FIKBoneConstraint 
 {
 	
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 public:
 
@@ -103,14 +103,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEnabled;
 
-#if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEnableDebugDraw;
-#endif // WITH_EDITORONLY_DATA
 
 public:
 
-	UIKBoneConstraint()
+	FIKBoneConstraint()
 		:
 		bEnabled(true),
 		bEnableDebugDraw(false)
@@ -126,7 +124,7 @@ public:
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		TArray<FTransform>& CSTransforms,
 		ACharacter* Character = nullptr
 	) { }
@@ -136,17 +134,29 @@ public:
 	TFunction<void(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<UIKBoneConstraint*>& Constraints,
+		const TArray<FIKBoneConstraint*>& Constraints,
 		TArray<FTransform>& CSTransforms
 		)> SetupFn = [](
 			int32 Index,
 			const TArray<FTransform>& ReferenceCSTransforms,
-			const TArray<UIKBoneConstraint*>& Constraints,
+			const TArray<FIKBoneConstraint*>& Constraints,
 			TArray<FTransform>& CSTransforms
-			) { }; 
+			) {};
 };
 
+/*
+ * Wrapper class allows these to be set 'polymorphically' during property-window setup
+ */
+UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced, abstract)
+class UIKBoneConstraintWrapper : public UObject
+{ 
+	GENERATED_BODY()
 
+public:
+
+	// Subclasses must override this to return the internal constraint struct
+	virtual FIKBoneConstraint* GetConstraint() { return nullptr; }
+};
 
 /*
 * A bone used in IK.
@@ -170,9 +180,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FBoneReference BoneRef;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, NoClear, Export, Category = "Settings")
-	UIKBoneConstraint* Constraint;
-		
+	FIKBoneConstraint* GetConstraint();
+
 	FCompactPoseBoneIndex BoneIndex;
 
 public:
@@ -186,6 +195,9 @@ public:
 	bool IsValid(const FBoneContainer& RequiredBones);
 
 protected:
+
+	UPROPERTY(EditAnywhere, Instanced, NoClear, Export, Category = "Settings")
+	UIKBoneConstraintWrapper* Constraint;
 
 };
 
