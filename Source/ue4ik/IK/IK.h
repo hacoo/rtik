@@ -62,11 +62,14 @@ enum class EIKBoneAxis : uint8
 {
 	IKBA_X UMETA(DisplayName = "X"),
 	IKBA_Y UMETA(DisplayName = "Y"),
-	IKBA_Z UMETA(DisplayName = "Z")
+	IKBA_Z UMETA(DisplayName = "Z"),
+	IKBA_XNeg UMETA(DisplayName = "X Negative"),
+	IKBA_YNeg UMETA(DisplayName = "Y Negative"),
+	IKBA_ZNeg UMETA(DisplayName = "Z Negative")
 };
 
-// Convert an EIKBoneAxis to an EAxis
-uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis);
+// Convert an EIKBoneAxis to a unit vector. 
+FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis);
 
 /*
 * A range-of-motion constraint on a bone used in IK.

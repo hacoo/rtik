@@ -2,23 +2,19 @@
 
 #include "IK.h"
 
-uint8 IKBoneAxisToAxis(EIKBoneAxis InBoneAxis)
+FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis)
 {
-	if (InBoneAxis == EIKBoneAxis::IKBA_X)
+	switch (InBoneAxis) 
 	{
-		return EAxis::X;
+	case EIKBoneAxis::IKBA_X: return FVector(1.0f, 0.0f, 0.0f);
+	case EIKBoneAxis::IKBA_Y: return FVector(0.0f, 1.0f, 0.0f);
+	case EIKBoneAxis::IKBA_Z: return FVector(0.0f, 0.0f, 1.0f);
+	case EIKBoneAxis::IKBA_XNeg: return FVector(-1.0f, 0.0f, 0.0f);
+	case EIKBoneAxis::IKBA_YNeg: return FVector(0.0f, -1.0f, 0.0f);
+	case EIKBoneAxis::IKBA_ZNeg: return FVector(0.0f, 0.0f, -1.0f);		
 	}
-	else if (InBoneAxis == EIKBoneAxis::IKBA_Y)
-	{
-		return EAxis::Y;
-	}
-	else if (InBoneAxis == EIKBoneAxis::IKBA_Z)
-	{
-		return EAxis::Z;
-	}
-	{
-		return EAxis::None;
-	}
+	
+	return FVector(0.0f, 0.0f, 0.0f);
 }
 
 #pragma region FIKBone
