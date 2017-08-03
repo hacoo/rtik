@@ -42,8 +42,63 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	// Input pin pointers are checked in IsValid -- don't need to check here
 
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
+	const USkeletalMeshSocket* TorsoPivotSocket = SkelComp->GetSocketByName(TorsoPivotSocketName);
+
+	if (TorsoPivotSocket == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Could not evaluate humanoid arm torso adjustment -- torso pivot socket named %s could not be found"),
+			*TorsoPivotSocketName.ToString());
+#endif
+		return;
+	}
+
+	if (Arm->Chain.Num() < 1)
+	{
+		return;
+	}
+
+	// Create two artificial 'bones'. The spine bone goes from the torso pivot to the neck,
+	// the shoulder bone goes from the neck to  the shoulder ball joint.
+	FTransform ShoulderCS = Output.Pose.GetComponentSpaceTransform(Arm->Chain[0].BoneIndex);
+
+	// 'Local transform'? Not 'component transform'? Come on guys
+	FTransform PivotCS = TorsoPivotSocket->GetSocketLocalTransform();
+
+	// Neck is directly above pivot, at shoulder height
+	FTransform NeckCS(PivotCS);
+	NeckCS.AddToTranslation(FVector(0.0f, 0.0f, ShoulderCS.GetLocation().Z));
+
+
+	// Set up augmented chain -- pivot and neck preceed the arm chain
+	int32 NumBones = Arm->Chain.Num() + 2;
+	TArray<FTransform> CSTransforms;
+	CSTransforms.Reserve(NumBones);
+	CSTransforms.Add(PivotCS);
+	CSTransforms.Add(NeckCS);
+
+	for (FIKBone& Bone : Arm->Chain.BonesRootToEffector)
+	{
+		CSTransforms.Add(Output.Pose.GetComponentSpaceTransform(Bone.BoneIndex));
+	}
+
+	// Set up pivot constraint. It can bend forward and backward. 
 	
+
+
+
+
+
 	
+
+
+	
+
+
+
+
+	
+
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
@@ -55,11 +110,41 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
-	bool bValid = true;
-	return bValid;
+	
+	if (Arm == nullptr)
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an input wrapper was null"));		
+#endif ENABLE_IK_DEBUG_VERBOSE
+		return false;		
+	}
+
+	if (!Arm->IsValid(RequiredBones))
+	{
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - arm chain was not valid to evaluate"));		
+#endif ENABLE_IK_DEBUG_VERBOSE
+		return false;				
+	}
+
+	return true;
 }
 
 void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-
+	if (Arm == nullptr)
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogIK, Warning, TEXT("Coud not initialize humanoid arm torso adjust - An input wrapper object was null"));
+#endif // ENABLE_IK_DEBUG
+		return;
+	}
+	
+	if (!Arm->InitBoneReferences(RequiredBones))
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize arm chain in humanoid arm torso adjust"));
+#endif // ENABLE_IK_DEBUG
+		return;
+	}
 }

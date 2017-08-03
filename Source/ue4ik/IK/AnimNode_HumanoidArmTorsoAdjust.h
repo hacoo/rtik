@@ -6,6 +6,7 @@
 #include "IK.h"
 #include "HumanoidIK.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "AnimNode_HumanoidArmTorsoAdjust.generated.h"
 
 /*
@@ -23,7 +24,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
 	FComponentSpacePoseLink BaseComponentPose;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links, meta = (PinShownByDefault))
 	URangeLimitedIKChainWrapper* Arm;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
@@ -43,6 +44,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	bool bEnable;	
 
+	// Specifies a point that the torso should pivot around during upper-body IK. When the torso
+	// bends forward / backward at the waist, this point will remain stationary, and the torso will
+	// pivot around it. Should be in the middle of the torso, roughly halfway up the spine.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	FName TorsoPivotSocketName;
+
+	// How far the torso may pitch forward, measured at the waist bone. In positive degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 180.0f))
+	float MaxForwardBendDegrees;
+
+	// How far the torso may pitch backward, measured at the waist bone. In positive degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
+	float MaxBackwardBendDegress;
+
+	// How far the torso may twist (around the character Z axis), in the forward direction. In positive degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
+	float MaxForwardTwistDegrees;
+
+	// How far the torso may twist (around the character Z axis), in the backward direction. In positive degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
+	float MaxBackwardTwistDegrees;
+
 	// World-space target to place the effector
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
 	FVector EffectorWorldTarget;
@@ -50,18 +73,18 @@ public:
 	// How to handle rotation of the effector (the the hand). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
 	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
 	// Increase to make IK more responsive but snappier. Uses constant interpolation.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector)
 	float EffectorVelocity;
 
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
 	// For most applications, you should probably set this to false.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector)
 	bool bEffectorMovesInstantly;
 
 public:
@@ -73,6 +96,11 @@ public:
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
+		TorsoPivotSocketName(NAME_None),
+		MaxForwardBendDegrees(60.0f),
+		MaxBackwardBendDegress(10.0f),
+		MaxForwardTwistDegrees(30.0f),
+		MaxBackwardTwistDegrees(30.0f),
 		EffectorWorldTarget(0.0f, 0.0f, 0.0f),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
