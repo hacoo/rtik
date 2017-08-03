@@ -10,7 +10,6 @@
 	this solver is designed to work with generic transforms (in component space).
 */
 
-
 struct UE4IK_API FRangeLimitedFABRIK
 {
 public:

@@ -92,7 +92,7 @@ public:
 */
 
 UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
-class UE4IK_API UIKBoneConstraint : public UObject
+class UE4IK_API FIKBoneConstraint 
 {
 	
 	GENERATED_BODY()
@@ -101,14 +101,22 @@ public:
 
 	// Constraint should only be enforced if this is set to true
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	bool bEnabled = true;
+	bool bEnabled;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	bool bEnableDebugDraw = false;
+	bool bEnableDebugDraw;
 #endif // WITH_EDITORONLY_DATA
 
 public:
+
+	UIKBoneConstraint()
+		:
+		bEnabled(true),
+		bEnableDebugDraw(false)
+	{ }
+
+
 	// Enforces the constraint. Will modify OutCSTransforms if needed.
 	// @param Index - The index of this constraint in Constraints; should correspond to the same bone in in InCSTransforms and OutCSTransforms
 	// @param ReferenceCSTransforms - Array of bone transforms before skeletal controls (e.g., IK) are applied. Not necessarily in the reference pose (although they might be, depending on your needs)

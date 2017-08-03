@@ -23,6 +23,8 @@ class UE4IK_API UNoBoneConstraint : public UIKBoneConstraint
 	
 public: 
   
+	UNoBoneConstraint() { }
+
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
@@ -49,32 +51,40 @@ class UE4IK_API UPlanarRotation : public UIKBoneConstraint
 	GENERATED_BODY()
 
 public:
-
+  
 	// Vector in component space. The bone direction (parent to child) will rotate around this vector, based at the parent. It should be normalized.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-	FVector RotationAxis = FVector(0.0f, 1.0f, 0.0f);
+	FVector RotationAxis;
 
 	// Vector in component space. This represents the '0 degree' rotation; i.e., the bone has a rotation of 0 degrees if the parent-child vector points in this direction. It should be normalized and normal to RotationAxis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-	FVector ForwardDirection = FVector(1.0f, 0.0f, 0.0f);
+	FVector ForwardDirection;
 
 	// Vector in component space. The bone will point in this direction if the constraint method fails (i.e., if the bone direction is normal to the rotation plane). It must be normalized.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
-	FVector FailsafeDirection = FVector(1.0f, 0.0f, 0.0f);
+	FVector FailsafeDirection;
 
 	// Maximum angle in the positive direction (toward ForwardDirection X RotationAxis), relative to ForwardDirection
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin=-180.0f, UIMax=180.0f))
-	float MaxDegrees = 45.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin = -180.0f, UIMax = 180.0f))
+	float MaxDegrees;
 
 	// Minimum angle in the positive direction (toward ForwardDirection X RotationAxis), relative to ForwardDirection
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin=-180.0f, UIMax=180.0f))
-	float MinDegrees = -45.0f;
-
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin = -180.0f, UIMax = 180.0f))
+	float MinDegrees;
 	
-	FVector UpDirection = FVector(0.0f, 0.0f, 1.0f);
+	FVector UpDirection;
 
 public:
+
+	UPlanarRotation()
+		:
+		RotationAxis(0.0f, 1.0f, 10.0f),
+		ForwardDirection(1.0f, 0.0f, 0.0f),
+		FailsafeDirection(1.0f, 0.0f, 0.0f),
+		MaxDegrees(45.0f),
+		MinDegrees(-45.0f),
+		UpDirection(0.0f, 0.0f, 1.0f)
+	{ }
 
 	virtual void EnforceConstraint(
 		int32 Index,

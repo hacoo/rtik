@@ -66,8 +66,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
 	float MaxBackwardTwistDegrees;
 
+	// Forward direction for this skeleton. Usually X axis, may sometimes be the Y axis.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	EIKBoneAxis SkeletonForwardAxis;
+
+	// Up direction for this skeleton. Should almost always be the Z axis.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	EIKBoneAxis SkeletonUpAxis;
+
+	// The waist bone indicates where the character will bend at the waist. Usually this is the first spine bone (the one closes to the pelvis)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	FIKBone WaistBone;
+
 	// World-space target to place the effector
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinHiddenByDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
 	FVector EffectorWorldTarget;
 
 	// How to handle rotation of the effector (the the hand). If set to No Change, the foot will maintain the same
@@ -101,6 +113,8 @@ public:
 		MaxBackwardBendDegress(10.0f),
 		MaxForwardTwistDegrees(30.0f),
 		MaxBackwardTwistDegrees(30.0f),
+		SkeletonForwardAxis(EIKBoneAxis::IKBA_X),
+		SkeletonUpAxis(EIKBoneAxis::IKBA_Y),
 		EffectorWorldTarget(0.0f, 0.0f, 0.0f),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
