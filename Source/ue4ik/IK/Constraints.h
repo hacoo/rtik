@@ -22,6 +22,7 @@ class UE4IK_API UNoBoneConstraint : public UIKBoneConstraint
 	GENERATED_BODY()
 	
 public: 
+  
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,

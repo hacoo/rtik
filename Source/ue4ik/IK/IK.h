@@ -31,6 +31,7 @@ enum class EIKUnreachableRule : uint8
 	
 	// Drag the root bone toward the target so it can be reached (caution, this is likely to give weird results)
 	IK_DragRoot     UMETA(DisplayName = "Drag Chain Root")
+
 };
 
 /*
@@ -108,9 +109,19 @@ public:
 		ACharacter* Character = nullptr
 	) { }
 
-
-
-		//		PURE_VIRTUAL(UIKBoneConstraint::EnforceConstriant, ;);	g
+	// Optional lambda to evaluate before the constraint is enforced. It can set up examine the chain and set 
+	// things up appropriately. Returns a bool; the constraint should only be enforced if it returns true.
+	TFunction<void(
+		int32 Index,
+		const TArray<FTransform>& ReferenceCSTransforms,
+		const TArray<UIKBoneConstraint*>& Constraints,
+		TArray<FTransform>& CSTransforms
+		)> SetupFn = [](
+			int32 Index,
+			const TArray<FTransform>& ReferenceCSTransforms,
+			const TArray<UIKBoneConstraint*>& Constraints,
+			TArray<FTransform>& CSTransforms
+			) { }; 
 };
 
 
