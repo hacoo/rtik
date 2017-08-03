@@ -44,24 +44,6 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 	float RootToTargetDistSq = FVector::DistSquared(OutCSTransforms[0].GetLocation(), EffectorTargetLocationCS);
 
-	/*
-	// FABRIK algorithm - bone translation calculation
-	// If the effector is further away than the distance from root to tip, simply move all bones in a line from root to effector location
-	if (RootToTargetDistSq > FMath::Square(MaximumReach))
-	{
-		for (int32 LinkIndex = 1; LinkIndex < NumBones; LinkIndex++)
-		{
-			FTransform& ParentLink = OutCSTransforms[LinkIndex - 1];
-			FTransform& CurrentLink = OutCSTransforms[LinkIndex];
-			CurrentLink.SetLocation(ParentLink.GetLocation() +
-				(EffectorTargetLocationCS - ParentLink.GetLocation()).GetUnsafeNormal() *
-				BoneLengths[LinkIndex]);
-		}
-		bBoneLocationUpdated = true;
-	}
-	else // Effector is within reach, calculate bone translations to position tip at effector location
-	{
-	*/
 	int32 TipBoneLinkIndex = NumBones - 1;
 	
 	// Check distance between tip location and effector location
@@ -119,7 +101,6 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				UIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
 				if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
 				{
-
 					CurrentConstraint->SetupFn(
 						LinkIndex - 1,
 						InCSTransforms,
@@ -151,15 +132,10 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			CurrentLink.SetLocation(ParentLink.GetLocation() +
 				(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
 				BoneLengths[TipBoneLinkIndex]);
-			
-			//UpdateParentRotation(ParentLink, IKChain->Chain[TipBoneLinkIndex - 1],
-			//CurrentLink, IKChain->Chain[TipBoneLinkIndex],
-			//Output.Pose);
 		}
 		
 		bBoneLocationUpdated = true;
 	}
-//}
 	
 	// Update bone rotations
 	if (bBoneLocationUpdated)
