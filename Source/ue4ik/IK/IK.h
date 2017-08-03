@@ -68,8 +68,19 @@ enum class EIKBoneAxis : uint8
 	IKBA_ZNeg UMETA(DisplayName = "Z Negative")
 };
 
-// Convert an EIKBoneAxis to a unit vector. 
-FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis);
+// IK utility functions
+struct FIKUtil
+{
+public:
+
+	// Convert an EIKBoneAxis to a unit vector.
+	static FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis);
+
+	// Get the specified axis of the skeletal mesh component's component transform
+	static FVector GetSkeletalMeshComponentAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis);
+};
+
+
 
 /*
 * A range-of-motion constraint on a bone used in IK.

@@ -1,8 +1,9 @@
 // Copyright (c) Henry Cooney 2017
 
 #include "IK.h"
+#include "Components/SkeletalMeshComponent.h"
 
-FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis)
+FVector FIKUtil::IKBoneAxisToVector(EIKBoneAxis InBoneAxis)
 {
 	switch (InBoneAxis) 
 	{
@@ -14,6 +15,23 @@ FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis)
 	case EIKBoneAxis::IKBA_ZNeg: return FVector(0.0f, 0.0f, -1.0f);		
 	}
 	
+	return FVector(0.0f, 0.0f, 0.0f);
+}
+
+
+FVector FIKUtil::GetSkeletalMeshComponentAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis)
+{
+	FTransform ComponentTransform = SkelComp.GetComponentTransform();
+	switch (InBoneAxis) 
+	{
+	case EIKBoneAxis::IKBA_X: return ComponentTransform.GetUnitAxis(EAxis::X);
+	case EIKBoneAxis::IKBA_Y: return ComponentTransform.GetUnitAxis(EAxis::Y);
+	case EIKBoneAxis::IKBA_Z: return ComponentTransform.GetUnitAxis(EAxis::Z);
+	case EIKBoneAxis::IKBA_XNeg: return -1 * ComponentTransform.GetUnitAxis(EAxis::X);
+	case EIKBoneAxis::IKBA_YNeg: return -1 * ComponentTransform.GetUnitAxis(EAxis::Y);
+	case EIKBoneAxis::IKBA_ZNeg: return -1 * ComponentTransform.GetUnitAxis(EAxis::Z);
+	}
+
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
