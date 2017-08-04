@@ -66,14 +66,14 @@ void FPlanarRotation::EnforceConstraint(
 		return;
 	}
 
+	FVector UpDirection = FVector::CrossProduct(RotationAxis, ForwardDirection);
+
 #if ENABLE_IK_DEBUG
 	if (!RotationAxis.IsNormalized() || !ForwardDirection.IsNormalized() || !UpDirection.IsNormalized())
 	{
 		UE_LOG(LogIK, Warning, TEXT("Planar rotation constraint contained an unnormalized direction"));
 	}
 #endif // ENABLE_IK_DEBUG
-
-	// Axes are set up in PostEditChangeProperty
 
 	FVector ParentLoc = CSTransforms[Index].GetLocation();
 	FVector ChildLoc = CSTransforms[Index + 1].GetLocation();
@@ -93,12 +93,9 @@ void FPlanarRotation::EnforceConstraint(
 		-1 * FMath::Acos(FVector::DotProduct(BoneDirection, ForwardDirection));
 
 	// Step 3: clamp to within allowed angle
-	float MinRad = FMath::DegreesToRadians(MinDegrees);
-	float MaxRad = FMath::DegreesToRadians(MaxDegrees);
-	float TargetRad = FMath::Clamp(AngleRad, MinRad, MaxRad);
+	float TargetDeg = FMath::Clamp(FMath::RadiansToDegrees(AngleRad), MinDegrees, MaxDegrees);
 	
-	FQuat Rotation(RotationAxis, TargetRad);
-	BoneDirection = Rotation.RotateVector(ForwardDirection);
+	BoneDirection = ForwardDirection.RotateAngleAxis(TargetDeg, RotationAxis);
 
 	BoneDirection *= BoneLength;
 	
@@ -129,7 +126,7 @@ void FPlanarRotation::EnforceConstraint(
 		FDebugDrawUtil::DrawVector(World, ToWorld.TransformPosition(ParentLoc),
 			ToWorld.TransformVector(MinRotation), FColor(0, 255, 255));
 
-		FString AngleStr = FString::Printf(TEXT("%f / %f"), FMath::RadiansToDegrees(AngleRad), FMath::RadiansToDegrees(TargetRad));
+		FString AngleStr = FString::Printf(TEXT("%f / %f"), FMath::RadiansToDegrees(AngleRad), TargetDeg);
 		FDebugDrawUtil::DrawString(World, FVector(0.0f, 0.0f, 100.0f), AngleStr, Character, FColor(0, 0, 255));		
 	}
 #endif

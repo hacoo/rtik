@@ -56,7 +56,7 @@ public:
 
 	The rotation angle is with respect to a second component-space vector, ForwardDirection. I.e.: if the bone is aligned directly with ForwardDirection, the rotation is 0 degrees. If ForwardDirection is not on the rotation plane, it will be projected onto it, so it must not be normal to the rotation plane.
 
-	Finally, the sign of the rotation angle is defined by the cross product of ForwardDirection and RotationAxis.
+	Finally, the sign of the rotation angle is defined by the cross product of RotationAxis and ForwardDirection.
 
 	If the bone direction is normal to the rotation plane, it will be forced to point in FailsafeDirection.
 */
@@ -79,15 +79,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	FVector FailsafeDirection;
 
-	// Maximum angle in the positive direction (toward ForwardDirection X RotationAxis), relative to ForwardDirection
+	// Maximum angle in the positive direction (toward RotationAxis X ForwardDirection), relative to ForwardDirection
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin = -180.0f, UIMax = 180.0f))
 	float MaxDegrees;
 
-	// Minimum angle in the positive direction (toward ForwardDirection X RotationAxis), relative to ForwardDirection
+	// Minimum angle in the positive direction (toward RotationAxis X ForwardDirection), relative to ForwardDirection
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (UIMin = -180.0f, UIMax = 180.0f))
 	float MinDegrees;
-	
-	FVector UpDirection;
 
 public:
 
@@ -97,8 +95,7 @@ public:
 		ForwardDirection(1.0f, 0.0f, 0.0f),
 		FailsafeDirection(1.0f, 0.0f, 0.0f),
 		MaxDegrees(45.0f),
-		MinDegrees(-45.0f),
-		UpDirection(0.0f, 0.0f, 1.0f)
+		MinDegrees(-45.0f)
 	{ }
 
 	virtual void EnforceConstraint(

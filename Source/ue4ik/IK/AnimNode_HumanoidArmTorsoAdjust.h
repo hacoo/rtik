@@ -114,7 +114,7 @@ public:
 		MaxForwardTwistDegrees(30.0f),
 		MaxBackwardTwistDegrees(30.0f),
 		SkeletonForwardAxis(EIKBoneAxis::IKBA_X),
-		SkeletonUpAxis(EIKBoneAxis::IKBA_Y),
+		SkeletonUpAxis(EIKBoneAxis::IKBA_Z),
 		EffectorWorldTarget(0.0f, 0.0f, 0.0f),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
