@@ -1,0 +1,36 @@
+Copyright (c) Henry Cooney 2017
+
+Notes on implementing and extending the FABRIK algorithm. See References section for relevant publications. 
+
+* References
+** A. Aristidou, J. Lasenby 2011 -- FABRIK, A Fast, Iterative Solver for the Inverse Kinematics Problem
+   Introduces the solver, ROM constraints, multieffector, et cetera
+   web: http://www.andreasaristidou.com/FABRIK.html
+   pdf: http://www.andreasaristidou.com/publications/papers/FABRIK.pdf
+
+** A. Aristidou et al. 2016 -- Extending FABRIK with Model Constraints
+   Talks about using FABRIK on real-world models
+   pdf: http://www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_C%CE%BFnstraints.pdf
+
+As of Aug. 2017, Unreal contains a good but basic implementation of FABRIK. Some features it lacks are:
+- ROM constraints
+- Multiple effectors
+- Closed loops
+- Joint weighting
+
+* Multieffector FABRIK
+  Notes on using FABRIK with multiple effectors.
+
+** Motivation
+   - No multieffector support in UE4
+   - Need multiple effectors to resolve upper body IK (cause there are 2 arms)
+   - Arms will probably need to adjust a sub-base. Then I'll need to resolve this with the lower body.
+   - Use closed loops? Or just sub-bases?
+
+
+
+
+
+
+
+
