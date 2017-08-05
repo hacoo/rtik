@@ -118,7 +118,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	TorsoPitchConstraint.MinDegrees = -BackwardBendDegreesFromPivot;
 	TorsoPitchConstraint.MaxDegrees = ForwardBendDegreesFromPivot;
 	TorsoPitchConstraint.bEnabled = true;
-	TorsoPitchConstraint.bEnableDebugDraw = false;
+	TorsoPitchConstraint.bEnableDebugDraw = true;
 
 	// Set up torso twist constraint, allowing a twist around the direction of the pivot-neck vector
 	FPlanarRotation TorsoTwistConstraint;
@@ -127,7 +127,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	TorsoTwistConstraint.MinDegrees = -MaxBackwardTwistDegrees;
 	TorsoTwistConstraint.MaxDegrees = MaxForwardTwistDegrees;
 	TorsoTwistConstraint.bEnabled = true;
-	TorsoPitchConstraint.bEnableDebugDraw = true;
+
 
 	// Setup lambda wil run before constraint eval. It sets the rotation axis to the direction of the previous bone 
 	// (the pivot-to-neck bone), and determines 'up' direction by the cross product.	
@@ -147,7 +147,8 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	TArray<FIKBoneConstraint*> Constraints;
 	Constraints.Reserve(NumBones);
 	Constraints.Add(&TorsoPitchConstraint);
-	Constraints.Add(&TorsoTwistConstraint);
+	//Constraints.Add(&TorsoTwistConstraint);
+	Constraints.Add(nullptr);
 	for (FIKBone& Bone : Arm->Chain.BonesRootToEffector)
 	{
 		Constraints.Add(Bone.GetConstraint());
@@ -165,7 +166,31 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		MaxIterations,
 		Cast<ACharacter>(SkelComp->GetOwner())
 	);
+
+	// Apply pivot / neck rotations to the waist bone
+	FVector NewShoulderDirection = (DestCSTransforms[2].GetLocation() - DestCSTransforms[1].GetLocation()).GetUnsafeNormal();
+	FVector OldShoulderDirection = (CSTransforms[2].GetLocation() - CSTransforms[1].GetLocation()).GetUnsafeNormal();
+	float TwistRad = FMath::Acos(FVector::DotProduct(NewShoulderDirection, OldShoulderDirection));
+
+	if (FVector::DotProduct(NewShoulderDirection,
+		FVector::CrossProduct(TorsoTwistConstraint.RotationAxis, TorsoTwistConstraint.ForwardDirection))
+		< 0.0f)
+	{
+		TwistRad = -TwistRad;
+	}
+
+	FVector OldSpineVec = CSTransforms[1].GetLocation() - WaistCS;
+	FVector NewSpineVec = DestCSTransforms[1].GetLocation() - WaistCS;
+
+	// Compound rotation is around bend axis and rotated spine direction
+	FQuat BendRotation = FQuat::FindBetween(OldSpineVec, NewSpineVec);	
+	FQuat TwistRotation(NewSpineVec, TwistRad);
 	
+	// Apply
+	FTransform NewWaistTransform(Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex));
+	NewWaistTransform.SetRotation(BendRotation * NewWaistTransform.GetRotation());
+	// OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, NewWaistTransform));
+
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{

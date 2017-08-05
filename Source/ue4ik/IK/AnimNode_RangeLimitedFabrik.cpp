@@ -6,21 +6,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "IK/RangeLimitedFABRIK.h"
 
-FAnimNode_RangeLimitedFabrik::FAnimNode_RangeLimitedFabrik()
-	: EffectorTransform(FTransform::Identity)
-	, EffectorTransformSpace(BCS_ComponentSpace)
-	, EffectorRotationSource(BRS_KeepLocalSpaceRotation)
-	, Precision(1.f)
-	, MaxIterations(10)
-	, bEnableDebugDraw(false)
-{
-}
-
-FVector FAnimNode_RangeLimitedFabrik::GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex)
-{
-	return MeshBases.GetComponentSpaceTransform(BoneIndex).GetLocation();
-}
-
 void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
 	const FBoneContainer& BoneContainer = Output.Pose.GetPose().GetBoneContainer();
@@ -101,58 +86,6 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 			OutBoneTransforms.Add(FBoneTransform(IKChain->Chain[i].BoneIndex, DestCSTransforms[i]));
 		}
 	}
-}
-
-void FAnimNode_RangeLimitedFabrik::EnforceROMConstraint(FCSPose<FCompactPose>& Pose, 
-	FIKBone& ChildBone, int32 ChildIndex)
-{
-	/*
-	if (ChildBone.ConstraintMode == EIKROMConstraintMode::IKROM_No_Constraint)
-	{
-		return;
-	}
-	FRangeLimitedFABRIKChainLink& ChildLink = Chain[ChildIndex];
-	FVector ChildLoc = ChildLink.BoneCSTransform.GetLocation();
-
-	FVector ChildDirection;
-	FVector ParentDirection;
-
-	// Step 1: determine the forward directions of the parent and child
-	if (ChildBone.bUseParentBoneDirection)
-	{
-		// Find the parent location -- either by looking at the chain, or going to the skeletal parent (if root)
-		FTransform ParentTransform;
-		if (ChildIndex < 1)
-		{
-			if (ChildLink.BoneIndex < 1)
-			{
-				// This bone is the root of the entire skeleton! So just use its default transform.
-				ParentTransform = Pose.GetComponentSpaceTransform(ChildLink.BoneIndex);
-			}
-			else
-			{
-				// At root of chain -- look at skeleton instead
-				FCompactPoseBoneIndex ParentBoneIndex = Pose.GetPose().GetParentBoneIndex(ChildLink.BoneIndex);
-				ParentTransform = Pose.GetComponentSpaceTransform(ParentBoneIndex);
-			}
-		} 
-		else
-		{
-			// Use the parent link transform
-			ParentTransform = Chain[ChildIndex - 1].BoneCSTransform;
-		}
-
-	}
-	
-*/
-
-/*
-	else if (ChildBone.ConstraintMode == EIKROMConstraintMode::IKROM_Pitch_And_Yaw)
-	{
-		
-		
-	}
-*/
 }
 
 void FAnimNode_RangeLimitedFabrik::UpdateParentRotation(FTransform& ParentTransform, const FIKBone& ParentBone,
