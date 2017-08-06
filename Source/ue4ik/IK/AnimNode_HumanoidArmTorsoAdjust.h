@@ -50,6 +50,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
 	FName TorsoPivotSocketName;
 
+	// How far the shoulders may be displaced from their staring position
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	float MaxShoulderDragDistance;
+
+	// How much the shoulders will resist being moved from their original positions. Set above 1 to
+	// make the shoulders displace less; set below 1 to make them displace more (not recommended)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f))
+	float ShoulderDragStiffness;
+	
 	// How far the torso may pitch forward, measured at the waist bone. In positive degrees.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 180.0f))
 	float MaxForwardBendDegrees;
@@ -109,6 +118,8 @@ public:
 		MaxIterations(10),
 		bEnable(true),
 		TorsoPivotSocketName(NAME_None),
+		MaxShoulderDragDistance(10.0f),
+		ShoulderDragStiffness(1.0f),
 		MaxForwardBendDegrees(60.0f),
 		MaxBackwardBendDegress(10.0f),
 		MaxForwardTwistDegrees(30.0f),

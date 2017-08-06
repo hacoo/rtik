@@ -29,6 +29,7 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 		Precision(1.f),
 		MaxIterations(10),
 		MaxRootDragDistance(0.0f),
+		RootDragStiffness(1.0f),
 		bEnableDebugDraw(false)
 	{ }
 
@@ -62,6 +63,11 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 	// How far IK may 'drag' the root from its starting position. If set to 0 (or lower), the root remains fixed.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
 	float MaxRootDragDistance;
+
+	// Divides the root displacement before clamping. Set to 1.0f for default stiffness. Higher stiffness will make the 
+	// root displace less; lower stiffness will make it displace more. Use a value less than 1.0f at your own risk.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (UIMin = 0.0f))
+	float RootDragStiffness;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;

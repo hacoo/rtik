@@ -5,6 +5,7 @@
 #include "Animation/AnimInstanceProxy.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "IK/RangeLimitedFABRIK.h"
+#include "Utility/DebugDrawUtil.h"
 
 void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
@@ -50,6 +51,8 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		Constraints,
 		CSEffectorTransform.GetLocation(),
 		DestCSTransforms,
+		MaxRootDragDistance,
+		RootDragStiffness,
 		Precision,
 		MaxIterations,
 		Character
@@ -86,6 +89,46 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 			OutBoneTransforms.Add(FBoneTransform(IKChain->Chain[i].BoneIndex, DestCSTransforms[i]));
 		}
 	}
+
+
+#if WITH_EDITOR
+
+	if (bEnableDebugDraw)
+	{
+		USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
+		UWorld* World = SkelComp->GetWorld();
+		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+
+		// Draw chain before adjustment, in yellow
+		for (int32 i = 0; i < NumChainLinks - 1; ++i)
+		{
+			FVector ParentLoc = ToWorld.TransformPosition(SourceCSTransforms[i].GetLocation());
+			FVector ChildLoc = ToWorld.TransformPosition(SourceCSTransforms[i + 1].GetLocation());
+			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
+			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
+		}		
+
+		// Draw root drag radius
+		if (MaxRootDragDistance > KINDA_SMALL_NUMBER)
+		{
+			FDebugDrawUtil::DrawSphere(World,
+				ToWorld.TransformPosition(SourceCSTransforms[0].GetLocation()),
+				FColor(255, 0, 0), MaxRootDragDistance, 12, -1.0f, 0.5f);
+		}
+
+		// Draw chain after adjustment, in cyan
+		for (int32 i = 0; i < NumChainLinks - 1; ++i)
+		{
+			FVector ParentLoc = ToWorld.TransformPosition(DestCSTransforms[i].GetLocation());
+			FVector ChildLoc = ToWorld.TransformPosition(DestCSTransforms[i+1].GetLocation());
+			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
+			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
+		}
+	}
+
+#endif
+
+
 }
 
 void FAnimNode_RangeLimitedFabrik::UpdateParentRotation(FTransform& ParentTransform, const FIKBone& ParentBone,
@@ -131,10 +174,9 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 	}
 
 	// Allow evaluation if all parameters are initialized and TipBone is child of RootBone
-	return
-		(
-			Precision > 0
-			&& IKChain->IsValid(RequiredBones)
+	return (
+		Precision > 0
+		&& IKChain->IsValid(RequiredBones)
 		);
 }
 

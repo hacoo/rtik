@@ -162,6 +162,8 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		Constraints,
 		EffectorTargetCS,
 		DestCSTransforms,
+		MaxShoulderDragDistance,
+		ShoulderDragStiffness,
 		Precision,
 		MaxIterations,
 		Cast<ACharacter>(SkelComp->GetOwner())

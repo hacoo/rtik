@@ -19,6 +19,8 @@ public:
 		const TArray<FIKBoneConstraint*>& Constraints,
 		const FVector& EffectorTargetLocationCS,
 		TArray<FTransform>& OutCSTransforms,
+		float MaxRootDragDistance = 0.0f,
+		float RootDragStiffness = 1.0f,
 		float Precision = 0.01f,
 		int32 MaxIterations = 20,
 		ACharacter* Character = nullptr
