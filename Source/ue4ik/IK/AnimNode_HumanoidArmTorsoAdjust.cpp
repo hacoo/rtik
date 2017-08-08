@@ -220,6 +220,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	float TwistRad = FMath::Lerp(SmallRad, LargeRad, ArmTwistRatio);
 	float TwistDeg = FMath::RadiansToDegrees(TwistRad);
 	TwistDeg = FMath::Clamp(TwistDeg, -MaxTwistDegreesLeft, MaxTwistDegreesRight);
+	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
 	
 	// Prepare pitch (bend forward / backward) rotation
 	FVector SpinePitchPreIK = FVector::VectorPlaneProject(SpineDirection, LeftAxis);
@@ -260,79 +261,13 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FQuat RollRotation(ForwardAxis, RollRad);
 */
 
-	// Apply new transforms
-	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
-	WaistCS.SetRotation(TwistRotation * PitchRotation * WaistCS.GetRotation());
+	// Interpolate rotation
+	FQuat TargetOffset = TwistRotation * PitchRotation;
+	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(TorsoRotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
+
+	// Apply new transforms	
+	WaistCS.SetRotation(LastRotationOffset * WaistCS.GetRotation());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
-
-	// debug section
-	UWorld* World = SkelComp->GetWorld();
-	FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
-	FVector WaistLocWorld = ToWorld.TransformPosition(WaistCS.GetLocation());
-	FVector NeckLocWorld = ToWorld.TransformPosition(NeckPreIK);
-
-	FDebugDrawUtil::DrawVector(World,
-		NeckLocWorld,
-		ToWorld.TransformVector(ShoulderLeftPreIKDir),
-		FColor(255, 255, 0));
-	FDebugDrawUtil::DrawVector(World,
-		NeckLocWorld,
-		ToWorld.TransformVector(ShoulderRightPreIKDir),
-		FColor(255, 255, 0));
-
-	FDebugDrawUtil::DrawVector(World,
-		NeckLocWorld,
-		ToWorld.TransformVector(ShoulderLeftPostIKDir),
-		FColor(0, 255, 255));
-	FDebugDrawUtil::DrawVector(World,
-		NeckLocWorld,
-		ToWorld.TransformVector(ShoulderRightPostIKDir),
-		FColor(0, 255, 255));
-
-	FDebugDrawUtil::DrawSphere(World, NeckLocWorld, FColor(255, 0, 0), 3.0f);
-	FDebugDrawUtil::DrawPlane(World, NeckLocWorld, SpineDirection);
-/*
-	float ForwardBendLen = FMath::Tan(FMath::DegreesToRadians(MaxForwardBendDegrees)) * 
-		(NeckCS.GetLocation() - WaistCS).Size();
-	float ForwardBendDegreesFromPivot = FMath::RadiansToDegrees(FMath::Atan(ForwardBendLen / 
-		(NeckCS.GetLocation() - PivotCS.GetLocation()).Size()));
-	
-	float BackwardBendLen = FMath::Tan(FMath::DegreesToRadians(MaxBackwardBendDegress)) * 
-		(NeckCS.GetLocation() - WaistCS).Size();
-	float BackwardBendDegreesFromPivot = FMath::RadiansToDegrees(FMath::Atan(BackwardBendLen / 
-		(NeckCS.GetLocation() - PivotCS.GetLocation()).Size()));
-*/
-
-	// Run FABRIK and pray
-
-	// Compare offsets of each shoulder socket to determine torso twist
-
-
-	/*
-	// Apply pivot / neck rotations to the waist bone
-	FVector NewShoulderDirection = (DestCSTransforms[2].GetLocation() - DestCSTransforms[1].GetLocation()).GetUnsafeNormal();
-	FVector OldShoulderDirection = (CSTransforms[2].GetLocation() - CSTransforms[1].GetLocation()).GetUnsafeNormal();
-	float TwistRad = FMath::Acos(FVector::DotProduct(NewShoulderDirection, OldShoulderDirection));
-
-	if (FVector::DotProduct(NewShoulderDirection,
-		FVector::CrossProduct(TorsoTwistConstraint.RotationAxis, TorsoTwistConstraint.ForwardDirection))
-		< 0.0f)
-	{
-		TwistRad = -TwistRad;
-	}
-
-	FVector OldSpineVec = CSTransforms[1].GetLocation() - WaistCS;
-	FVector NewSpineVec = DestCSTransforms[1].GetLocation() - WaistCS;
-
-	// Compound rotation is around bend axis and rotated spine direction
-	FQuat BendRotation = FQuat::FindBetween(OldSpineVec, NewSpineVec);	
-	FQuat TwistRotation(NewSpineVec, TwistRad);
-	
-	// Apply
-	FTransform NewWaistTransform(Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex));
-	NewWaistTransform.SetRotation(BendRotation * NewWaistTransform.GetRotation());
-	// OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, NewWaistTransform));
-	*/
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)

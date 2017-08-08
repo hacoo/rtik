@@ -150,6 +150,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
 	FIKBone WaistBone;
 
+	// How quickly the torso rotates (across all rotation axes). Increase to make torso rotation more responsive but snappier. This is a slerp value.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	float TorsoRotationSlerpSpeed;
+
 	// Where to place left arm effector, in world space
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
 	FTransform LeftArmWorldTarget;
@@ -194,13 +198,15 @@ public:
 		MaxTwistDegreesRight(30.0f),		
 		ArmTwistRatio(0.5f),
 		SkeletonForwardAxis(EIKBoneAxis::IKBA_X),
-		SkeletonUpAxis(EIKBoneAxis::IKBA_Z),
+		SkeletonUpAxis(EIKBoneAxis::IKBA_Z),\
+		TorsoRotationSlerpSpeed(10.0f),
 		LeftArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		RightArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),
-		LastEffectorOffset(0.0f, 0.0f, 0.0f)
+		LastEffectorOffset(0.0f, 0.0f, 0.0f),
+		LastRotationOffset(FQuat::Identity)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
@@ -217,4 +223,5 @@ public:
 protected:
 	float DeltaTime;
 	FVector LastEffectorOffset;
+	FQuat LastRotationOffset;
 };
