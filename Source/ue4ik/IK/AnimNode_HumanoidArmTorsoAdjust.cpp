@@ -64,11 +64,10 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	}
 
 	// Get skeleton axes
-	FVector ForwardAxis = FIKUtil::GetSkeletalMeshComponentAxis(*SkelComp, SkeletonForwardAxis);
-	FVector UpAxis      = FIKUtil::GetSkeletalMeshComponentAxis(*SkelComp, SkeletonUpAxis);
+	FVector ForwardAxis = FIKUtil::IKBoneAxisToVector(SkeletonForwardAxis);
+	FVector UpAxis      = FIKUtil::IKBoneAxisToVector(SkeletonUpAxis);
 	FVector LeftAxis    = FVector::CrossProduct(ForwardAxis, UpAxis);
 	FVector RightAxis   = -1 * LeftAxis;
-
 	
 	// Not an actual bone location. The torso will pivot around this location during forward / backward bends.
 	FTransform PivotCS(ToCS.TransformPosition(TorsoPivotSocket->GetSocketLocation(SkelComp)));
@@ -239,7 +238,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	// Apply new transforms
 	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
 	//WaistCS.SetRotation(PitchRotation * RollRotation * TwistRotation * WaistCS.GetRotation());
-	WaistCS.SetRotation(PitchRotation * TwistRotation * WaistCS.GetRotation());
+	WaistCS.SetRotation(PitchRotation * WaistCS.GetRotation());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
 
 	// debug section
@@ -394,9 +393,9 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 		// Draw skeleton axes
 		FVector Base = ToWorld.GetOrigin();
-		FDebugDrawUtil::DrawVector(World, Base, ForwardAxis, FColor(255, 0, 0));
-		FDebugDrawUtil::DrawVector(World, Base, LeftAxis, FColor(0, 255, 0));
-		FDebugDrawUtil::DrawVector(World, Base, UpAxis, FColor(0, 0, 255));
+		FDebugDrawUtil::DrawVector(World, Base, ToWorld.TransformVector(ForwardAxis), FColor(255, 0, 0));
+		FDebugDrawUtil::DrawVector(World, Base, ToWorld.TransformVector(LeftAxis), FColor(0, 255, 0));
+		FDebugDrawUtil::DrawVector(World, Base, ToWorld.TransformVector(UpAxis), FColor(0, 0, 255));
 
 	}
 #endif // WITH_EDITOR

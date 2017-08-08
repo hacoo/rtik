@@ -76,8 +76,9 @@ public:
 	// Convert an EIKBoneAxis to a unit vector.
 	static FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis);
 
-	// Get the specified axis of the skeletal mesh component's component transform
-	static FVector GetSkeletalMeshComponentAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis);
+	// Get the specified axis of the skeletal mesh, in world space. Component space is always relative to the skeletal mesh, 
+	// so for that just use IKBoneAxisToVector above :)	
+	static FVector GetSkeletalMeshWorldAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis);
 };
 
 

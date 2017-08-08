@@ -18,11 +18,10 @@ FVector FIKUtil::IKBoneAxisToVector(EIKBoneAxis InBoneAxis)
 	return FVector(0.0f, 0.0f, 0.0f);
 }
 
-
-FVector FIKUtil::GetSkeletalMeshComponentAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis)
+FVector FIKUtil::GetSkeletalMeshWorldAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis)
 {
-	FTransform ComponentTransform = SkelComp.GetComponentTransform();
-	switch (InBoneAxis) 
+	FTransform ComponentTransform = SkelComp.GetComponentToWorld();
+	switch (InBoneAxis)  
 	{
 	case EIKBoneAxis::IKBA_X: return ComponentTransform.GetUnitAxis(EAxis::X);
 	case EIKBoneAxis::IKBA_Y: return ComponentTransform.GetUnitAxis(EAxis::Y);
@@ -34,6 +33,7 @@ FVector FIKUtil::GetSkeletalMeshComponentAxis(const USkeletalMeshComponent& Skel
 
 	return FVector(0.0f, 0.0f, 0.0f);
 }
+
 
 #pragma region FIKBone
 bool FIKBone::InitIfInvalid(const FBoneContainer& RequiredBones)
