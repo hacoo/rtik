@@ -95,8 +95,8 @@ public:
 	// Specifies a point that the torso should pivot around during upper-body IK. When the torso
 	// bends forward / backward at the waist, this point will remain stationary, and the torso will
 	// pivot around it. Should be in the middle of the torso, roughly halfway up the spine.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
-	FName TorsoPivotSocketName;
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	// FName TorsoPivotSocketName;
 
 	// How far the shoulders may be displaced from their staring position
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
@@ -174,7 +174,7 @@ public:
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
-		TorsoPivotSocketName(NAME_None),
+		// TorsoPivotSocketName(NAME_None),
 		MaxShoulderDragDistance(50.0f),
 		ShoulderDragStiffness(1.0f),
 		MaxPitchForwardDegrees(60.0f),

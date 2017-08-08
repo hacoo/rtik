@@ -32,8 +32,9 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	FMatrix ToCS = SkelComp->GetComponentToWorld().ToMatrixNoScale().Inverse();
-	const USkeletalMeshSocket* TorsoPivotSocket = SkelComp->GetSocketByName(TorsoPivotSocketName);
 
+/*
+	const USkeletalMeshSocket* TorsoPivotSocket = SkelComp->GetSocketByName(TorsoPivotSocketName);
 	if (TorsoPivotSocket == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
@@ -42,6 +43,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 #endif
 		return;
 	}
+*/
 
 	int32 NumBonesLeft = LeftArm->Chain.Num();
 	int32 NumBonesRight = RightArm->Chain.Num();
@@ -57,7 +59,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FVector RightAxis   = -1 * LeftAxis;
 	
 	// Not an actual bone location. The torso will pivot around this location during forward / backward bends.
-	FTransform PivotCS(ToCS.TransformPosition(TorsoPivotSocket->GetSocketLocation(SkelComp)));
+	// FTransform PivotCS(ToCS.TransformPosition(TorsoPivotSocket->GetSocketLocation(SkelComp)));
 
 	// Upper body rotations are applied at this bone.
 	FTransform WaistCS = Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex);
