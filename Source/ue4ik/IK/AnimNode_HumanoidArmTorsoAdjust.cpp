@@ -14,21 +14,8 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Arm Torso Adjust"), STAT_HumanoidArmTorsoAdjust_Eval, STATGROUP_Anim);
 
-void FAnimNode_HumanoidArmTorsoAdjust::Initialize(const FAnimationInitializeContext & Context)
-{
-	Super::Initialize(Context);
-	BaseComponentPose.Initialize(Context);
-}
-
-void FAnimNode_HumanoidArmTorsoAdjust::CacheBones(const FAnimationCacheBonesContext & Context)
-{
-	Super::CacheBones(Context);
-	BaseComponentPose.CacheBones(Context);
-}
-
 void FAnimNode_HumanoidArmTorsoAdjust::UpdateInternal(const FAnimationUpdateContext & Context)
 {
-	BaseComponentPose.Update(Context);
 	DeltaTime = Context.GetDeltaTime();	
 }
 
