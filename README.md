@@ -32,12 +32,16 @@ Updated 8/7/2017
 
 Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
 
-Work is continuing on upper-body IK. I am working on a technique for rotating the torso which is a bit simpler than the
-Aristidou closed-loop method; also, it allows the user greater control over the torso rotation limits. So far it seems
-to be working really well, but there are a few bugs to smooth out.
+Upper body IK is also working, with nice upper body / torso rotations. I haven't implemented any kind of arm constraints or joint
+corrections yet; to me, this is less important than with the legs since a. the targets are not procedural and b. Unreal's two-bone
+IK nodes actually work pretty well for arm IK.
 
-The current 
+I haven't attempted to integrate hip / lower body movements with upper body IK. Basically, clever use of FABRIK closed-loop
+solvers on the upper / lower body triangles allow the character to bend over in a more realistic way, moving the hips back / down
+instead of bending at the waist only. I don't think many people would actually use this, but it looks cool.
 
+Before I add any new features, I'd like to clean up what I have here and start making it into something that can easily be
+used with other projects. Also, I need to do some basic performance tests.
 
 ## License
 
