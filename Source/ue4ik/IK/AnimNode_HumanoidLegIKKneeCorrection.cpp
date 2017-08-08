@@ -10,7 +10,7 @@
 #include "Utility/DebugDrawUtil.h"
 #endif
 
-DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Eval"), STAT_HumanoidLegIKKneeCorrection_Eval, STATGROUP_Anim);
+DECLARE_CYCLE_STAT(TEXT("IK Humanoid Knee Correction Eval"), STAT_HumanoidLegIKKneeCorrection_Eval, STATGROUP_Anim);
 
 void FAnimNode_HumanoidLegIKKneeCorrection::Initialize(const FAnimationInitializeContext & Context)
 {
