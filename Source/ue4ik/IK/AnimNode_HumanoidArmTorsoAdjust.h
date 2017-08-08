@@ -168,17 +168,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector, meta = (PinHiddenByDefault))
 	TEnumAsByte<EBoneRotationSource> EffectorRotationSource;
 
-	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
-	// Increase to make IK more responsive but snappier. Uses constant interpolation.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector)
-	float EffectorVelocity;
-
-	// If true, the effector will snap instantly to the target location. If false, the effector will
-	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
-	// For most applications, you should probably set this to false.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effector)
-	bool bEffectorMovesInstantly;
-
 public:
 
 	FAnimNode_HumanoidArmTorsoAdjust()
@@ -203,8 +192,6 @@ public:
 		LeftArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		RightArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
-		EffectorVelocity(50.0f),
-		bEffectorMovesInstantly(false),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f),
 		LastRotationOffset(FQuat::Identity)
 	{ }

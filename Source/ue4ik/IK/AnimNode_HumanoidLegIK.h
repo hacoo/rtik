@@ -86,7 +86,7 @@ public:
 	// How quickly the effector moves toward the target. This parameter is used only is Effector Moves Instantly is set to false.
 	// Increase to make IK more responsive but snappier. Uses constant interpolation.
 	//
-	// This is only used in Normal Locomotion mode. In World Target mode, the effector always moves instantly.	
+	// This is only used in Normal Locomotion mode. In World Target mode, the effector always moves instantly; you should interpolate the IK target beforehand in your event graph.	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	float EffectorVelocity;
 
