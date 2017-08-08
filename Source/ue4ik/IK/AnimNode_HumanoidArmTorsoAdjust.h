@@ -152,11 +152,11 @@ public:
 
 	// Where to place left arm effector, in world space
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
-	FVector LeftArmWorldTarget;
+	FTransform LeftArmWorldTarget;
 
 	// Where to place right arm effector, in world space
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
-	FVector RightArmWorldTarget;
+	FTransform RightArmWorldTarget;
 
 	// How to handle rotation of the effector (the the hand). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
@@ -195,8 +195,8 @@ public:
 		ArmTwistRatio(0.5f),
 		SkeletonForwardAxis(EIKBoneAxis::IKBA_X),
 		SkeletonUpAxis(EIKBoneAxis::IKBA_Z),
-		LeftArmWorldTarget(0.0f, 0.0f, 0.0f),
-		RightArmWorldTarget(0.0f, 0.0f, 0.0f),
+		LeftArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
+		RightArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),

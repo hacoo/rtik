@@ -113,13 +113,12 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		ConstraintsRight.Add(Bone.GetConstraint());
 	}
 
-
 	// First pass: IK each arm, allowing shoulders to drag
 	TArray<FTransform> PostIKTransformsLeft;
 	if (Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_BothArms ||
 		Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_LeftArmOnly)
 	{
-		FVector LeftTargetCS = ToCS.TransformPosition(LeftArmWorldTarget);
+		FVector LeftTargetCS = ToCS.TransformPosition(LeftArmWorldTarget.GetLocation());
 		FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			CSTransformsLeft,
 			ConstraintsLeft,
@@ -132,7 +131,6 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			Cast<ACharacter>(SkelComp->GetOwner())
 		);
 	}
-
 	else
 	{
 		for (FTransform& Transform : CSTransformsLeft)
@@ -144,7 +142,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	if (Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_BothArms ||
 		Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_RightArmOnly)
 	{
-		FVector RightTargetCS = ToCS.TransformPosition(RightArmWorldTarget);
+		FVector RightTargetCS = ToCS.TransformPosition(RightArmWorldTarget.GetLocation());
 		FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			CSTransformsRight,
 			ConstraintsRight,

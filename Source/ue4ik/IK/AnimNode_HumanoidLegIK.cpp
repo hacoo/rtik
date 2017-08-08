@@ -87,7 +87,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	}
 	else
 	{
-		FootTargetCS = ToCS.TransformPosition(FootTargetWorld);
+		FootTargetCS = ToCS.TransformPosition(FootTargetWorld.GetLocation());
 	}
 
 	// Interpolate the foot target (if needed)

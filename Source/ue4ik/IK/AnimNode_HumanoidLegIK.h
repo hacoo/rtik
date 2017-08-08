@@ -52,7 +52,7 @@ public:
 	
 	// Target location for the foot; IK will attempt to move the tip of the shin here. In world space.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
-	FVector FootTargetWorld;
+	FTransform FootTargetWorld;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
@@ -104,7 +104,7 @@ public:
 		:
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
-		FootTargetWorld(0.0f, 0.0f, 0.0f),
+		FootTargetWorld(FVector(0.0f, 0.0f, 0.0f)),
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
