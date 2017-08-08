@@ -192,6 +192,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			-1 * FMath::Acos(FVector::DotProduct(ShoulderRightPreIKDir, ShoulderRightPostIKDir));
 	}	
 
+	float TwistRad;
 	float SmallRad;
 	float LargeRad;
 	if (FMath::Abs(LeftTwistRad) > FMath::Abs(RightTwistRad))
@@ -203,10 +204,19 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	{
 		SmallRad = LeftTwistRad;
 		LargeRad = RightTwistRad;
-	}	
-
-	// Blend the twists...
-	float TwistRad = FMath::Lerp(SmallRad, LargeRad, ArmTwistRatio);
+	}
+		
+	if (Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_BothArms)
+	{
+		// If IKing both arms, blend the twists
+		TwistRad = FMath::Lerp(SmallRad, LargeRad, ArmTwistRatio);
+	}
+	else
+	{
+		// Otherwise, use the large twist; the other arm isn't iking and shouldn't contribute
+		TwistRad = LargeRad;
+	}
+	
 	float TwistDeg = FMath::RadiansToDegrees(TwistRad);
 	TwistDeg = FMath::Clamp(TwistDeg, -MaxTwistDegreesLeft, MaxTwistDegreesRight);
 	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
@@ -250,8 +260,9 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FQuat RollRotation(ForwardAxis, RollRad);
 */
 
+	// Twist needs to be applied first; pitch will modify twist axes and cause a bad rotation
+	FQuat TargetOffset = PitchRotation * TwistRotation;
 	// Interpolate rotation
-	FQuat TargetOffset = TwistRotation * PitchRotation;
 	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(TorsoRotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
 
 	// Apply new transforms	

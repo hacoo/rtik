@@ -99,20 +99,20 @@ public:
 	// FName TorsoPivotSocketName;
 
 	// How far the shoulders may be displaced from their staring position
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f))
 	float MaxShoulderDragDistance;
 
 	// How much the shoulders will resist being moved from their original positions. Set above 1 to
 	// make the shoulders displace less; set below 1 to make them displace more (not recommended)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.01f))
 	float ShoulderDragStiffness;
 	
 	// How far the torso may pitch forward, measured at the waist bone. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 90.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 180.0f))
 	float MaxPitchForwardDegrees;
 
 	// How far the torso may pitch backward, measured at the waist bone. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
 	float MaxPitchBackwardDegrees;
 
 /*
@@ -122,11 +122,11 @@ public:
 */
 	
 	// How far the torso may twist, around the character's spine direction, toward the left arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
 	float MaxTwistDegreesLeft;
 
 	// How far the torso may twist, around the character's spine direction, toward the right arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
 	float MaxTwistDegreesRight;
 
 	// The two arms will require different amounts of twist. If set to 1.0, the larger of the two twists is used;
