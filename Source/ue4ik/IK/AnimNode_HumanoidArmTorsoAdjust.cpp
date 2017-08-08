@@ -115,33 +115,57 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 
 	// First pass: IK each arm, allowing shoulders to drag
-	FVector LeftTargetCS = ToCS.TransformPosition(LeftArmWorldTarget);
 	TArray<FTransform> PostIKTransformsLeft;
-	FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-		CSTransformsLeft,
-		ConstraintsLeft,
-		LeftTargetCS,
-		PostIKTransformsLeft,
-		MaxShoulderDragDistance,
-		ShoulderDragStiffness,
-		Precision,
-		MaxIterations,
-		Cast<ACharacter>(SkelComp->GetOwner())
-	);
+	if (Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_BothArms ||
+		Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_LeftArmOnly)
+	{
+		FVector LeftTargetCS = ToCS.TransformPosition(LeftArmWorldTarget);
+		FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+			CSTransformsLeft,
+			ConstraintsLeft,
+			LeftTargetCS,
+			PostIKTransformsLeft,
+			MaxShoulderDragDistance,
+			ShoulderDragStiffness,
+			Precision,
+			MaxIterations,
+			Cast<ACharacter>(SkelComp->GetOwner())
+		);
+	}
 
-	FVector RightTargetCS = ToCS.TransformPosition(RightArmWorldTarget);
+	else
+	{
+		for (FTransform& Transform : CSTransformsLeft)
+		{
+			PostIKTransformsLeft.Add(Transform);
+		}
+	}
 	TArray<FTransform> PostIKTransformsRight;
-	FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-		CSTransformsRight,
-		ConstraintsRight,
-		RightTargetCS,
-		PostIKTransformsRight,
-		MaxShoulderDragDistance,
-		ShoulderDragStiffness,
-		Precision,
-		MaxIterations,
-		Cast<ACharacter>(SkelComp->GetOwner())
-	);
+	if (Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_BothArms ||
+		Mode == EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_RightArmOnly)
+	{
+		FVector RightTargetCS = ToCS.TransformPosition(RightArmWorldTarget);
+		FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+			CSTransformsRight,
+			ConstraintsRight,
+			RightTargetCS,
+			PostIKTransformsRight,
+			MaxShoulderDragDistance,
+			ShoulderDragStiffness,
+			Precision,
+			MaxIterations,
+			Cast<ACharacter>(SkelComp->GetOwner())
+		);
+	}
+	else
+	{
+		for (FTransform& Transform : CSTransformsRight)
+		{
+			PostIKTransformsRight.Add(Transform);
+		}
+	}
+
+
 
 	// Use first pass results to twist the torso around the spine direction
 	// Note --calculations here are relative to the waist bone, not root!
@@ -203,11 +227,11 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FVector SpinePitchPreIK = FVector::VectorPlaneProject(SpineDirection, LeftAxis);
 	FVector SpinePitchPostIK = FVector::VectorPlaneProject(SpineDirectionPost, LeftAxis);
 	
-	FVector PitchAxis = FVector::CrossProduct(SpinePitchPreIK, SpinePitchPostIK);
-	float PitchRad;
-	if (PitchAxis.Normalize())
+	FVector PitchPositiveDirection = FVector::CrossProduct(SpinePitchPreIK, SpinePitchPostIK);
+	float PitchRad = 0.0f;
+	if (PitchPositiveDirection.Normalize())
 	{
-		PitchRad = (FVector::DotProduct(PitchAxis, RightAxis) >= 0.0f) ?
+		PitchRad = (FVector::DotProduct(PitchPositiveDirection, RightAxis) >= 0.0f) ?
 			FMath::Acos(FVector::DotProduct(SpinePitchPreIK, SpinePitchPostIK)) :
 			-1 * FMath::Acos(FVector::DotProduct(SpinePitchPreIK, SpinePitchPostIK));
 	}
@@ -217,15 +241,17 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	);
 	FQuat PitchRotation(RightAxis, PitchRad);
 
+/*  Torso rolling is disabled for now. I think it looks better without. 
+
 	// Prepare roll (bend side-to-side) rotation
 	FVector SpineRollPreIK = FVector::VectorPlaneProject(SpineDirection, ForwardAxis);
 	FVector SpineRollPostIK = FVector::VectorPlaneProject(SpineDirectionPost, ForwardAxis);
 	
-	FVector RollAxis = FVector::CrossProduct(SpineRollPostIK, SpineRollPostIK);
-	float RollRad;
-	if (RollAxis.Normalize())
+	FVector RollPositiveDirection = FVector::CrossProduct(SpineRollPreIK, SpineRollPostIK);
+	float RollRad = 0.0f;
+	if (RollPositiveDirection.Normalize())
 	{
-		RollRad = (FVector::DotProduct(RollAxis, ForwardAxis) >= 0.0f) ?
+		RollRad = (FVector::DotProduct(RollPositiveDirection, ForwardAxis) >= 0.0f) ?
 			FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK)) :
 			-1 * FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK));
 	}
@@ -234,11 +260,11 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		FMath::Clamp(FMath::RadiansToDegrees(RollRad), -MaxRollDegrees, MaxRollDegrees)
 	);
 	FQuat RollRotation(ForwardAxis, RollRad);
+*/
 
 	// Apply new transforms
 	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
-	//WaistCS.SetRotation(PitchRotation * RollRotation * TwistRotation * WaistCS.GetRotation());
-	WaistCS.SetRotation(PitchRotation * WaistCS.GetRotation());
+	WaistCS.SetRotation(TwistRotation * PitchRotation * WaistCS.GetRotation());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
 
 	// debug section

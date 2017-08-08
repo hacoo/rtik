@@ -9,6 +9,31 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "AnimNode_HumanoidArmTorsoAdjust.generated.h"
 
+/*
+* This node adjusts the torso before arm IK, causing it to bend toward the hand IK targets.
+*
+* This is accomplished by running FABRIK along each arm chain, allowing the root (the shoulder joint) to 
+* be dragged. The dragged shoulder positions are used to determine how the torso should rotate.
+*
+* The torso will twist (around the spine axis) and pitch (around the skeleton left axis) only; rolling is
+* not implemented. 
+*
+* There are a few important but unintuitive parameters in this node, including:
+*
+* - MaxShoulderDragDistance - How far the initial FABRIK pass may displace each shoulder bone. Increasing
+*   will cause the torso to move more; in particular, faraway targets will have greater weight and the torso 
+*   will bend more to reach them. 
+* 
+* - ShoulderDragStiffness - How much the shoulders will resist being dragged. Increasing this value above 1.0 will
+*   make the torso bend less, though it will not limit the maximum bend when reaching for faraway targets.
+*   
+* - ArmTwistRatio - Since the two arms are IKed separately, each will required a different amount of torso twist.
+*   One of these twist rotations will have greater magnitude than the other. This parameter controls the weighting
+*   between the two twists; if it is set closer to 1.0, the large-magnitude twist is favored; if it is set closer to
+*   0.0, the small-magnitude twist is favored. So, setting this higher will make the torso twist more. You shoulder
+*   usually just leave it at 0.5.
+*/
+
 
 /*
 * How arm IK should behave
@@ -94,9 +119,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
 	float MaxPitchBackwardDegrees;
 
+/*
 	// How far the torso may move side-to-side, rolling around the forward axis, in either direction. In positive degrees.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
 	float MaxRollDegrees;
+*/
 	
 	// How far the torso may twist, around the character's spine direction, toward the left arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
@@ -107,7 +134,7 @@ public:
 	float MaxTwistDegreesRight;
 
 	// The two arms will require different amounts of twist. If set to 1.0, the larger of the two twists is used;
-	// if set to 0.0, the smaller twist is used. Increasing will cause the torso to twist more.
+	// if set to 0.0, the smaller twist is used. Increasing will cause the torso to twist more. You should usually leave this at 0.5.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 1.0f))
 	float ArmTwistRatio;
 
@@ -159,11 +186,10 @@ public:
 		MaxIterations(10),
 		bEnable(true),
 		TorsoPivotSocketName(NAME_None),
-		MaxShoulderDragDistance(10.0f),
+		MaxShoulderDragDistance(50.0f),
 		ShoulderDragStiffness(1.0f),
 		MaxPitchForwardDegrees(60.0f),
 		MaxPitchBackwardDegrees(10.0f),
-		MaxRollDegrees(20.0f),
 		MaxTwistDegreesLeft(30.0f),
 		MaxTwistDegreesRight(30.0f),		
 		ArmTwistRatio(0.5f),
