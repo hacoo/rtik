@@ -96,6 +96,12 @@ bool FHumanoidLegChain::FindWithinFootRotationLimit(const USkeletalMeshComponent
 	float& OutAngleRad) const
 {
 
+	if (TraceData.FootHitResult.GetActor() == nullptr ||
+		TraceData.ToeHitResult.GetActor() == nullptr)
+	{
+		return false;
+	}
+
 	FVector ToCS = -1 * SkelComp.GetComponentLocation();
 
 	FVector FootFloorCS = ToCS + TraceData.FootHitResult.ImpactPoint;
@@ -130,18 +136,39 @@ bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp
 	FVector FootFloorCS = ToCS + TraceData.FootHitResult.ImpactPoint;
 	FVector ToeFloorCS  = ToCS + TraceData.ToeHitResult.ImpactPoint;
 
+	// If one of the trace results is invalid, don't rotate, and use the other one
+	if (TraceData.FootHitResult.GetActor() == nullptr || TraceData.ToeHitResult.GetActor() == nullptr)
+	{
+		if (TraceData.FootHitResult.GetActor() != nullptr)
+		{
+			OutTraceLocationCS = FootFloorCS;
+		}
+		else if (TraceData.ToeHitResult.GetActor() != nullptr)
+		{
+			OutTraceLocationCS = ToeFloorCS;
+		}
+
+#if ENABLE_IK_DEBUG_VERBOSE
+		else
+		{
+			UE_LOG(LogIK, Warning, TEXT("Warning, GetIKFloorPointCS was called on an invalid trace result. The output floor point may be invalid."));
+			// check (false);
+		}
+#endif // ENABLE_IK_DEBUG
+		
+		return false;
+	}
+
 	float Unused;
 	// If within foot rotation limit, always use the foot. Otherwise, use the higher point and the foot shouldn't rotate.
 	bool bWithinRotationLimit = FindWithinFootRotationLimit(SkelComp, TraceData, Unused);
 	
 	if (bWithinRotationLimit)
 	{
-		// Use lower point
 		OutTraceLocationCS = FootFloorCS;
 	}
 	else
 	{
-		// Use higher point
 		OutTraceLocationCS = FootFloorCS.Z > ToeFloorCS.Z ? FootFloorCS : ToeFloorCS;
 	}
 

@@ -51,9 +51,16 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 	FVector FootTargetCS;
 	FVector FloorCS;
-		
+			
 	if (Mode == EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
-	{
+	{		
+		// Check that we have some valid trace data
+		if (TraceData->GetTraceData().FootHitResult.GetActor() == nullptr &&
+			TraceData->GetTraceData().ToeHitResult.GetActor() == nullptr)
+		{
+			return;
+		}
+
 		// Use trace data to figure out where the foot should go.
 		FComponentSpacePoseContext BasePose(Output);
 		BaseComponentPose.EvaluateComponentSpace(BasePose);
@@ -61,9 +68,6 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FVector BaseRootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, FCompactPoseBoneIndex(0));
 		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
 
-		FVector FootFloorCS = ToCS.TransformPosition(TraceData->GetTraceData().FootHitResult.ImpactPoint);
-		FVector ToeFloorCS = ToCS.TransformPosition(TraceData->GetTraceData().ToeHitResult.ImpactPoint);
-		
 		// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
 		bool bWithinRotationLimit = Leg->Chain.GetIKFloorPointCS(*SkelComp, TraceData->GetTraceData(), FloorCS);
 		
@@ -79,6 +83,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		{
 			FootTargetCS = FootCS;
 		}
+
 	}
 	else
 	{

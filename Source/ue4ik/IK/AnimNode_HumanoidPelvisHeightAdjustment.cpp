@@ -62,7 +62,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	bool bReturnToCenter = false;
 	float TargetPelvisDelta = 0.0f;
 
-	if (LeftLegTraceData->GetTraceData().FootHitResult.GetActor()  == nullptr || 
+	if (LeftLegTraceData->GetTraceData().FootHitResult.GetActor()  == nullptr && 
 		RightLegTraceData->GetTraceData().FootHitResult.GetActor() == nullptr) 
 	{
 		bReturnToCenter = true;
