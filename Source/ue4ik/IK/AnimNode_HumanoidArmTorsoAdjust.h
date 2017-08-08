@@ -87,13 +87,17 @@ public:
 	float ShoulderDragStiffness;
 	
 	// How far the torso may pitch forward, measured at the waist bone. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 180.0f))
-	float MaxForwardBendDegrees;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin=0.0f, UIMax = 90.0f))
+	float MaxPitchForwardDegrees;
 
 	// How far the torso may pitch backward, measured at the waist bone. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
-	float MaxBackwardBendDegress;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	float MaxPitchBackwardDegrees;
 
+	// How far the torso may move side-to-side, rolling around the forward axis, in either direction. In positive degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	float MaxRollDegrees;
+	
 	// How far the torso may twist, around the character's spine direction, toward the left arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
 	float MaxTwistDegreesLeft;
@@ -101,7 +105,6 @@ public:
 	// How far the torso may twist, around the character's spine direction, toward the right arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
 	float MaxTwistDegreesRight;
-
 
 	// The two arms will require different amounts of twist. If set to 1.0, the larger of the two twists is used;
 	// if set to 0.0, the smaller twist is used. Increasing will cause the torso to twist more.
@@ -158,8 +161,9 @@ public:
 		TorsoPivotSocketName(NAME_None),
 		MaxShoulderDragDistance(10.0f),
 		ShoulderDragStiffness(1.0f),
-		MaxForwardBendDegrees(60.0f),
-		MaxBackwardBendDegress(10.0f),
+		MaxPitchForwardDegrees(60.0f),
+		MaxPitchBackwardDegrees(10.0f),
+		MaxRollDegrees(20.0f),
 		MaxTwistDegreesLeft(30.0f),
 		MaxTwistDegreesRight(30.0f),		
 		ArmTwistRatio(0.5f),

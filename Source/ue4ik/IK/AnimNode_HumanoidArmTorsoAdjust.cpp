@@ -66,7 +66,8 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	// Get skeleton axes
 	FVector ForwardAxis = FIKUtil::GetSkeletalMeshComponentAxis(*SkelComp, SkeletonForwardAxis);
 	FVector UpAxis      = FIKUtil::GetSkeletalMeshComponentAxis(*SkelComp, SkeletonUpAxis);
-	FVector LeftAxis   = FVector::CrossProduct(ForwardAxis, UpAxis);
+	FVector LeftAxis    = FVector::CrossProduct(ForwardAxis, UpAxis);
+	FVector RightAxis   = -1 * LeftAxis;
 
 	
 	// Not an actual bone location. The torso will pivot around this location during forward / backward bends.
@@ -154,12 +155,8 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FVector ShoulderLeftPostIK = PostIKTransformsLeft[0].GetLocation() - WaistCS.GetLocation();
 	FVector ShoulderRightPostIK = PostIKTransformsRight[0].GetLocation() - WaistCS.GetLocation();
 	FVector NeckPostIK = (ShoulderLeftPostIK + ShoulderRightPostIK) / 2;
-	
-	// Rotate the post-IK shoulder points into the pre-IK twist plane so the shoulder directions can be compared
-	//FQuat TwistPlaneRotation = FQuat::FindBetweenNormals(SpineDirectionPostIK, SpineDirectionPreIK);
-	//FVector ShoulderLeftPostIKDir = TwistPlaneRotation.RotateVector(ShoulderLeftPostIK - NeckPostIK).GetUnsafeNormal();
-	//FVector ShoulderRightPostIKDir = TwistPlaneRotation.RotateVector(ShoulderRightPostIK - NeckPostIK).GetUnsafeNormal();
-	
+	FVector SpineDirectionPost = NeckPostIK.GetUnsafeNormal();
+		
 	FVector ShoulderLeftPostIKDir = (ShoulderLeftPostIK - NeckPostIK).GetUnsafeNormal();
 	FVector ShoulderRightPostIKDir = (ShoulderRightPostIK - NeckPostIK).GetUnsafeNormal();
 
@@ -202,10 +199,47 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	float TwistRad = FMath::Lerp(SmallRad, LargeRad, ArmTwistRatio);
 	float TwistDeg = FMath::RadiansToDegrees(TwistRad);
 	TwistDeg = FMath::Clamp(TwistDeg, -MaxTwistDegreesLeft, MaxTwistDegreesRight);
+	
+	// Prepare pitch (bend forward / backward) rotation
+	FVector SpinePitchPreIK = FVector::VectorPlaneProject(SpineDirection, LeftAxis);
+	FVector SpinePitchPostIK = FVector::VectorPlaneProject(SpineDirectionPost, LeftAxis);
+	
+	FVector PitchAxis = FVector::CrossProduct(SpinePitchPreIK, SpinePitchPostIK);
+	float PitchRad;
+	if (PitchAxis.Normalize())
+	{
+		PitchRad = (FVector::DotProduct(PitchAxis, RightAxis) >= 0.0f) ?
+			FMath::Acos(FVector::DotProduct(SpinePitchPreIK, SpinePitchPostIK)) :
+			-1 * FMath::Acos(FVector::DotProduct(SpinePitchPreIK, SpinePitchPostIK));
+	}
 
-	// Apply twist
+	PitchRad = FMath::DegreesToRadians(
+		FMath::Clamp(FMath::RadiansToDegrees(PitchRad), -MaxPitchBackwardDegrees, MaxPitchForwardDegrees)
+	);
+	FQuat PitchRotation(RightAxis, PitchRad);
+
+	// Prepare roll (bend side-to-side) rotation
+	FVector SpineRollPreIK = FVector::VectorPlaneProject(SpineDirection, ForwardAxis);
+	FVector SpineRollPostIK = FVector::VectorPlaneProject(SpineDirectionPost, ForwardAxis);
+	
+	FVector RollAxis = FVector::CrossProduct(SpineRollPostIK, SpineRollPostIK);
+	float RollRad;
+	if (RollAxis.Normalize())
+	{
+		RollRad = (FVector::DotProduct(RollAxis, ForwardAxis) >= 0.0f) ?
+			FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK)) :
+			-1 * FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK));
+	}
+
+	RollRad = FMath::DegreesToRadians(
+		FMath::Clamp(FMath::RadiansToDegrees(RollRad), -MaxRollDegrees, MaxRollDegrees)
+	);
+	FQuat RollRotation(ForwardAxis, RollRad);
+
+	// Apply new transforms
 	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
-	WaistCS.SetRotation(TwistRotation * WaistCS.GetRotation());
+	//WaistCS.SetRotation(PitchRotation * RollRotation * TwistRotation * WaistCS.GetRotation());
+	WaistCS.SetRotation(PitchRotation * TwistRotation * WaistCS.GetRotation());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
 
 	// debug section
@@ -314,6 +348,15 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			FColor(255, 255, 0));
 		FDebugDrawUtil::DrawSphere(World, WaistLocWorld, FColor(255, 255, 0), 3.0f);
 		
+		FVector NeckPointPre = ToWorld.TransformPosition((CSTransformsLeft[0].GetLocation() + CSTransformsRight[0].GetLocation()) / 2);
+		FDebugDrawUtil::DrawLine(World,
+			WaistLocWorld,
+			NeckPointPre,
+			FColor(255, 255, 0));
+		FDebugDrawUtil::DrawSphere(World, NeckPointPre, FColor(255, 255, 0), 3.0f);
+
+
+		
 		// Draw chain after adjustment, in cyan
 		for (int32 i = 0; i < NumBonesLeft - 1; ++i)
 		{
@@ -341,6 +384,13 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			ToWorld.TransformPosition(PostIKTransformsRight[0].GetLocation()),
 			FColor(0, 255, 255));
 		FDebugDrawUtil::DrawSphere(World, WaistLocWorld, FColor(0, 255, 255), 3.0f);
+
+		FVector NeckPointPost = ToWorld.TransformPosition((PostIKTransformsLeft[0].GetLocation() + PostIKTransformsRight[0].GetLocation()) / 2);
+		FDebugDrawUtil::DrawLine(World,
+			WaistLocWorld,
+			NeckPointPost,
+			FColor(0, 255, 255));
+		FDebugDrawUtil::DrawSphere(World, NeckPointPost, FColor(0, 255, 255), 3.0f);
 
 		// Draw skeleton axes
 		FVector Base = ToWorld.GetOrigin();
