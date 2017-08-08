@@ -50,7 +50,9 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	ACharacter* Character = Cast<ACharacter>(SkelComp->GetOwner());
 	if(Character == nullptr)
 	{
+#if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("FAnimNode_HumanoidPelvisHeightAdjustment -- evaluation failed, skeletal mesh component owner could not be cast to ACharacter"));
+#endif // ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
 

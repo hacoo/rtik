@@ -21,8 +21,7 @@ void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
     // Trace direction is downward axis of skeletal mesh component.
 
 	if (Character == nullptr)
-	{
-		UE_LOG(LogIK, Warning, TEXT("FHumanoidIK::HumanoidIKLegTrace -- Leg trace failed, Character was invalid"));
+	{		
 		return;
 	}
 
