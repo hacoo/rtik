@@ -9,6 +9,27 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "AnimNode_HumanoidArmTorsoAdjust.generated.h"
 
+
+/*
+* How arm IK should behave
+*/
+UENUM(BlueprintType)
+enum class EHumanoidArmTorsoIKMode : uint8
+{	
+	// Disabled; return to base pose
+	IK_Human_ArmTorso_Disabled UMETA(DisplayName = "Disabled"),
+	
+	// IK left arm only
+	IK_Human_ArmTorso_LeftArmOnly UMETA(DisplayName = "IK left arm only"),
+
+	// IK right arm only
+	IK_Human_ArmTorso_RightArmOnly UMETA(DisplayName = "IK right arm only"),
+
+	// IK both arms
+	IK_Human_ArmTorso_BothArms UMETA(DisplayName = "IK both arms"),
+};
+
+
 /*
 * Rotates the torso and shoulders to prepare for IK.
 */
@@ -25,8 +46,14 @@ public:
 	FComponentSpacePoseLink BaseComponentPose;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links, meta = (PinShownByDefault))
-	URangeLimitedIKChainWrapper* Arm;
-		
+	URangeLimitedIKChainWrapper* LeftArm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links, meta = (PinShownByDefault))
+	URangeLimitedIKChainWrapper* RightArm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
+	EHumanoidArmTorsoIKMode Mode;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEnableDebugDraw;
 
@@ -67,13 +94,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
 	float MaxBackwardBendDegress;
 
-	// How far the torso may twist (around the character Z axis), in the forward direction. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
-	float MaxForwardTwistDegrees;
+	// How far the torso may twist, around the character's spine direction, toward the left arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	float MaxTwistDegreesLeft;
 
-	// How far the torso may twist (around the character Z axis), in the backward direction. In positive degrees.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 180.0f))
-	float MaxBackwardTwistDegrees;
+	// How far the torso may twist, around the character's spine direction, toward the right arm. Measured relative to the incoming animation pose, NOT the character forward direction. In degrees.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 90.0f))
+	float MaxTwistDegreesRight;
+
+
+	// The two arms will require different amounts of twist. If set to 1.0, the larger of the two twists is used;
+	// if set to 0.0, the smaller twist is used. Increasing will cause the torso to twist more.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso, meta = (UIMin = 0.0f, UIMax = 1.0f))
+	float ArmTwistRatio;
 
 	// Forward direction for this skeleton. Usually X axis, may sometimes be the Y axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
@@ -87,9 +120,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Torso)
 	FIKBone WaistBone;
 
-	// World-space target to place the effector
+	// Where to place left arm effector, in world space
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
-	FVector EffectorWorldTarget;
+	FVector LeftArmWorldTarget;
+
+	// Where to place right arm effector, in world space
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
+	FVector RightArmWorldTarget;
 
 	// How to handle rotation of the effector (the the hand). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
@@ -112,6 +149,7 @@ public:
 
 	FAnimNode_HumanoidArmTorsoAdjust()
 		:
+		Mode(EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_Disabled),
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
 		Precision(0.001f),
@@ -122,11 +160,13 @@ public:
 		ShoulderDragStiffness(1.0f),
 		MaxForwardBendDegrees(60.0f),
 		MaxBackwardBendDegress(10.0f),
-		MaxForwardTwistDegrees(30.0f),
-		MaxBackwardTwistDegrees(30.0f),
+		MaxTwistDegreesLeft(30.0f),
+		MaxTwistDegreesRight(30.0f),		
+		ArmTwistRatio(0.5f),
 		SkeletonForwardAxis(EIKBoneAxis::IKBA_X),
 		SkeletonUpAxis(EIKBoneAxis::IKBA_Z),
-		EffectorWorldTarget(0.0f, 0.0f, 0.0f),
+		LeftArmWorldTarget(0.0f, 0.0f, 0.0f),
+		RightArmWorldTarget(0.0f, 0.0f, 0.0f),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),

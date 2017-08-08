@@ -105,9 +105,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				FVector RootDisplacement = RootTarget - InCSTransforms[0].GetLocation();
 				if (RootDragStiffness > KINDA_SMALL_NUMBER)
 				{
-					UE_LOG(LogIK, Warning, TEXT("%f"), RootDisplacement.Size());
 					RootDisplacement /= RootDragStiffness;
-					UE_LOG(LogIK, Warning, TEXT("%f"), RootDisplacement.Size());					
 				}
 
 				// limit root displacement to drag length

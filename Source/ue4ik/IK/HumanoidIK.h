@@ -237,7 +237,6 @@ public:
 		return Chain.IsValid(RequiredBones);
 	}
 };
-
 /*
 * Wrapper class for passing around in BP
 UCLASS(BlueprintType, EditInlineNew)

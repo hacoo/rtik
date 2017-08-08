@@ -56,7 +56,9 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		return;
 	}
 
-	if (Arm->Chain.Num() < 1)
+	int32 NumBonesLeft = LeftArm->Chain.Num();
+	int32 NumBonesRight = RightArm->Chain.Num();
+	if (NumBonesLeft < 1 || NumBonesRight < 1)
 	{
 		return;
 	}
@@ -66,28 +68,13 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FVector UpAxis      = FIKUtil::GetSkeletalMeshComponentAxis(*SkelComp, SkeletonUpAxis);
 	FVector LeftAxis   = FVector::CrossProduct(ForwardAxis, UpAxis);
 
-	// Create two artificial 'bones'. The spine bone goes from the torso pivot to the neck,
-	// the shoulder bone goes from the neck to  the shoulder ball joint.
-	FTransform ShoulderCS = Output.Pose.GetComponentSpaceTransform(Arm->Chain[0].BoneIndex);
-
-	// Artificial bones don't need rotaions as they won't be rendered. 
+	
+	// Not an actual bone location. The torso will pivot around this location during forward / backward bends.
 	FTransform PivotCS(ToCS.TransformPosition(TorsoPivotSocket->GetSocketLocation(SkelComp)));
 
-	// Neck is directly above pivot, at shoulder height
-	FTransform NeckCS(PivotCS.GetLocation() + (ShoulderCS.GetLocation() - PivotCS.GetLocation()).ProjectOnTo(UpAxis));
+	// Upper body rotations are applied at this bone.
+	FTransform WaistCS = Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex);
 
-	// Set up augmented chain -- pivot and neck preceed the arm chain
-	int32 NumBones = Arm->Chain.Num() + 2;
-	TArray<FTransform> CSTransforms;
-	CSTransforms.Reserve(NumBones);
-	CSTransforms.Add(PivotCS);
-	CSTransforms.Add(NeckCS);
-
-	for (FIKBone& Bone : Arm->Chain.BonesRootToEffector)
-	{
-		CSTransforms.Add(Output.Pose.GetComponentSpaceTransform(Bone.BoneIndex));
-	}
-	
 #if ENABLE_IK_DEBUG
 	if (!LeftAxis.IsNormalized())
 	{
@@ -96,15 +83,158 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	}
 #endif 
 
-	// Set up torso pitch constraint, allowing torso to bend forward / backward
-	FPlanarRotation TorsoPitchConstraint;
-	TorsoPitchConstraint.RotationAxis = -1 * LeftAxis;
-	TorsoPitchConstraint.ForwardDirection = UpAxis;
-	TorsoPitchConstraint.FailsafeDirection = UpAxis;
+	// Setup starting transforms
+	TArray<FTransform> CSTransformsLeft;
+	CSTransformsLeft.Reserve(NumBonesLeft);
+	for (FIKBone& Bone : LeftArm->Chain.BonesRootToEffector)
+	{
+		CSTransformsLeft.Add(Output.Pose.GetComponentSpaceTransform(Bone.BoneIndex));
+	}
 
-	// Bend degree inputs are measured from the waist bone. Convert them to be measured at the torso pivot.
-	FVector WaistCS = Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex).GetLocation();
+	TArray<FTransform> CSTransformsRight;
+	CSTransformsLeft.Reserve(NumBonesRight);
+	for (FIKBone& Bone : RightArm->Chain.BonesRootToEffector)
+	{
+		CSTransformsRight.Add(Output.Pose.GetComponentSpaceTransform(Bone.BoneIndex));
+	}
 
+	// Setup constraints
+	TArray<FIKBoneConstraint*> ConstraintsLeft;
+	ConstraintsLeft.Reserve(NumBonesLeft);
+	for (FIKBone& Bone : LeftArm->Chain.BonesRootToEffector)
+	{
+		ConstraintsLeft.Add(Bone.GetConstraint());
+	}
+
+	TArray<FIKBoneConstraint*> ConstraintsRight;
+	ConstraintsRight.Reserve(NumBonesLeft);
+	for (FIKBone& Bone : LeftArm->Chain.BonesRootToEffector)
+	{
+		ConstraintsRight.Add(Bone.GetConstraint());
+	}
+
+
+	// First pass: IK each arm, allowing shoulders to drag
+	FVector LeftTargetCS = ToCS.TransformPosition(LeftArmWorldTarget);
+	TArray<FTransform> PostIKTransformsLeft;
+	FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+		CSTransformsLeft,
+		ConstraintsLeft,
+		LeftTargetCS,
+		PostIKTransformsLeft,
+		MaxShoulderDragDistance,
+		ShoulderDragStiffness,
+		Precision,
+		MaxIterations,
+		Cast<ACharacter>(SkelComp->GetOwner())
+	);
+
+	FVector RightTargetCS = ToCS.TransformPosition(RightArmWorldTarget);
+	TArray<FTransform> PostIKTransformsRight;
+	FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+		CSTransformsRight,
+		ConstraintsRight,
+		RightTargetCS,
+		PostIKTransformsRight,
+		MaxShoulderDragDistance,
+		ShoulderDragStiffness,
+		Precision,
+		MaxIterations,
+		Cast<ACharacter>(SkelComp->GetOwner())
+	);
+
+	// Use first pass results to twist the torso around the spine direction
+	// Note --calculations here are relative to the waist bone, not root!
+	// 'Neck' is the midpoint beween the shoulders
+	FVector ShoulderLeftPreIK = CSTransformsLeft[0].GetLocation() - WaistCS.GetLocation();
+	FVector ShoulderRightPreIK = CSTransformsRight[0].GetLocation() - WaistCS.GetLocation();
+	FVector NeckPreIK = (ShoulderLeftPreIK + ShoulderRightPreIK) / 2;
+	FVector SpineDirection = NeckPreIK.GetUnsafeNormal();
+
+	FVector ShoulderLeftPostIK = PostIKTransformsLeft[0].GetLocation() - WaistCS.GetLocation();
+	FVector ShoulderRightPostIK = PostIKTransformsRight[0].GetLocation() - WaistCS.GetLocation();
+	FVector NeckPostIK = (ShoulderLeftPostIK + ShoulderRightPostIK) / 2;
+	
+	// Rotate the post-IK shoulder points into the pre-IK twist plane so the shoulder directions can be compared
+	//FQuat TwistPlaneRotation = FQuat::FindBetweenNormals(SpineDirectionPostIK, SpineDirectionPreIK);
+	//FVector ShoulderLeftPostIKDir = TwistPlaneRotation.RotateVector(ShoulderLeftPostIK - NeckPostIK).GetUnsafeNormal();
+	//FVector ShoulderRightPostIKDir = TwistPlaneRotation.RotateVector(ShoulderRightPostIK - NeckPostIK).GetUnsafeNormal();
+	
+	FVector ShoulderLeftPostIKDir = (ShoulderLeftPostIK - NeckPostIK).GetUnsafeNormal();
+	FVector ShoulderRightPostIKDir = (ShoulderRightPostIK - NeckPostIK).GetUnsafeNormal();
+
+	FVector ShoulderLeftPreIKDir = (ShoulderLeftPreIK - NeckPreIK).GetUnsafeNormal();
+	FVector ShoulderRightPreIKDir = (ShoulderRightPreIK - NeckPreIK).GetUnsafeNormal();
+
+	// Find the twist angle by blending the small rotation and the large one as specified
+	FVector LeftTwistAxis = FVector::CrossProduct(ShoulderLeftPreIKDir, ShoulderLeftPostIKDir);
+	float LeftTwistRad = 0.0f;
+	if (LeftTwistAxis.Normalize())
+	{
+		LeftTwistRad = (FVector::DotProduct(LeftTwistAxis, SpineDirection) > 0.0f) ?
+			FMath::Acos(FVector::DotProduct(ShoulderLeftPreIKDir, ShoulderLeftPostIKDir)) :
+			-1 * FMath::Acos(FVector::DotProduct(ShoulderLeftPreIKDir, ShoulderLeftPostIKDir));
+	}
+
+	FVector RightTwistAxis = FVector::CrossProduct(ShoulderRightPreIKDir, ShoulderRightPostIKDir);
+	float RightTwistRad = 0.0f;
+	if (RightTwistAxis.Normalize())
+	{
+		RightTwistRad = (FVector::DotProduct(RightTwistAxis, SpineDirection) > 0.0f) ?
+			FMath::Acos(FVector::DotProduct(ShoulderRightPreIKDir, ShoulderRightPostIKDir)) :
+			-1 * FMath::Acos(FVector::DotProduct(ShoulderRightPreIKDir, ShoulderRightPostIKDir));
+	}	
+
+	float SmallRad;
+	float LargeRad;
+	if (FMath::Abs(LeftTwistRad) > FMath::Abs(RightTwistRad))
+	{
+		SmallRad = RightTwistRad;
+		LargeRad = LeftTwistRad;
+	}
+	else
+	{
+		SmallRad = LeftTwistRad;
+		LargeRad = RightTwistRad;
+	}	
+
+	// Blend the twists...
+	float TwistRad = FMath::Lerp(SmallRad, LargeRad, ArmTwistRatio);
+	float TwistDeg = FMath::RadiansToDegrees(TwistRad);
+	TwistDeg = FMath::Clamp(TwistDeg, -MaxTwistDegreesLeft, MaxTwistDegreesRight);
+
+	// Apply twist
+	FQuat TwistRotation(SpineDirection, FMath::DegreesToRadians(TwistDeg));
+	WaistCS.SetRotation(TwistRotation * WaistCS.GetRotation());
+	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
+
+	// debug section
+	UWorld* World = SkelComp->GetWorld();
+	FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+	FVector WaistLocWorld = ToWorld.TransformPosition(WaistCS.GetLocation());
+	FVector NeckLocWorld = ToWorld.TransformPosition(NeckPreIK);
+
+	FDebugDrawUtil::DrawVector(World,
+		NeckLocWorld,
+		ToWorld.TransformVector(ShoulderLeftPreIKDir),
+		FColor(255, 255, 0));
+	FDebugDrawUtil::DrawVector(World,
+		NeckLocWorld,
+		ToWorld.TransformVector(ShoulderRightPreIKDir),
+		FColor(255, 255, 0));
+
+	FDebugDrawUtil::DrawVector(World,
+		NeckLocWorld,
+		ToWorld.TransformVector(ShoulderLeftPostIKDir),
+		FColor(0, 255, 255));
+	FDebugDrawUtil::DrawVector(World,
+		NeckLocWorld,
+		ToWorld.TransformVector(ShoulderRightPostIKDir),
+		FColor(0, 255, 255));
+
+	FDebugDrawUtil::DrawSphere(World, NeckLocWorld, FColor(255, 0, 0), 3.0f);
+	FDebugDrawUtil::DrawPlane(World, NeckLocWorld, SpineDirection);
+/*
 	float ForwardBendLen = FMath::Tan(FMath::DegreesToRadians(MaxForwardBendDegrees)) * 
 		(NeckCS.GetLocation() - WaistCS).Size();
 	float ForwardBendDegreesFromPivot = FMath::RadiansToDegrees(FMath::Atan(ForwardBendLen / 
@@ -114,61 +244,14 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		(NeckCS.GetLocation() - WaistCS).Size();
 	float BackwardBendDegreesFromPivot = FMath::RadiansToDegrees(FMath::Atan(BackwardBendLen / 
 		(NeckCS.GetLocation() - PivotCS.GetLocation()).Size()));
-
-	TorsoPitchConstraint.MinDegrees = -BackwardBendDegreesFromPivot;
-	TorsoPitchConstraint.MaxDegrees = ForwardBendDegreesFromPivot;
-	TorsoPitchConstraint.bEnabled = true;
-	TorsoPitchConstraint.bEnableDebugDraw = true;
-
-	// Set up torso twist constraint, allowing a twist around the direction of the pivot-neck vector
-	FPlanarRotation TorsoTwistConstraint;
-	TorsoTwistConstraint.ForwardDirection = -LeftAxis;	
-	TorsoTwistConstraint.FailsafeDirection = -LeftAxis;
-	TorsoTwistConstraint.MinDegrees = -MaxBackwardTwistDegrees;
-	TorsoTwistConstraint.MaxDegrees = MaxForwardTwistDegrees;
-	TorsoTwistConstraint.bEnabled = true;
-
-
-	// Setup lambda wil run before constraint eval. It sets the rotation axis to the direction of the previous bone 
-	// (the pivot-to-neck bone), and determines 'up' direction by the cross product.	
-	TorsoTwistConstraint.SetupFn = [&TorsoTwistConstraint](
-		int32 Index,
-		const TArray<FTransform>& ReferenceCSTransforms,
-		const TArray<FIKBoneConstraint*>& Constraints,
-		TArray<FTransform>& CSTransforms
-		)
-	{
-		FVector PivotLoc = CSTransforms[Index - 1].GetLocation();
-		FVector NeckLoc = CSTransforms[Index].GetLocation();		
-		TorsoTwistConstraint.RotationAxis = -1 * (NeckLoc - PivotLoc).GetUnsafeNormal();
-	};
-
-	// Add constraints
-	TArray<FIKBoneConstraint*> Constraints;
-	Constraints.Reserve(NumBones);
-	Constraints.Add(&TorsoPitchConstraint);
-	//Constraints.Add(&TorsoTwistConstraint);
-	Constraints.Add(nullptr);
-	for (FIKBone& Bone : Arm->Chain.BonesRootToEffector)
-	{
-		Constraints.Add(Bone.GetConstraint());
-	}
+*/
 
 	// Run FABRIK and pray
-	FVector EffectorTargetCS = ToCS.TransformPosition(EffectorWorldTarget);
-	TArray<FTransform> DestCSTransforms;
-	FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-		CSTransforms,
-		Constraints,
-		EffectorTargetCS,
-		DestCSTransforms,
-		MaxShoulderDragDistance,
-		ShoulderDragStiffness,
-		Precision,
-		MaxIterations,
-		Cast<ACharacter>(SkelComp->GetOwner())
-	);
 
+	// Compare offsets of each shoulder socket to determine torso twist
+
+
+	/*
 	// Apply pivot / neck rotations to the waist bone
 	FVector NewShoulderDirection = (DestCSTransforms[2].GetLocation() - DestCSTransforms[1].GetLocation()).GetUnsafeNormal();
 	FVector OldShoulderDirection = (CSTransforms[2].GetLocation() - CSTransforms[1].GetLocation()).GetUnsafeNormal();
@@ -192,31 +275,74 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FTransform NewWaistTransform(Output.Pose.GetComponentSpaceTransform(WaistBone.BoneIndex));
 	NewWaistTransform.SetRotation(BendRotation * NewWaistTransform.GetRotation());
 	// OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, NewWaistTransform));
+	*/
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
 		UWorld* World = SkelComp->GetWorld();		
 		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FVector WaistLocWorld = ToWorld.TransformPosition(WaistCS.GetLocation());
+		FVector ParentLoc;
+		FVector ChildLoc;
 
 		// Draw chain before adjustment, in yellow
-		for (int32 i = 0; i < NumBones - 1; ++i)
+		for (int32 i = 0; i < NumBonesLeft - 1; ++i)
 		{
-			FVector ParentLoc = ToWorld.TransformPosition(CSTransforms[i].GetLocation());
-			FVector ChildLoc = ToWorld.TransformPosition(CSTransforms[i+1].GetLocation());
+			// Draw each arm
+			ParentLoc = ToWorld.TransformPosition(CSTransformsLeft[i].GetLocation());
+			ChildLoc = ToWorld.TransformPosition(CSTransformsLeft[i+1].GetLocation());
 			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
 			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
-		}		
 
+			ParentLoc = ToWorld.TransformPosition(CSTransformsRight[i].GetLocation());
+			ChildLoc = ToWorld.TransformPosition(CSTransformsRight[i+1].GetLocation());
+			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
+			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
+
+		}		
+		// Draw torso triangle
+		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+			ToWorld.TransformPosition(CSTransformsLeft[0].GetLocation()),
+			FColor(255, 255, 0));
+		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+			ToWorld.TransformPosition(CSTransformsRight[0].GetLocation()),
+			FColor(255, 255, 0));
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(CSTransformsLeft[0].GetLocation()),
+			ToWorld.TransformPosition(CSTransformsRight[0].GetLocation()),
+			FColor(255, 255, 0));
+		FDebugDrawUtil::DrawSphere(World, WaistLocWorld, FColor(255, 255, 0), 3.0f);
+		
 		// Draw chain after adjustment, in cyan
-		for (int32 i = 0; i < NumBones - 1; ++i)
+		for (int32 i = 0; i < NumBonesLeft - 1; ++i)
 		{
-			FVector ParentLoc = ToWorld.TransformPosition(DestCSTransforms[i].GetLocation());
-			FVector ChildLoc = ToWorld.TransformPosition(DestCSTransforms[i+1].GetLocation());
+			// Draw each arm
+			ParentLoc = ToWorld.TransformPosition(PostIKTransformsLeft[i].GetLocation());
+			ChildLoc = ToWorld.TransformPosition(PostIKTransformsLeft[i+1].GetLocation());
 			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
 			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
-		}
 
+			ParentLoc = ToWorld.TransformPosition(PostIKTransformsRight[i].GetLocation());
+			ChildLoc = ToWorld.TransformPosition(PostIKTransformsRight[i+1].GetLocation());
+			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
+			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
+
+		}
+		// Draw torso triangle
+		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+			ToWorld.TransformPosition(PostIKTransformsLeft[0].GetLocation()),
+			FColor(0, 255, 255));
+		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+			ToWorld.TransformPosition(PostIKTransformsRight[0].GetLocation()),
+			FColor(0, 255, 255));
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(PostIKTransformsLeft[0].GetLocation()),
+			ToWorld.TransformPosition(PostIKTransformsRight[0].GetLocation()),
+			FColor(0, 255, 255));
+		FDebugDrawUtil::DrawSphere(World, WaistLocWorld, FColor(0, 255, 255), 3.0f);
+
+		// Draw skeleton axes
 		FVector Base = ToWorld.GetOrigin();
 		FDebugDrawUtil::DrawVector(World, Base, ForwardAxis, FColor(255, 0, 0));
 		FDebugDrawUtil::DrawVector(World, Base, LeftAxis, FColor(0, 255, 0));
@@ -229,7 +355,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skeleton, const FBoneContainer & RequiredBones)
 {
 	
-	if (Arm == nullptr)
+	if (LeftArm == nullptr || RightArm == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an input wrapper was null"));		
@@ -237,10 +363,10 @@ bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skele
 		return false;		
 	}
 
-	if (!Arm->IsValid(RequiredBones))
+	if (!LeftArm->IsValid(RequiredBones) || !RightArm->IsValid(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - arm chain was not valid"));		
+		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an arm chain was not valid"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;				
 	}
@@ -258,7 +384,7 @@ bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skele
 
 void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneContainer& RequiredBones)
 {
-	if (Arm == nullptr)
+	if (LeftArm == nullptr || RightArm == nullptr)
 	{
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogIK, Warning, TEXT("Coud not initialize humanoid arm torso adjust - An input wrapper object was null"));
@@ -266,10 +392,10 @@ void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneConta
 		return;
 	}
 	
-	if (!Arm->InitBoneReferences(RequiredBones))
+	if (!LeftArm->InitBoneReferences(RequiredBones) || !RightArm->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize arm chain in humanoid arm torso adjust"));
+		UE_LOG(LogIK, Warning, TEXT("Could not initialize an arm chain in humanoid arm torso adjust"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
@@ -281,5 +407,4 @@ void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneConta
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
-
 }
