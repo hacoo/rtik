@@ -239,34 +239,13 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	);
 	FQuat PitchRotation(RightAxis, PitchRad);
 
-/*  Torso rolling is disabled for now. I think it looks better without. 
-
-	// Prepare roll (bend side-to-side) rotation
-	FVector SpineRollPreIK = FVector::VectorPlaneProject(SpineDirection, ForwardAxis);
-	FVector SpineRollPostIK = FVector::VectorPlaneProject(SpineDirectionPost, ForwardAxis);
-	
-	FVector RollPositiveDirection = FVector::CrossProduct(SpineRollPreIK, SpineRollPostIK);
-	float RollRad = 0.0f;
-	if (RollPositiveDirection.Normalize())
-	{
-		RollRad = (FVector::DotProduct(RollPositiveDirection, ForwardAxis) >= 0.0f) ?
-			FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK)) :
-			-1 * FMath::Acos(FVector::DotProduct(SpineRollPreIK, SpineRollPostIK));
-	}
-
-	RollRad = FMath::DegreesToRadians(
-		FMath::Clamp(FMath::RadiansToDegrees(RollRad), -MaxRollDegrees, MaxRollDegrees)
-	);
-	FQuat RollRotation(ForwardAxis, RollRad);
-*/
-
 	// Twist needs to be applied first; pitch will modify twist axes and cause a bad rotation
-	FQuat TargetOffset = PitchRotation * TwistRotation;
+	FQuat TargetOffset = (PitchRotation * TwistRotation);
 	// Interpolate rotation
 	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(TorsoRotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
 
 	// Apply new transforms	
-	WaistCS.SetRotation(LastRotationOffset * WaistCS.GetRotation());
+	WaistCS.SetRotation((LastRotationOffset * WaistCS.GetRotation()).Normalize());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
 
 #if WITH_EDITOR
