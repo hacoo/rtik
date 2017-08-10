@@ -126,13 +126,16 @@ protected:
 		ACharacter* Character = nullptr
 		);
 
-	// Drag the root from its starting location, clamping to a max distance	
-	static void DragRoot(
-		const TArray<FTransform>& InTransforms,
-		float MaxRootDragDistance,
-		float RootDragStiffness,
-		const TArray<float>& BoneLengths,
-		TArray<FTransform>& OutTrasnforms
+	// Drags PointToDrag relative to MaintainDistancePoint; that is, PointToDrag is moved so that it attempts
+	// to maintain the distance BoneLength between itself and MaintainDistancePoint. However, this displacement is 
+	// clamped, PointToDrag may not be moved farther than MaxDragDistance from StartingTransform.
+	static void DragPoint(
+		const FTransform& StartingTransform,
+		const FTransform& MaintainDistancePoint,
+		float BoneLength,
+		float MaxDragDistance,
+		float DragStiffness,
+		FTransform& PointToDrag
 	);
 
 	// Compute bone lengths and store in BoneLengths. BoneLengths will be emptied and refilled.

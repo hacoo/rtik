@@ -60,12 +60,13 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			);
 			
 			// Drag the root if enabled
-			DragRoot(
-				InTransforms,
+			DragPoint(
+				InTransforms[0],
+				OutTransforms[1],
+				BoneLengths[1],
 				MaxRootDragDistance,
 				RootDragStiffness,
-				BoneLengths,
-				OutTransforms
+				OutTransforms[0]
 			);
 
 			// "Backward Reaching" stage - adjust bones from root.
@@ -115,6 +116,7 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 
 	// Number of points in the chain. Number of bones = NumPoints - 1
 	int32 NumPoints = InTransforms.Num();
+	int32 EffectorIndex       = NumPoints - 1;
 
 	// Gather bone transforms
 	OutTransforms.Reserve(NumPoints);
@@ -128,19 +130,22 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 		// Need at least one bone to do IK!
 		return false;
 	}
-	
 	// Gather bone lengths. BoneLengths contains the length of the bone ENDING at this point,
+	
 	// i.e., BoneLengths[i] contains the distance between point i-1 and point i
 	TArray<float> BoneLengths;
 	float MaximumReach = ComputeBoneLengths(InTransforms, BoneLengths);
+	float RootToEffectorLength = FVector::Dist(InTransforms[0].GetLocation(), InTransforms[EffectorIndex].GetLocation());
 
 	bool bBoneLocationUpdated = false;
-	int32 EffectorIndex       = NumPoints - 1;
 	
 	// Check distance between tip location and effector location
 	float Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
 	if (Slop > Precision)
 	{
+		// The closed loop method is identical, except the root is dragged a second time to maintain
+		// distance with the effector.		
+
 		// Set tip bone at end effector location.
 		OutTransforms[EffectorIndex].SetLocation(EffectorTargetLocation);
 		
@@ -157,12 +162,23 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 			);
 			
 			// Drag the root if enabled
-			DragRoot(
-				InTransforms,
+			DragPoint(
+				InTransforms[0],
+				OutTransforms[1],
+				BoneLengths[1],
 				MaxRootDragDistance,
 				RootDragStiffness,
-				BoneLengths,
-				OutTransforms
+				OutTransforms[0]
+			);
+
+			// Drag the root again, toward the effector (since they're connected in a closed loop)
+			DragPoint(
+				InTransforms[0],
+				OutTransforms[EffectorIndex],
+				RootToEffectorLength,
+				MaxRootDragDistance,
+				RootDragStiffness,
+				OutTransforms[0]
 			);
 
 			// "Backward Reaching" stage - adjust bones from root.
@@ -259,7 +275,7 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 
 	for (int32 PointIndex = 1; PointIndex < NumPoints; PointIndex++)
 	{
-		FTransform& ParentPoint = OutTransforms[PointIndex - 1];
+		FTransform& ParentPoint  = OutTransforms[PointIndex - 1];
 		FTransform& CurrentPoint = OutTransforms[PointIndex];
 		
 		if (FMath::IsNearlyZero(BoneLengths[PointIndex]))
@@ -295,43 +311,42 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 	}
 }
 
-void FRangeLimitedFABRIK::DragRoot(
-	const TArray<FTransform>& InTransforms,
-	float MaxRootDragDistance,
-	float RootDragStiffness,
-	const TArray<float>& BoneLengths,
-	TArray<FTransform>& OutTransforms
+void FRangeLimitedFABRIK::DragPoint(
+	const FTransform& StartingTransform,
+	const FTransform& MaintainDistancePoint,
+	float BoneLength,
+	float MaxDragDistance,
+	float DragStiffness,
+	FTransform& PointToDrag
 )
 {
-	if (MaxRootDragDistance < SMALL_NUMBER)
+	if (MaxDragDistance < SMALL_NUMBER)
 	{
-		return;
+		PointToDrag.SetLocation(StartingTransform.GetLocation());
 	}
 		
-	FTransform& ChildPoint = OutTransforms[1];
-	FVector RootTarget;
-
-	if (FMath::IsNearlyZero(BoneLengths[1]))
+	FVector Target;
+	if (FMath::IsNearlyZero(BoneLength))
 	{
-		RootTarget = ChildPoint.GetLocation();
+		Target = MaintainDistancePoint.GetLocation();
 	}
 	else
 	{
-		RootTarget = ChildPoint.GetLocation() +
-			(OutTransforms[0].GetLocation() - ChildPoint.GetLocation()).GetUnsafeNormal() *
-			BoneLengths[1];
+		Target = MaintainDistancePoint.GetLocation() +
+			(PointToDrag.GetLocation() - MaintainDistancePoint.GetLocation()).GetUnsafeNormal() *
+			BoneLength;
 	}
 		
 	// Root drag stiffness pulls the root back if enabled
-	FVector RootDisplacement = RootTarget - InTransforms[0].GetLocation();
-	if (RootDragStiffness > KINDA_SMALL_NUMBER)
+	FVector Displacement = Target - StartingTransform.GetLocation();
+	if (DragStiffness > KINDA_SMALL_NUMBER)
 	{
-		RootDisplacement /= RootDragStiffness;
+		Displacement /= DragStiffness;
 	}
 	
 	// limit root displacement to drag length
-	FVector RootLimitedDisplacement = RootDisplacement.GetClampedToMaxSize(MaxRootDragDistance);
-	OutTransforms[0].SetLocation(InTransforms[0].GetLocation() + RootLimitedDisplacement);
+	FVector LimitedDisplacement = Displacement.GetClampedToMaxSize(MaxDragDistance);
+	PointToDrag.SetLocation(StartingTransform.GetLocation() + LimitedDisplacement);
 }
 
 
@@ -344,14 +359,10 @@ void FRangeLimitedFABRIK::UpdateParentRotation(
 	FVector OldDir = (OldChildTransform.GetLocation() - OldParentTransform.GetLocation()).GetUnsafeNormal();
 	FVector NewDir = (NewChildTransform.GetLocation() - NewParentTransform.GetLocation()).GetUnsafeNormal();
 	
-	// Calculate axis of rotation from pre-translation vector to post-translation vector
 	FVector RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
-	float RotationAngle = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
-	FQuat DeltaRotation = FQuat(RotationAxis, RotationAngle);
-	// We're going to multiply it, in order to not have to re-normalize the final quaternion, it has to be a unit quaternion.
-	checkSlow(DeltaRotation.IsNormalized());
+	float RotationAngle  = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
+	FQuat DeltaRotation  = FQuat(RotationAxis, RotationAngle);
 	
-	// Calculate absolute rotation and set it
 	NewParentTransform.SetRotation(DeltaRotation * OldParentTransform.GetRotation());
 	NewParentTransform.NormalizeRotation();
 }
