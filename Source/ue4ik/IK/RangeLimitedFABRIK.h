@@ -49,7 +49,7 @@ public:
 	* The effector's rotation is NOT updated (unlike in the UE4 FABRIK implementation).
 	* Parameter descriptions follow:
 	* 	
-	* @param InTransforsm - The starting transforms of each chain point. Not modified.
+	* @param InTransforsm - The starting transforms of each chain point. Not modified. Must contain at least 2 transforms.
 	* @param Constraints - Constraints corresponding to each chain point; entries should be set to nullptr for points that don't need a constraint.
 	*   these may modify chain transforms arbitrarily and are enforced each time a point is moved.
 	*	Strong constraints will degrade the results of FABRIK, it's up to you to figure out what works.
@@ -64,8 +64,8 @@ public:
 	* @param MaxIterations - The maximum number of iterations to run. Increase for possibly better results but 
 	    possibly worse performance.
 	* @param Character - Character pointer whcih may be used for debug drawing. May safely be set to nullptr or ignored.
+	* @return - True if any transforms in OutTransforms were updated; otherwise, false. If false, the contents of OutTransforms is identical to InTransforms.
 	*/
-
 	static bool SolveRangeLimitedFABRIK(
 		const TArray<FTransform>& InTransforms,
 		const TArray<FIKBoneConstraint*>& Constraints,
@@ -77,14 +77,60 @@ public:
 		int32 MaxIterations = 20,
 		ACharacter* Character = nullptr
 	);
+
+	/*
+	* Solves FABRIK on a CLOSED LOOP, that is, a chain where the effector is assumed to be connected to the root.
+	* 	
+	* I'm not sure how well constraints will work with this solver, but they are nonetheless supported for the sake of
+	* keeping a consistent interface. You're welcome to try them out but results may be bad.	
+	*
+	* Note that you will probably HAVE to use root dragging if you want this solver to work!
+	*/
+	static bool SolveClosedLoopFABRIK(
+		const TArray<FTransform>& InTransforms,
+		const TArray<FIKBoneConstraint*>& Constraints,
+		const FVector& EffectorTargetLocation,
+		TArray<FTransform>& OutTransforms,
+		float MaxRootDragDistance = 10.0f,
+		float RootDragStiffness = 1.0f,
+		float Precision = 0.01f,
+		int32 MaxIterations = 20,
+		ACharacter* Character = nullptr
+	);
 	
+	
+protected:
+
 	static void UpdateParentRotation(
 		FTransform& NewParentTransform,
 		const FTransform& OldParentTransform,
 		const FTransform& NewChildTransform,
 		const FTransform& OldChildTransform
 	);
+
+	// Iterate from effector to root
+	static void FABRIKForwardPass(
+		const TArray<FTransform>& InTransforms,
+		const TArray<FIKBoneConstraint*>& Constraints,
+		TArray<float>& BoneLengths,
+		TArray<FTransform>& OutTransforms,
+		ACharacter* Character = nullptr 
+		);
 	
-private:
-   	
+	// Iterate from root to effector
+	static void FABRIKBackwardPass(
+		const TArray<FTransform>& InTransforms,
+		const TArray<FIKBoneConstraint*>& Constraints,
+		TArray<float>& BoneLengths,
+		TArray<FTransform>& OutTransforms,
+		ACharacter* Character = nullptr
+		);
+
+	static void DragRoot(
+		const TArray<FTransform>& InTransforms,
+		float MaxRootDragDistance,
+		float RootDragStiffness,
+		TArray<float>& BoneLengths,
+		TArray<FTransform>& OutTrasnforms
+	);
 };
