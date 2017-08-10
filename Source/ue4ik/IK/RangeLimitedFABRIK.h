@@ -1,4 +1,4 @@
-// Copyright (c) Henry Cooney 2017
+﻿// Copyright (c) Henry Cooney 2017
 
 #pragma once
 
@@ -11,6 +11,36 @@
 
 	See www.andreasaristidou.com/FABRIK.html for details of the FABRIK algorithm.
 */
+
+/* 
+* A three-point closed loop, containing two noisy effectors.
+* This is a very specific type of IK 'chain', used for the torso upper and lower body triangles.
+*/
+struct UE4IK_API FNoisyThreePointClosedLoop
+{
+public:
+
+	FNoisyThreePointClosedLoop(const FTransform& InEffectorATransform, const FTransform& InEffectorBTransform,
+		const FTransform& InRootTransform)
+		:
+		EffectorATransform(InEffectorATransform),
+		EffectorBTransform(InEffectorBTransform),
+		RootTransform(InRootTransform)
+	{ }
+		
+	FNoisyThreePointClosedLoop()
+	{ }
+
+	// The first noisy effector
+	FTransform EffectorATransform;
+
+	// The second noisy effector
+	FTransform EffectorBTransform;
+
+	// The root transform. Not IKed onto a target location, but may be constrained not to drag too far from
+	// its starting position	
+	FTransform RootTransform;
+};
 
 struct UE4IK_API FRangeLimitedFABRIK
 {
@@ -46,7 +76,9 @@ public:
 	* In other words, the rotation of each point transform is updated with the smallest rotation to make it 
 	* 'point toward' the newly adjusted child point.	
 	*
-	* The effector's rotation is NOT updated (unlike in the UE4 FABRIK implementation).
+	* The effector's rotation is NOT updated (unlike in the UE4 FABRIK implementation), you will need to do this
+	* yourself after running FABRIK.
+	*
 	* Parameter descriptions follow:
 	* 	
 	* @param InTransforsm - The starting transforms of each chain point. Not modified. Must contain at least 2 transforms.
@@ -62,7 +94,7 @@ public:
 	* @param Precision - Iteration will terminate when the effector is within this distance from the target.
 	*  Decrease for possibly better results but possibly worse performance.
 	* @param MaxIterations - The maximum number of iterations to run. Increase for possibly better results but 
-	    possibly worse performance.
+	*  possibly worse performance.
 	* @param Character - Character pointer whcih may be used for debug drawing. May safely be set to nullptr or ignored.
 	* @return - True if any transforms in OutTransforms were updated; otherwise, false. If false, the contents of OutTransforms is identical to InTransforms.
 	*/
@@ -97,7 +129,22 @@ public:
 		int32 MaxIterations = 20,
 		ACharacter* Character = nullptr
 	);
-	
+
+	/*
+	* Runs closed-loop FABRIK multiple times, attempting to move both 'noisy effectors' to their targets.
+	* See www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_Cοnstraints.pdf
+	*/
+	static bool SolveNoisyThreePoint(
+		const FNoisyThreePointClosedLoop& InClosedLoop,
+		const FVector& EffectorATarget,
+		const FVector& EffectorBTarget,
+		FNoisyThreePointClosedLoop& OutClosedLoop,
+		float MaxRootDragDistance = 0.0f,
+		float RootDragStiffness = 1.0f,
+		float Precision = 0.01f,
+		int32 MaxIterations = 20,
+		ACharacter* Character = nullptr		
+	);
 	
 protected:
 
@@ -115,7 +162,7 @@ protected:
 		const TArray<float>& BoneLengths,
 		TArray<FTransform>& OutTransforms,
 		ACharacter* Character = nullptr 
-		);
+	);
 	
 	// Iterate from root to effector
 	static void FABRIKBackwardPass(
@@ -124,13 +171,28 @@ protected:
 		const TArray<float>& BoneLengths,
 		TArray<FTransform>& OutTransforms,
 		ACharacter* Character = nullptr
-		);
+	);
+
+	// The core FABRIK method. Projects PointToMove onto the vector between itself and MaintainDistancePoint, 
+	// such that the distance between them is BoneLength. This enforces the core FABRIK constraint, that inter-point
+	// distances don't change. Thus, PointToMove is 'dragged' toward MaintainDistancePoint and the original interpoint
+	// distance is maintained.
+	static FORCEINLINE void DragPoint(
+		const FTransform& MaintainDistancePoint,
+		float BoneLength,
+		FTransform& PointToMove
+	);
 
 	// Drags PointToDrag relative to MaintainDistancePoint; that is, PointToDrag is moved so that it attempts
-	// to maintain the distance BoneLength between itself and MaintainDistancePoint. However, this displacement is 
-	// clamped, PointToDrag may not be moved farther than MaxDragDistance from StartingTransform.
-	static void DragPoint(
-		const FTransform& StartingTransform,
+	// to maintain the distance BoneLength between itself and MaintainDistancePoint. However, PointToDrag is 'tethered'
+	// to TetherPoint; it cannot ever be dragged father than MaxDragDistance from TetherPoint. Additionally, the 
+	// tether acts like a spring, instantaneously pulling MaintainDistancePoint back toward TetherPoint by an amount dictated by DragStiffnes;
+	// specifically, the required displacement (before clamping to MaxDragDisplacement) is divided by DragStiffness.
+	// 
+	// Basically, this is like EnforcePointDistance, but with the additional stronger constraint that PointToDrag
+	// can never be moved father than MaxDragDistance from StartingTransform.
+	static void DragPointTethered(
+		const FTransform& TetherPoint,
 		const FTransform& MaintainDistancePoint,
 		float BoneLength,
 		float MaxDragDistance,

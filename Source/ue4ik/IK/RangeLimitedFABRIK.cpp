@@ -60,7 +60,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			);
 			
 			// Drag the root if enabled
-			DragPoint(
+			DragPointTethered(
 				InTransforms[0],
 				OutTransforms[1],
 				BoneLengths[1],
@@ -162,7 +162,7 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 			);
 			
 			// Drag the root if enabled
-			DragPoint(
+			DragPointTethered(
 				InTransforms[0],
 				OutTransforms[1],
 				BoneLengths[1],
@@ -172,7 +172,7 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 			);
 
 			// Drag the root again, toward the effector (since they're connected in a closed loop)
-			DragPoint(
+			DragPointTethered(
 				InTransforms[0],
 				OutTransforms[EffectorIndex],
 				RootToEffectorLength,
@@ -212,6 +212,39 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 	return bBoneLocationUpdated;
 };
 
+bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
+	const FNoisyThreePointClosedLoop& InClosedLoop,
+	const FVector& EffectorATarget,
+	const FVector& EffectorBTarget,
+	FNoisyThreePointClosedLoop& OutClosedLoop,
+	float MaxRootDragDistance,
+	float RootDragStiffness,
+	float Precision,
+	int32 MaxIterations,
+	ACharacter* Character
+)
+{
+	// Create constraints -- this method doesn't support them, so they should be null
+	TArray<FIKBoneConstraint*>Constraints({ nullptr, nullptr, nullptr });
+	
+	// Create FABRIK-able chains
+	TArray<FTransform> InEffectorATransforms({ 
+		InClosedLoop.RootTransform, 
+		InClosedLoop.EffectorBTransform,
+		InClosedLoop.EffectorATransform
+	});
+	TArray<FTransform> OutEffectorATransforms;
+
+	TArray<FTransform> InEffectorBTransforms({ 
+		InClosedLoop.RootTransform,
+		InClosedLoop.EffectorATransform,
+		InClosedLoop.EffectorBTransform
+	});
+	TArray<FTransform> OutEffectorBTransforms;
+
+	
+	return true;
+}
 
 void FRangeLimitedFABRIK::FABRIKForwardPass(
 	const TArray<FTransform>& InTransforms,
@@ -229,16 +262,8 @@ void FRangeLimitedFABRIK::FABRIKForwardPass(
 		FTransform& CurrentPoint = OutTransforms[PointIndex];
 		FTransform& ChildPoint = OutTransforms[PointIndex + 1];
 
-		if (FMath::IsNearlyZero(BoneLengths[PointIndex + 1]))
-		{
-			CurrentPoint.SetLocation(ChildPoint.GetLocation());
-		}
-		else
-		{
-			CurrentPoint.SetLocation(ChildPoint.GetLocation() +
-				(CurrentPoint.GetLocation() - ChildPoint.GetLocation()).GetUnsafeNormal() *
-				BoneLengths[PointIndex + 1]);
-		}
+		// Move the parent to maintain starting bone lengths
+		DragPoint(ChildPoint, BoneLengths[PointIndex + 1], CurrentPoint);
 
 		// Enforce parent's constraint any time child is moved
 		FIKBoneConstraint* CurrentConstraint = Constraints[PointIndex - 1];
@@ -278,16 +303,8 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 		FTransform& ParentPoint  = OutTransforms[PointIndex - 1];
 		FTransform& CurrentPoint = OutTransforms[PointIndex];
 		
-		if (FMath::IsNearlyZero(BoneLengths[PointIndex]))
-		{
-			CurrentPoint.SetLocation(ParentPoint.GetLocation());
-		}
-		else
-		{
-			CurrentPoint.SetLocation(ParentPoint.GetLocation() +
-				(CurrentPoint.GetLocation() - ParentPoint.GetLocation()).GetUnsafeNormal() *
-				BoneLengths[PointIndex]);
-		}
+		// Move the child to maintain starting bone lengths
+		DragPoint(ParentPoint, BoneLengths[PointIndex], CurrentPoint);
 		
 		// Enforce parent's constraint any time child is moved
 		FIKBoneConstraint* CurrentConstraint = Constraints[PointIndex - 1];
@@ -311,7 +328,18 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 	}
 }
 
-void FRangeLimitedFABRIK::DragPoint(
+FORCEINLINE void FRangeLimitedFABRIK::DragPoint(
+	const FTransform& MaintainDistancePoint,
+	float BoneLength,
+	FTransform& PointToMove
+) 
+{
+	PointToMove.SetLocation(MaintainDistancePoint.GetLocation() +
+		(PointToMove.GetLocation() - MaintainDistancePoint.GetLocation()).GetUnsafeNormal() *
+		BoneLength);
+}
+
+void FRangeLimitedFABRIK::DragPointTethered(
 	const FTransform& StartingTransform,
 	const FTransform& MaintainDistancePoint,
 	float BoneLength,
@@ -337,8 +365,9 @@ void FRangeLimitedFABRIK::DragPoint(
 			BoneLength;
 	}
 		
-	// Root drag stiffness pulls the root back if enabled
 	FVector Displacement = Target - StartingTransform.GetLocation();
+
+	// Root drag stiffness 'pulls' the root back if enabled
 	if (DragStiffness > KINDA_SMALL_NUMBER)
 	{
 		Displacement /= DragStiffness;
@@ -348,7 +377,6 @@ void FRangeLimitedFABRIK::DragPoint(
 	FVector LimitedDisplacement = Displacement.GetClampedToMaxSize(MaxDragDistance);
 	PointToDrag.SetLocation(StartingTransform.GetLocation() + LimitedDisplacement);
 }
-
 
 void FRangeLimitedFABRIK::UpdateParentRotation(
 	FTransform& NewParentTransform, 
