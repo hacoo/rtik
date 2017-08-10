@@ -14,8 +14,21 @@
 
 	See IK.h for a description of ROM constraints.
 	
-	See RangeLimitedFABRIK.h for more detailed description of the FABRIK algorithm as implemented here.
+	See RangeLimitedFABRIK.h for more detailed description of the FABRIK algorithm(s) as implemented here.
 */
+
+/*
+* Which solver method to use
+*/
+UENUM(BlueprintType)
+enum class ERangeLimitedFABRIKSolverMode : uint8
+{	
+	// Standard FABRIK chain solver	
+	RLF_Normal UMETA(DisplayName = "Normal Chain solver"),
+
+	// Closed loop solver, assumes root and effector are connected	
+	RLF_ClosedLoop UMETA(DisplayName = "Closed Loop")
+};
 
 USTRUCT()
 struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlBase
@@ -28,6 +41,7 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 		EffectorTransform(FTransform::Identity),
 		EffectorTransformSpace(BCS_ComponentSpace),
 		EffectorRotationSource(BRS_KeepLocalSpaceRotation),
+		SolverMode(ERangeLimitedFABRIKSolverMode::RLF_Normal),
 		Precision(1.f),
 		MaxIterations(10),
 		MaxRootDragDistance(0.0f),
@@ -35,6 +49,7 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 		bEnableDebugDraw(false)
 	{ }
 
+	
 
 	// Coordinates for target location of tip bone - if EffectorLocationSpace is bone, this is the offset from Target Bone to use as target location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector, meta = (PinShownByDefault))
@@ -53,6 +68,9 @@ struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControl
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
 	TEnumAsByte<enum EBoneRotationSource> EffectorRotationSource;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinShownByDefault))
+	ERangeLimitedFABRIKSolverMode SolverMode;
 
 	// Tolerance for final tip location delta from EffectorLocation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)

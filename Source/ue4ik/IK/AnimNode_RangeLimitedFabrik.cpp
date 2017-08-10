@@ -51,17 +51,36 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	TArray<FTransform> DestCSTransforms;
 
 	ACharacter* Character = Cast<ACharacter>(Output.AnimInstanceProxy->GetSkelMeshComponent()->GetOwner());
-	bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-		SourceCSTransforms,
-		Constraints,
-		CSEffectorTransform.GetLocation(),
-		DestCSTransforms,
-		MaxRootDragDistance,
-		RootDragStiffness,
-		Precision,
-		MaxIterations,
-		Character
-	);
+	bool bBoneLocationUpdated = false;
+
+	if (SolverMode == ERangeLimitedFABRIKSolverMode::RLF_Normal)
+	{
+		bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+			SourceCSTransforms,
+			Constraints,
+			CSEffectorTransform.GetLocation(),
+			DestCSTransforms,
+			MaxRootDragDistance,
+			RootDragStiffness,
+			Precision,
+			MaxIterations,
+			Character
+		);
+	}
+	else if (SolverMode == ERangeLimitedFABRIKSolverMode::RLF_ClosedLoop)
+	{
+		bBoneLocationUpdated = FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
+			SourceCSTransforms,
+			Constraints,
+			CSEffectorTransform.GetLocation(),
+			DestCSTransforms,
+			MaxRootDragDistance,
+			RootDragStiffness,
+			Precision,
+			MaxIterations,
+			Character
+		);
+	}
 
 	// Special handling for tip bone's rotation.
 	int32 TipBoneIndex = NumChainLinks - 1;
@@ -104,30 +123,71 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 		UWorld* World = SkelComp->GetWorld();
 		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
 
-		// Draw chain before adjustment, in yellow
-		for (int32 i = 0; i < NumChainLinks - 1; ++i)
+		if (SolverMode == ERangeLimitedFABRIKSolverMode::RLF_Normal)
 		{
-			FVector ParentLoc = ToWorld.TransformPosition(SourceCSTransforms[i].GetLocation());
-			FVector ChildLoc = ToWorld.TransformPosition(SourceCSTransforms[i + 1].GetLocation());
-			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
-			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
-		}		
+			// Draw chain before adjustment, in yellow
+			for (int32 i = 0; i < NumChainLinks - 1; ++i)
+			{
+				FVector ParentLoc = ToWorld.TransformPosition(SourceCSTransforms[i].GetLocation());
+				FVector ChildLoc = ToWorld.TransformPosition(SourceCSTransforms[i + 1].GetLocation());
+				FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
+				FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
+			}
 
-		// Draw root drag radius
-		if (MaxRootDragDistance > KINDA_SMALL_NUMBER)
-		{
-			FDebugDrawUtil::DrawSphere(World,
-				ToWorld.TransformPosition(SourceCSTransforms[0].GetLocation()),
-				FColor(255, 0, 0), MaxRootDragDistance, 12, -1.0f, 0.5f);
+			// Draw root drag radius
+			if (MaxRootDragDistance > KINDA_SMALL_NUMBER)
+			{
+				FDebugDrawUtil::DrawSphere(World,
+					ToWorld.TransformPosition(SourceCSTransforms[0].GetLocation()),
+					FColor(255, 0, 0), MaxRootDragDistance, 12, -1.0f, 0.5f);
+			}
+
+			// Draw chain after adjustment, in cyan
+			for (int32 i = 0; i < NumChainLinks - 1; ++i)
+			{
+				FVector ParentLoc = ToWorld.TransformPosition(DestCSTransforms[i].GetLocation());
+				FVector ChildLoc = ToWorld.TransformPosition(DestCSTransforms[i + 1].GetLocation());
+				FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
+				FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
+			}
 		}
-
-		// Draw chain after adjustment, in cyan
-		for (int32 i = 0; i < NumChainLinks - 1; ++i)
+		else if (SolverMode == ERangeLimitedFABRIKSolverMode::RLF_ClosedLoop)
 		{
-			FVector ParentLoc = ToWorld.TransformPosition(DestCSTransforms[i].GetLocation());
-			FVector ChildLoc = ToWorld.TransformPosition(DestCSTransforms[i+1].GetLocation());
-			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
-			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
+			// Draw chain before adjustment, in yellow
+			for (int32 i = 0; i < NumChainLinks - 1; ++i)
+			{
+				FVector ParentLoc = ToWorld.TransformPosition(SourceCSTransforms[i].GetLocation());
+				FVector ChildLoc = ToWorld.TransformPosition(SourceCSTransforms[i + 1].GetLocation());
+				FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
+				FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
+			}
+
+			FDebugDrawUtil::DrawLine(World,
+				ToWorld.TransformPosition(SourceCSTransforms[0].GetLocation()),
+				ToWorld.TransformPosition(SourceCSTransforms[NumChainLinks-1].GetLocation()),
+				FColor(255, 255, 0));
+
+			// Draw root drag radius
+			if (MaxRootDragDistance > KINDA_SMALL_NUMBER)
+			{
+				FDebugDrawUtil::DrawSphere(World,
+					ToWorld.TransformPosition(SourceCSTransforms[0].GetLocation()),
+					FColor(255, 0, 0), MaxRootDragDistance, 12, -1.0f, 0.5f);
+			}
+
+			// Draw chain after adjustment, in cyan
+			for (int32 i = 0; i < NumChainLinks - 1; ++i)
+			{
+				FVector ParentLoc = ToWorld.TransformPosition(DestCSTransforms[i].GetLocation());
+				FVector ChildLoc = ToWorld.TransformPosition(DestCSTransforms[i + 1].GetLocation());
+				FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
+				FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
+			}
+
+			FDebugDrawUtil::DrawLine(World,
+				ToWorld.TransformPosition(DestCSTransforms[0].GetLocation()),
+				ToWorld.TransformPosition(DestCSTransforms[NumChainLinks-1].GetLocation()),
+				FColor(0, 255, 255));	
 		}
 	}
 

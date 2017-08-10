@@ -270,7 +270,6 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			ChildLoc = ToWorld.TransformPosition(CSTransformsRight[i+1].GetLocation());
 			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(255, 255, 0));
 			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(255, 255, 0), 3.0f);
-
 		}		
 		// Draw torso triangle
 		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
@@ -292,8 +291,6 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			FColor(255, 255, 0));
 		FDebugDrawUtil::DrawSphere(World, NeckPointPre, FColor(255, 255, 0), 3.0f);
 
-
-		
 		// Draw chain after adjustment, in cyan
 		for (int32 i = 0; i < NumBonesLeft - 1; ++i)
 		{
@@ -307,7 +304,6 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			ChildLoc = ToWorld.TransformPosition(PostIKTransformsRight[i+1].GetLocation());
 			FDebugDrawUtil::DrawLine(World, ParentLoc, ChildLoc, FColor(0, 255, 255));
 			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
-
 		}
 		// Draw torso triangle
 		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
