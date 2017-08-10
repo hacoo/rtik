@@ -9,10 +9,12 @@
 
 
 /*
-	Range-limited FABRIK solver. Based on FABRIK UE4 FABRIK solver (see AnimNode_Fabrik.h), but will
+	Range-limited FABRIK solver. Based on UE4 FABRIK solver (see AnimNode_Fabrik.h), but will
 	additionally enforce range-of-motion constraints.
 
 	See IK.h for a description of ROM constraints.
+	
+	See RangeLimitedFABRIK.h for more detailed description of the FABRIK algorithm as implemented here.
 */
 
 USTRUCT()

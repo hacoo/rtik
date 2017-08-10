@@ -4,20 +4,20 @@
 #include "Utility/DebugDrawUtil.h"
 
 bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-	const TArray<FTransform>& InCSTransforms,
+	const TArray<FTransform>& InTransforms,
 	const TArray<FIKBoneConstraint*>& Constraints,
-	const FVector & EffectorTargetLocationCS,
-	TArray<FTransform>& OutCSTransforms,
+	const FVector & EffectorTargetLocation,
+	TArray<FTransform>& OutTransforms,
 	float MaxRootDragDistance,
 	float RootDragStiffness,
 	float Precision,
 	int32 MaxIterations,
 	ACharacter* Character)
 {
-	OutCSTransforms.Empty();
+	OutTransforms.Empty();
 
 	// Number of points in the chain. Number of bones = NumPoints - 1
-	int32 NumPoints = InCSTransforms.Num();
+	int32 NumPoints = InTransforms.Num();
 
 	if (NumPoints < 2)
 	{
@@ -26,10 +26,10 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	}
 
 	// Gather bone transforms
-	OutCSTransforms.Reserve(NumPoints);
-	for (const FTransform& Transform : InCSTransforms)
+	OutTransforms.Reserve(NumPoints);
+	for (const FTransform& Transform : InTransforms)
 	{
-		OutCSTransforms.Add(Transform);
+		OutTransforms.Add(Transform);
 	}
 	
 	// Gather bone lengths
@@ -40,23 +40,23 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 	for (int32 i = 1; i < NumPoints; ++i)
 	{
-		BoneLengths.Add(FVector::Dist(OutCSTransforms[i - 1].GetLocation(),
-			OutCSTransforms[i].GetLocation()));
+		BoneLengths.Add(FVector::Dist(OutTransforms[i - 1].GetLocation(),
+			OutTransforms[i].GetLocation()));
 		MaximumReach  += BoneLengths[i];
 	}
 
 	bool bBoneLocationUpdated = false;
 
-	float RootToTargetDistSq = FVector::DistSquared(OutCSTransforms[0].GetLocation(), EffectorTargetLocationCS);
+	float RootToTargetDistSq = FVector::DistSquared(OutTransforms[0].GetLocation(), EffectorTargetLocation);
 
 	int32 TipBoneLinkIndex = NumPoints - 1;
 	
 	// Check distance between tip location and effector location
-	float Slop = FVector::Dist(OutCSTransforms[TipBoneLinkIndex].GetLocation(), EffectorTargetLocationCS);
+	float Slop = FVector::Dist(OutTransforms[TipBoneLinkIndex].GetLocation(), EffectorTargetLocation);
 	if (Slop > Precision)
 	{
 		// Set tip bone at end effector location.
-		OutCSTransforms[TipBoneLinkIndex].SetLocation(EffectorTargetLocationCS);
+		OutTransforms[TipBoneLinkIndex].SetLocation(EffectorTargetLocation);
 		
 		int32 IterationCount = 0;
 		while ((Slop > Precision) && (IterationCount++ < MaxIterations))
@@ -64,29 +64,36 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			// "Forward Reaching" stage - adjust bones from end effector.
 			for (int32 LinkIndex = TipBoneLinkIndex - 1; LinkIndex > 0; LinkIndex--)
 			{
-				FTransform& CurrentLink = OutCSTransforms[LinkIndex];
-				FTransform& ChildLink = OutCSTransforms[LinkIndex + 1];
-				
-				CurrentLink.SetLocation(ChildLink.GetLocation() +
-					(CurrentLink.GetLocation() - ChildLink.GetLocation()).GetUnsafeNormal() *
-					BoneLengths[LinkIndex + 1]);
-				
+				FTransform& CurrentLink = OutTransforms[LinkIndex];
+				FTransform& ChildLink = OutTransforms[LinkIndex + 1];
+
+				if (FMath::IsNearlyZero(BoneLengths[LinkIndex + 1]))
+				{
+					CurrentLink.SetLocation(ChildLink.GetLocation());
+				}
+				else
+				{
+					CurrentLink.SetLocation(ChildLink.GetLocation() +
+						(CurrentLink.GetLocation() - ChildLink.GetLocation()).GetUnsafeNormal() *
+						BoneLengths[LinkIndex + 1]);
+				}
+					
 				// Enforce parent's constraint any time child is moved
 				FIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
 				if (CurrentConstraint != nullptr && CurrentConstraint->bEnabled)
 				{
 					CurrentConstraint->SetupFn(
 						LinkIndex - 1,
-						InCSTransforms,
+						InTransforms,
 						Constraints,
-						OutCSTransforms
+						OutTransforms
 					);
 					
 					CurrentConstraint->EnforceConstraint(
 						LinkIndex - 1,
-						InCSTransforms,
+						InTransforms,
 						Constraints,
-						OutCSTransforms,
+						OutTransforms,
 						Character
 					);
 				}
@@ -95,14 +102,22 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			// Drag the root if enabled
 			if (MaxRootDragDistance > KINDA_SMALL_NUMBER)
 			{
-				FTransform& ChildLink = OutCSTransforms[1];
 
-				FVector RootTarget = ChildLink.GetLocation() +
-					(OutCSTransforms[0].GetLocation() - ChildLink.GetLocation()).GetUnsafeNormal() *
-					BoneLengths[1];
+				FTransform& ChildLink = OutTransforms[1];
+				FVector RootTarget;
+				if (FMath::IsNearlyZero(BoneLengths[1]))
+				{
+					RootTarget = ChildLink.GetLocation();
+				}
+				else
+				{
+					RootTarget = ChildLink.GetLocation() +
+						(OutTransforms[0].GetLocation() - ChildLink.GetLocation()).GetUnsafeNormal() *
+						BoneLengths[1];
+				}
 
 				// Root drag stiffness pulls the root back if enabled
-				FVector RootDisplacement = RootTarget - InCSTransforms[0].GetLocation();
+				FVector RootDisplacement = RootTarget - InTransforms[0].GetLocation();
 				if (RootDragStiffness > KINDA_SMALL_NUMBER)
 				{
 					RootDisplacement /= RootDragStiffness;
@@ -110,19 +125,26 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 				// limit root displacement to drag length
 				FVector RootLimitedDisplacement = RootDisplacement.GetClampedToMaxSize(MaxRootDragDistance);
-				OutCSTransforms[0].SetLocation(InCSTransforms[0].GetLocation() + RootLimitedDisplacement);
+				OutTransforms[0].SetLocation(InTransforms[0].GetLocation() + RootLimitedDisplacement);
 			}
 
 
 			// "Backward Reaching" stage - adjust bones from root.
 			for (int32 LinkIndex = 1; LinkIndex < TipBoneLinkIndex; LinkIndex++)
 			{
-				FTransform& ParentLink = OutCSTransforms[LinkIndex - 1];
-				FTransform& CurrentLink = OutCSTransforms[LinkIndex];
-				
-				CurrentLink.SetLocation(ParentLink.GetLocation() +
-					(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
-					BoneLengths[LinkIndex]);
+				FTransform& ParentLink = OutTransforms[LinkIndex - 1];
+				FTransform& CurrentLink = OutTransforms[LinkIndex];
+
+				if (FMath::IsNearlyZero(BoneLengths[LinkIndex]))
+				{
+					CurrentLink.SetLocation(ParentLink.GetLocation());
+				}
+				else
+				{
+					CurrentLink.SetLocation(ParentLink.GetLocation() +
+						(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
+						BoneLengths[LinkIndex]);
+				}
 				
 				// Enforce parent's constraint any time child is moved
 				FIKBoneConstraint* CurrentConstraint = Constraints[LinkIndex - 1];
@@ -130,16 +152,16 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				{
 					CurrentConstraint->SetupFn(
 						LinkIndex - 1,
-						InCSTransforms,
+						InTransforms,
 						Constraints,
-						OutCSTransforms
+						OutTransforms
 					);
 					
 					CurrentConstraint->EnforceConstraint(
 						LinkIndex - 1,
-						InCSTransforms,
+						InTransforms,
 						Constraints,
-						OutCSTransforms,
+						OutTransforms,
 						Character
 					);
 				}
@@ -148,13 +170,13 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			// Re-check distance between tip location and effector location
 			// Since we're keeping tip on top of effector location, check with its parent bone.
 			Slop = FMath::Abs(BoneLengths[TipBoneLinkIndex] -
-				FVector::Dist(OutCSTransforms[TipBoneLinkIndex - 1].GetLocation(), EffectorTargetLocationCS));
+				FVector::Dist(OutTransforms[TipBoneLinkIndex - 1].GetLocation(), EffectorTargetLocation));
 		}
 		
 		// Place tip bone based on how close we got to target.
 		{
-			FTransform& ParentLink = OutCSTransforms[TipBoneLinkIndex - 1];
-			FTransform& CurrentLink = OutCSTransforms[TipBoneLinkIndex];
+			FTransform& ParentLink = OutTransforms[TipBoneLinkIndex - 1];
+			FTransform& CurrentLink = OutTransforms[TipBoneLinkIndex];
 			
 			CurrentLink.SetLocation(ParentLink.GetLocation() +
 				(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
@@ -169,8 +191,11 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	{
 		for (int32 LinkIndex = 0; LinkIndex < NumPoints - 1; ++LinkIndex)
 		{
-			UpdateParentRotation(OutCSTransforms[LinkIndex], InCSTransforms[LinkIndex],
-				OutCSTransforms[LinkIndex + 1], InCSTransforms[LinkIndex + 1]);
+			if (!FMath::IsNearlyZero(BoneLengths[LinkIndex + 1]))
+			{
+				UpdateParentRotation(OutTransforms[LinkIndex], InTransforms[LinkIndex],
+					OutTransforms[LinkIndex + 1], InTransforms[LinkIndex + 1]);
+			}
 		}
 	}
 
