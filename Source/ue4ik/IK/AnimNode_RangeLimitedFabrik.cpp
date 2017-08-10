@@ -7,8 +7,12 @@
 #include "IK/RangeLimitedFABRIK.h"
 #include "Utility/DebugDrawUtil.h"
 
+DECLARE_CYCLE_STAT(TEXT("IK Range Limited FABRIK"), STAT_RangeLimitedFabrik_Eval, STATGROUP_Anim);
+
 void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms)
 {
+	SCOPE_CYCLE_COUNTER(STAT_RangeLimitedFabrik_Eval);
+	
 	const FBoneContainer& BoneContainer = Output.Pose.GetPose().GetBoneContainer();
 
 	// Update EffectorLocation if it is based off a bone position
@@ -22,6 +26,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 #if WITH_EDITOR
 	CachedEffectorCSTransform = CSEffectorTransform;
 #endif	
+	check(OutBoneTransforms.Num() == 0);
 
 	int32 NumChainLinks = IKChain->Chain.Num();
 	if (NumChainLinks < 2)
