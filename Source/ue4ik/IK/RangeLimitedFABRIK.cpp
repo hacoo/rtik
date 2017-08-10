@@ -79,15 +79,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 
 			Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
 		}
-		
-		// Place tip bone based on how close we got to target.
-		FTransform& ParentPoint = OutTransforms[EffectorIndex - 1];
-		FTransform& CurrentPoint = OutTransforms[EffectorIndex];
-		
-		CurrentPoint.SetLocation(ParentPoint.GetLocation() +
-			(CurrentPoint.GetLocation() - ParentPoint.GetLocation()).GetUnsafeNormal() *
-			BoneLengths[EffectorIndex]);
-		
+				
 		bBoneLocationUpdated = true;
 	}
 	
@@ -182,18 +174,9 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 				Character
 			);
 
-			Slop = FMath::Abs(BoneLengths[EffectorIndex] -
-				FVector::Dist(OutTransforms[EffectorIndex - 1].GetLocation(), EffectorTargetLocation));
+			Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
 		}
-		
-		// Place tip bone based on how close we got to target.
-		FTransform& ParentPoint = OutTransforms[EffectorIndex - 1];
-		FTransform& CurrentPoint = OutTransforms[EffectorIndex];
-		
-		CurrentPoint.SetLocation(ParentPoint.GetLocation() +
-			(CurrentPoint.GetLocation() - ParentPoint.GetLocation()).GetUnsafeNormal() *
-			BoneLengths[EffectorIndex]);
-		
+				
 		bBoneLocationUpdated = true;
 	}
 	
