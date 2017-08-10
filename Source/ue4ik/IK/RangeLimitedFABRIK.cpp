@@ -1,4 +1,4 @@
-// Copyright (c) Henry Cooney 2017
+﻿// Copyright (c) Henry Cooney 2017
 
 #include "RangeLimitedFABRIK.h"
 #include "Utility/DebugDrawUtil.h"
@@ -207,6 +207,14 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 					OutTransforms[PointIndex + 1], InTransforms[PointIndex + 1]);
 			}
 		}
+
+		// Update the last bone's rotation. Unlike normal fabrik, it's assumed to point toward the root bone,
+		// so it's rotation must be updated
+		if (!FMath::IsNearlyZero(RootToEffectorLength))
+		{
+			UpdateParentRotation(OutTransforms[EffectorIndex], InTransforms[EffectorIndex],
+				OutTransforms[0], InTransforms[0]);
+		}
 	}
 
 	return bBoneLocationUpdated;
@@ -224,26 +232,85 @@ bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
 	ACharacter* Character
 )
 {
-	// Create constraints -- this method doesn't support them, so they should be null
-	TArray<FIKBoneConstraint*>Constraints({ nullptr, nullptr, nullptr });
-	
-	// Create FABRIK-able chains
-	TArray<FTransform> InEffectorATransforms({ 
-		InClosedLoop.RootTransform, 
-		InClosedLoop.EffectorBTransform,
-		InClosedLoop.EffectorATransform
-	});
-	TArray<FTransform> OutEffectorATransforms;
+	// Temporary transforms for each point
+	FTransform A    = InClosedLoop.EffectorATransform;
+	FTransform B    = InClosedLoop.EffectorBTransform;
+	FTransform Root = InClosedLoop.RootTransform;
 
-	TArray<FTransform> InEffectorBTransforms({ 
-		InClosedLoop.RootTransform,
-		InClosedLoop.EffectorATransform,
-		InClosedLoop.EffectorBTransform
-	});
-	TArray<FTransform> OutEffectorBTransforms;
+	// Compute bone lengths
+	float DistAToRoot = FVector::Dist(A.GetLocation(), Root.GetLocation());
+	float DistBToRoot = FVector::Dist(B.GetLocation() - Root.GetLocation());
+	float DistAToB    = FVector::Dist(A.GetLocation() - B.GetLocation());
 
+	// See www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_Cοnstraints.pdf Figure 9 for
+	// description of each phase. Hopefully I'm implementing this right.
+   
+	bool bBoneLocationUpdated = false;
+	float Slop = FMath::Max(FVector::Dist(A.GetLocation, EffectorATarget), FVector::Dist(B.GetLocation, EffectorBTarget));
+	int32 IterationCount = 0;
+	while ((Slop > Precision) && (IterationCount++ < MaxIterations))
+	{
+		// Phase 1 (Fig. 9 b): go around the loop
+		DragPoint(A, DistAToRoot, Root);
+		DragPoint(B, DistAToB, A);
+		DragPoint(Root, DistBToRoot, B);
+		DragPoint(A, DistAToRoot, Root);
+
+		// Phase 2 (Fig. 9 c): Reset root and go other way
+		Root.SetLocation(InClosedLoop.RootTransform.GetLocation());
+		DragPoint(B, DistBToRoot, Root);
+		DragPoint(A, DistAToB, B);
+
+		// Phase 3 (Fig. 9 d): Drag root toward both effectors
+		DragPoint(A, DistAToRoot, Root);
+		DragPoint(B, DistBToRoot, Root);
+
+		// Phase 4 (Fig. 9 e): Same as phase 1
+		DragPoint(A, DistAToRoot, Root);
+		DragPoint(B, DistAToB, A);
+		DragPoint(Root, DistBToRoot, B);
+		DragPoint(A, DistAToRoot, Root);
+
+		// Phase 4 (Fig. 9 e): Same as phase 1
+		DragPoint(A, DistAToRoot, Root);
+		DragPoint(B, DistAToB, A);
+		DragPoint(Root, DistBToRoot, B);
+		DragPoint(A, DistAToRoot, Root);
+
+		// Phase 5 (Fig. 9 d): Same as phase 2
+		Root.SetLocation(InClosedLoop.RootTransform.GetLocation());
+		DragPoint(B, DistBToRoot, Root);
+		DragPoint(A, DistAToB, B);
+
+		bBoneLocationUpdated = true;
+		Slop = FMath::Max(FVector::Dist(A.GetLocation, EffectorATarget), FVector::Dist(B.GetLocation, EffectorBTarget));
+	}
 	
-	return true;
+	// Update rotations
+	if (bBoneLocationUpdated)
+	{
+		if (!FMath::IsNearlyZero(DistAToRoot))
+		{
+			UpdateParentRotation(Root, InClosedLoop.RootTransform, A, InClosedLoop.EffectorATransform);
+		}
+
+		if (!FMath::IsNearlyZero(DistAToB))
+		{
+			UpdateParentRotation(A, InClosedLoop.EffectorATransform, B, InClosedLoop.EffectorBTransform);
+		}
+
+		if (!FMath::IsNearlyZero(DistBToRoot))
+		{
+			UpdateParentRotation(B, InClosedLoop.EffectorBTransform, Root, InClosedLoop.RootTransform);
+		}
+	}
+	
+	// Copy transforms to output
+	OutClosedLoop.EffectorATransform = A;
+	OutClosedLoop.EffectorBTransform = B;
+	OutClosedLoop.RootTransform = Root;
+
+	return bBoneLocationUpdated;
 }
 
 void FRangeLimitedFABRIK::FABRIKForwardPass(
