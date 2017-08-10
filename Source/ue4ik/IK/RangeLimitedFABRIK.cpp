@@ -34,21 +34,11 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 	
 	// Gather bone lengths. BoneLengths contains the length of the bone ENDING at this point,
 	// i.e., BoneLengths[i] contains the distance between point i-1 and point i
-	float MaximumReach = 0.0f;
 	TArray<float> BoneLengths;
-	BoneLengths.Reserve(NumPoints);
-	BoneLengths.Add(0.0f);
-
-	for (int32 i = 1; i < NumPoints; ++i)
-	{
-		BoneLengths.Add(FVector::Dist(OutTransforms[i - 1].GetLocation(),
-			OutTransforms[i].GetLocation()));
-		MaximumReach  += BoneLengths[i];
-	}
+	float MaximumReach = ComputeBoneLengths(InTransforms, BoneLengths);
 
 	bool bBoneLocationUpdated = false;
-	float RootToTargetDistSq  = FVector::DistSquared(OutTransforms[0].GetLocation(), EffectorTargetLocation);
-	int32 EffectorIndex    = NumPoints - 1;
+	int32 EffectorIndex       = NumPoints - 1;
 	
 	// Check distance between tip location and effector location
 	float Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
@@ -94,14 +84,12 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 		}
 		
 		// Place tip bone based on how close we got to target.
-		{
-			FTransform& ParentLink = OutTransforms[EffectorIndex - 1];
-			FTransform& CurrentLink = OutTransforms[EffectorIndex];
-			
-			CurrentLink.SetLocation(ParentLink.GetLocation() +
-				(CurrentLink.GetLocation() - ParentLink.GetLocation()).GetUnsafeNormal() *
-				BoneLengths[EffectorIndex]);
-		}
+		FTransform& ParentPoint = OutTransforms[EffectorIndex - 1];
+		FTransform& CurrentPoint = OutTransforms[EffectorIndex];
+		
+		CurrentPoint.SetLocation(ParentPoint.GetLocation() +
+			(CurrentPoint.GetLocation() - ParentPoint.GetLocation()).GetUnsafeNormal() *
+			BoneLengths[EffectorIndex]);
 		
 		bBoneLocationUpdated = true;
 	}
@@ -161,7 +149,7 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 void FRangeLimitedFABRIK::FABRIKForwardPass(
 	const TArray<FTransform>& InTransforms,
 	const TArray<FIKBoneConstraint*>& Constraints,
-	TArray<float>& BoneLengths,
+	const TArray<float>& BoneLengths,
 	TArray<FTransform>& OutTransforms,
 	ACharacter* Character
 )
@@ -210,7 +198,7 @@ void FRangeLimitedFABRIK::FABRIKForwardPass(
 void FRangeLimitedFABRIK::FABRIKBackwardPass(
 	const TArray<FTransform>& InTransforms,
 	const TArray<FIKBoneConstraint*>& Constraints,
-	TArray<float>& BoneLengths,
+	const TArray<float>& BoneLengths,
 	TArray<FTransform>& OutTransforms,
 	ACharacter* Character
 	)
@@ -260,7 +248,7 @@ void FRangeLimitedFABRIK::DragRoot(
 	const TArray<FTransform>& InTransforms,
 	float MaxRootDragDistance,
 	float RootDragStiffness,
-	TArray<float>& BoneLengths,
+	const TArray<float>& BoneLengths,
 	TArray<FTransform>& OutTransforms
 )
 {
@@ -315,4 +303,27 @@ void FRangeLimitedFABRIK::UpdateParentRotation(
 	// Calculate absolute rotation and set it
 	NewParentTransform.SetRotation(DeltaRotation * OldParentTransform.GetRotation());
 	NewParentTransform.NormalizeRotation();
+}
+
+float FRangeLimitedFABRIK::ComputeBoneLengths(
+	const TArray<FTransform>& InTransforms,
+	TArray<float>& OutBoneLengths
+)
+{
+	int32 NumPoints = InTransforms.Num();
+	float MaximumReach = 0.0f;
+	OutBoneLengths.Empty();
+	OutBoneLengths.Reserve(NumPoints);
+
+	// Root always has zero length
+	OutBoneLengths.Add(0.0f);
+
+	for (int32 i = 1; i < NumPoints; ++i)
+	{
+		OutBoneLengths.Add(FVector::Dist(InTransforms[i - 1].GetLocation(),
+			InTransforms[i].GetLocation()));
+		MaximumReach  += OutBoneLengths[i];
+	}
+	
+	return MaximumReach;
 }

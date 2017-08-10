@@ -245,7 +245,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	LastRotationOffset = FQuat::Slerp(LastRotationOffset, TargetOffset, FMath::Clamp(TorsoRotationSlerpSpeed * DeltaTime, 0.0f, 1.0f));
 
 	// Apply new transforms	
-	WaistCS.SetRotation((LastRotationOffset * WaistCS.GetRotation()).Normalize());
+	WaistCS.SetRotation((LastRotationOffset * WaistCS.GetRotation()).GetNormalized());
 	OutBoneTransforms.Add(FBoneTransform(WaistBone.BoneIndex, WaistCS));
 
 #if WITH_EDITOR

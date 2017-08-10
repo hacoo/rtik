@@ -112,7 +112,7 @@ protected:
 	static void FABRIKForwardPass(
 		const TArray<FTransform>& InTransforms,
 		const TArray<FIKBoneConstraint*>& Constraints,
-		TArray<float>& BoneLengths,
+		const TArray<float>& BoneLengths,
 		TArray<FTransform>& OutTransforms,
 		ACharacter* Character = nullptr 
 		);
@@ -121,16 +121,26 @@ protected:
 	static void FABRIKBackwardPass(
 		const TArray<FTransform>& InTransforms,
 		const TArray<FIKBoneConstraint*>& Constraints,
-		TArray<float>& BoneLengths,
+		const TArray<float>& BoneLengths,
 		TArray<FTransform>& OutTransforms,
 		ACharacter* Character = nullptr
 		);
 
+	// Drag the root from its starting location, clamping to a max distance	
 	static void DragRoot(
 		const TArray<FTransform>& InTransforms,
 		float MaxRootDragDistance,
 		float RootDragStiffness,
-		TArray<float>& BoneLengths,
+		const TArray<float>& BoneLengths,
 		TArray<FTransform>& OutTrasnforms
+	);
+
+	// Compute bone lengths and store in BoneLengths. BoneLengths will be emptied and refilled.
+	// Each entry contains the length of bone ending at point i, i.e., OutBoneLengths[i] contains the starting distance 
+	// between point i and point i-1.
+	// Returns the maximum reach.
+	static float ComputeBoneLengths(
+		const TArray<FTransform>& InTransforms,
+		TArray<float>& OutBoneLengths
 	);
 };
