@@ -77,10 +77,7 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				Character
 			);
 
-			// Re-check distance between tip location and effector location
-			// Since we're keeping tip on top of effector location, check with its parent bone.
-			Slop = FMath::Abs(BoneLengths[EffectorIndex] -
-				FVector::Dist(OutTransforms[EffectorIndex - 1].GetLocation(), EffectorTargetLocation));
+			Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
 		}
 		
 		// Place tip bone based on how close we got to target.
@@ -123,7 +120,7 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 )
 {
 	OutTransforms.Empty();
-		
+
 	// Number of points in the chain. Number of bones = NumPoints - 1
 	int32 NumPoints = InTransforms.Num();
 
@@ -139,10 +136,81 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 		// Need at least one bone to do IK!
 		return false;
 	}
+	
+	// Gather bone lengths. BoneLengths contains the length of the bone ENDING at this point,
+	// i.e., BoneLengths[i] contains the distance between point i-1 and point i
+	TArray<float> BoneLengths;
+	float MaximumReach = ComputeBoneLengths(InTransforms, BoneLengths);
 
+	bool bBoneLocationUpdated = false;
+	int32 EffectorIndex       = NumPoints - 1;
+	
+	// Check distance between tip location and effector location
+	float Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
+	if (Slop > Precision)
+	{
+		// Set tip bone at end effector location.
+		OutTransforms[EffectorIndex].SetLocation(EffectorTargetLocation);
+		
+		int32 IterationCount = 0;
+		while ((Slop > Precision) && (IterationCount++ < MaxIterations))
+		{
+			// "Forward Reaching" stage - adjust bones from end effector.
+			FABRIKForwardPass(
+				InTransforms,
+				Constraints,
+				BoneLengths,
+				OutTransforms,
+				Character
+			);
+			
+			// Drag the root if enabled
+			DragRoot(
+				InTransforms,
+				MaxRootDragDistance,
+				RootDragStiffness,
+				BoneLengths,
+				OutTransforms
+			);
 
+			// "Backward Reaching" stage - adjust bones from root.
+			FABRIKBackwardPass(
+				InTransforms,
+				Constraints,
+				BoneLengths,
+				OutTransforms,
+				Character
+			);
 
-	return true;
+			Slop = FMath::Abs(BoneLengths[EffectorIndex] -
+				FVector::Dist(OutTransforms[EffectorIndex - 1].GetLocation(), EffectorTargetLocation));
+		}
+		
+		// Place tip bone based on how close we got to target.
+		FTransform& ParentPoint = OutTransforms[EffectorIndex - 1];
+		FTransform& CurrentPoint = OutTransforms[EffectorIndex];
+		
+		CurrentPoint.SetLocation(ParentPoint.GetLocation() +
+			(CurrentPoint.GetLocation() - ParentPoint.GetLocation()).GetUnsafeNormal() *
+			BoneLengths[EffectorIndex]);
+		
+		bBoneLocationUpdated = true;
+	}
+	
+	// Update bone rotations
+	if (bBoneLocationUpdated)
+	{
+		for (int32 PointIndex = 0; PointIndex < NumPoints - 1; ++PointIndex)
+		{
+			if (!FMath::IsNearlyZero(BoneLengths[PointIndex + 1]))
+			{
+				UpdateParentRotation(OutTransforms[PointIndex], InTransforms[PointIndex],
+					OutTransforms[PointIndex + 1], InTransforms[PointIndex + 1]);
+			}
+		}
+	}
+
+	return bBoneLocationUpdated;
 };
 
 
@@ -206,7 +274,7 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 	int32 NumPoints     = InTransforms.Num();
 	int32 EffectorIndex = NumPoints - 1;
 
-	for (int32 PointIndex = 1; PointIndex < EffectorIndex; PointIndex++)
+	for (int32 PointIndex = 1; PointIndex < NumPoints; PointIndex++)
 	{
 		FTransform& ParentPoint = OutTransforms[PointIndex - 1];
 		FTransform& CurrentPoint = OutTransforms[PointIndex];
