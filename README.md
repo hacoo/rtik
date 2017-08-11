@@ -1,8 +1,8 @@
-# IKMod
+# RTIK
 
 Copyright (c) 2017 Henry Cooney
 
-IKMod is a modular inverse kinematics system for Unreal Engine 4. UE4 includes several inverse kinematics solvers; however, these are only the basic building blocks of a functional IK system. Substantial additional work is required to make IK look good.
+RTIK (Real Time Inverse Kinematics) is an inverse kinematics system for Unreal Engine 4. UE4 includes several inverse kinematics solvers; however, these are only the basic building blocks of a functional IK system. Substantial additional work is required to make IK look good.
 
 This project attempts to create a modular, easy-to-use IK system for UE4. The goals are as follows:
 
@@ -18,9 +18,10 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## How To Use
 
-   More information incoming! IKMod is currently in the early phases and is not useful.
+   More information incoming! RTIK is currently in the early phases and is not useful.
 
-   IKMod is currently distributed as a stand-alone UE4 project, similar to UE4 Content Examples. To run it, you will need Unreal Engine 4.16, available at `https://www.unrealengine.com/`. Once UE4 is installed, simply run ue4ik.uproject to start the project in-editor.
+   RTIK is currently distributed as a stand-alone UE4 project, similar to UE4 Content Examples. To run it, you will need Unreal Engine 4.16, available at `https://www.unrealengine.com/`. Once UE4 is installed, simply run ue4ik.uproject to start the project in-editor.
+   RTIK should be compatible with older engines, but has only been tested with 4.16+.
 
    IK has been applied to several characters in the starting scene. You can look at their animgraphs to see how they have been set up, or run in-editor to see the results.
 
@@ -28,13 +29,21 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
  
 ## Status
 
-Updated 8/7/2017 
+Updated 8/11/2017 
 
 Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
 
+Upper body IK is also working, though there is no lower-hip movement.
+
+Closed loop and noisy-three-point solvers have been implemented. However, before adding new features, I'd like to clean up what I already have.
+So, current tasks are:
+    - Repackage as a non-game module
+    - Improve ease-of-use
+    - Make some early 'docs' and demo videos!
+
 Upper body IK is also working, with nice upper body / torso rotations. I haven't implemented any kind of arm constraints or joint
 corrections yet; to me, this is less important than with the legs since a. the targets are not procedural and b. Unreal's two-bone
-IK nodes actually work pretty well for arm IK.
+IK nodes actually work pretty well for arm IK; you don't usually get bad arm positions unless you do something stupid.
 
 I haven't attempted to integrate hip / lower body movements with upper body IK. Basically, clever use of FABRIK closed-loop
 solvers on the upper / lower body triangles allow the character to bend over in a more realistic way, moving the hips back / down
