@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "ue4ik.h"
+#include "rtik.h"
 #include "Animation/AnimNodeBase.h"
 #include "AnimNode_SkeletalControlBase.h"
 #include "CoreMinimal.h"
