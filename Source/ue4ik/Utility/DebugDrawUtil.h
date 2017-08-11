@@ -13,7 +13,7 @@
 */
 
 USTRUCT()
-struct UE4IK_API FDebugDrawUtil
+struct FDebugDrawUtil
 {
 	GENERATED_USTRUCT_BODY()
 

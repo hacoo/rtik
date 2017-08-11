@@ -12,7 +12,7 @@
  * Animation utility functions
  */
 USTRUCT()
-struct UE4IK_API FAnimUtil 
+struct FAnimUtil 
 {
 	GENERATED_BODY()
 	

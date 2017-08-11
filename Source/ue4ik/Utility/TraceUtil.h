@@ -7,7 +7,7 @@
 #include "TraceUtil.generated.h"
 
 UCLASS()
-class UE4IK_API UTraceUtil : public UBlueprintFunctionLibrary
+class UTraceUtil : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
