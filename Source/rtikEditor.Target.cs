@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class ue4ikEditorTarget : TargetRules
+public class rtikEditorTarget : TargetRules
 {
-	public ue4ikEditorTarget(TargetInfo Target) : base(Target)
+	public rtikEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
 
-		ExtraModuleNames.AddRange( new string[] { "ue4ik" } );
-        ExtraModuleNames.Add("ue4ikEditor");
+		ExtraModuleNames.AddRange( new string[] { "rtik" } );
+        ExtraModuleNames.Add("rtikEditor");
 	}
 }
