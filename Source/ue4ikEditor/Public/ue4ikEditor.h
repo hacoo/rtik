@@ -5,7 +5,7 @@
 #include "LogMacros.h"
 #include "UnrealEd.h"
  
-DECLARE_LOG_CATEGORY_EXTERN(LogIKEditor, All, All)
+DECLARE_LOG_CATEGORY_EXTERN(LogRTIKEditor, All, All)
  
 class Fue4ikEditorModule
 	: public IModuleInterface

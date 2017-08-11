@@ -39,7 +39,7 @@ void FPlanarRotation::PostEditChangeProperty(struct FPropertyChangedEvent& Prope
 
 	if (!bAxesOK)
 	{
-		UE_LOG(LogIK, Warning, TEXT("Planar Rotation Constraint was set up incorrectly. Forward direction direction and rotation axis must not be colinear."))
+		UE_LOG(LogRTIK, Warning, TEXT("Planar Rotation Constraint was set up incorrectly. Forward direction direction and rotation axis must not be colinear."))
 	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -61,7 +61,7 @@ void FPlanarRotation::EnforceConstraint(
 	{
 		// This constraint is not meaningful on the tip bone
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK: Can't use planar joint constraint on effector bone"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK: Can't use planar joint constraint on effector bone"));
 #endif //ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
@@ -71,7 +71,7 @@ void FPlanarRotation::EnforceConstraint(
 #if ENABLE_IK_DEBUG
 	if (!RotationAxis.IsNormalized() || !ForwardDirection.IsNormalized() || !UpDirection.IsNormalized())
 	{
-		UE_LOG(LogIK, Warning, TEXT("Planar rotation constraint contained an unnormalized direction"));
+		UE_LOG(LogRTIK, Warning, TEXT("Planar rotation constraint contained an unnormalized direction"));
 	}
 #endif // ENABLE_IK_DEBUG
 

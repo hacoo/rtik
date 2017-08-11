@@ -151,7 +151,7 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- an input wrapper object was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate -- an input wrapper object was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -161,7 +161,7 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg was not valid to evaluate"));
 	}
 #endif // ENABLE_ANIM_DEBUG
 
@@ -170,7 +170,7 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg -- internal FABRIK solver was not ready to evaluate"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg -- internal FABRIK solver was not ready to evaluate"));
 	}
 #endif // ENABLE_ANIM_DEBUG
    
@@ -183,7 +183,7 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- An input wrapper object was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg -- An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
@@ -192,7 +192,7 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
 #endif // ENABLE_IK_DEBUG
 	}
 	else

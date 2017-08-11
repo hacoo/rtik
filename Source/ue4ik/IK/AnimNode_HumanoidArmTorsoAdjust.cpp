@@ -38,7 +38,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	if (TorsoPivotSocket == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate humanoid arm torso adjustment -- torso pivot socket named %s could not be found"),
+		UE_LOG(LogRTIK, Warning, TEXT("Could not evaluate humanoid arm torso adjustment -- torso pivot socket named %s could not be found"),
 			*TorsoPivotSocketName.ToString());
 #endif
 		return;
@@ -67,7 +67,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 #if ENABLE_IK_DEBUG
 	if (!LeftAxis.IsNormalized())
 	{
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Arm Torso Adjustment - Skeleton Forward Axis and Skeleton Up Axis were not orthogonal"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not evaluate Humanoid Arm Torso Adjustment - Skeleton Forward Axis and Skeleton Up Axis were not orthogonal"));
 		return;
 	}
 #endif 
@@ -373,7 +373,7 @@ bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skele
 	if (LeftArm == nullptr || RightArm == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an input wrapper was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an input wrapper was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;		
 	}
@@ -381,7 +381,7 @@ bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skele
 	if (!LeftArm->IsValid(RequiredBones) || !RightArm->IsValid(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an arm chain was not valid"));		
+		UE_LOG(LogRTIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - an arm chain was not valid"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;				
 	}
@@ -389,7 +389,7 @@ bool FAnimNode_HumanoidArmTorsoAdjust::IsValidToEvaluate(const USkeleton * Skele
 	if (!WaistBone.IsValid(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - Waist bone was not valid"));		
+		UE_LOG(LogRTIK, Warning, TEXT("Humaonid Arm Torso Adjust was not valid to evaluate - Waist bone was not valid"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;				
 	}
@@ -402,7 +402,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneConta
 	if (LeftArm == nullptr || RightArm == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Coud not initialize humanoid arm torso adjust - An input wrapper object was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Coud not initialize humanoid arm torso adjust - An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
@@ -410,7 +410,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneConta
 	if (!LeftArm->InitBoneReferences(RequiredBones) || !RightArm->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize an arm chain in humanoid arm torso adjust"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize an arm chain in humanoid arm torso adjust"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
@@ -418,7 +418,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::InitializeBoneReferences(const FBoneConta
 	if (!WaistBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize waist bone in humanoid arm torso adjust"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize waist bone in humanoid arm torso adjust"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}

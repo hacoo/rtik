@@ -44,7 +44,7 @@ bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const USkeleton* Skeleton, 
 	if (Leg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- a bone wrapper was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- a bone wrapper was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -52,7 +52,7 @@ bool FAnimNode_IKHumanoidLegTrace::IsValidToEvaluate(const USkeleton* Skeleton, 
 	if (TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- Trace data was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg Trace was not valid to evaluate -- Trace data was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -68,7 +68,7 @@ void FAnimNode_IKHumanoidLegTrace::InitializeBoneReferences(const FBoneContainer
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace -- Leg invalid"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace -- Leg invalid"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
@@ -77,7 +77,7 @@ void FAnimNode_IKHumanoidLegTrace::InitializeBoneReferences(const FBoneContainer
 	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg Trace"));
 #endif // ENABLE_IK_DEBUG
 	}
 }

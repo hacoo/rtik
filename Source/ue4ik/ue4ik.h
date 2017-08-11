@@ -4,5 +4,5 @@
 
 #include "CoreMinimal.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogIK, All, All)
+DECLARE_LOG_CATEGORY_EXTERN(LogRTIK, All, All)
  

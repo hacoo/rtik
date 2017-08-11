@@ -79,7 +79,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	if (!HipFootAxisPre.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Knee Correction - HipFootAxisPre Normalization Failure"));
+		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - HipFootAxisPre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPre        = FVector(0.0f, 0.0f, 1.0f);
 	}
@@ -90,7 +90,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	if (!HipFootAxisPost.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Knee Correction - HipFootAxisPost Normalization Failure"));
+		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - HipFootAxisPost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPost       = FVector(0.0f, 0.0f, 1.0f);
 	}
@@ -112,7 +112,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	if (!FootToePre.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Knee Correction - FootToePre Normalization Failure"));
+		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - FootToePre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePre = KneeDirectionPre;
 	}
@@ -136,7 +136,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	if (!FootToePost.Normalize())
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Knee Correction - FootToePost Normalization Failure"));
+		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - FootToePost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePost = KneeDirectionPost;
 	}
@@ -245,7 +245,7 @@ bool FAnimNode_HumanoidLegIKKneeCorrection::IsValidToEvaluate(const USkeleton * 
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate -- an input wrapper object was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate -- an input wrapper object was null"));		
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -255,7 +255,7 @@ bool FAnimNode_HumanoidLegIKKneeCorrection::IsValidToEvaluate(const USkeleton * 
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg Knee Correction was not valid to evaluate"));
 	}
 #endif // ENABLE_IK_DEBUG_VERBOSE
 	
@@ -268,7 +268,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::InitializeBoneReferences(const FBone
 	if (Leg == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg Knee Correction -- An input wrapper object was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg Knee Correction -- An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
@@ -277,7 +277,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::InitializeBoneReferences(const FBone
 	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
 #endif // ENABLE_IK_DEBUG
 	}
 }

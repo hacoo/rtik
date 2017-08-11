@@ -32,7 +32,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a bone wrapper was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a bone wrapper was null"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
@@ -40,7 +40,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	if (LeftLegTraceData == nullptr || RightLegTraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a trace data input was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not evaluate Humanoid Pelvis Height Adjustment, a trace data input was null"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
@@ -51,7 +51,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::EvaluateSkeletalControl_AnyThread
 	if(Character == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("FAnimNode_HumanoidPelvisHeightAdjustment -- evaluation failed, skeletal mesh component owner could not be cast to ACharacter"));
+		UE_LOG(LogRTIK, Warning, TEXT("FAnimNode_HumanoidPelvisHeightAdjustment -- evaluation failed, skeletal mesh component owner could not be cast to ACharacter"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		return;
 	}
@@ -172,7 +172,7 @@ bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton
 	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid -- one of the bone wrappers was null"));				
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid -- one of the bone wrappers was null"));				
 #endif // ENABLE_ANIM_DEBUG
 		return false;
 	}
@@ -184,7 +184,7 @@ bool FAnimNode_HumanoidPelvisHeightAdjustment::IsValidToEvaluate(const USkeleton
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid to evaluate"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid Pelvis Height Adjustment was not valid to evaluate"));
 	}
 #endif // ENABLE_ANIM_DEBUG
 
@@ -197,7 +197,7 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FB
 	if (LeftLeg == nullptr || RightLeg == nullptr || PelvisBone == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize biped hip adjustment -- one of the bone wrappers was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize biped hip adjustment -- one of the bone wrappers was null"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}
@@ -205,21 +205,21 @@ void FAnimNode_HumanoidPelvisHeightAdjustment::InitializeBoneReferences(const FB
 	if (!RightLeg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize right leg for biped hip adjustment"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize right leg for biped hip adjustment"));
 #endif // ENABLE_IK_DEBUG
 	}
 
 	if (!LeftLeg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize left leg for biped hip adjustment"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize left leg for biped hip adjustment"));
 #endif // ENABLE_IK_DEBUG
 	}
 
 	if (!PelvisBone->Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize pelvis bone for biped hip adjustment"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize pelvis bone for biped hip adjustment"));
 #endif // ENABLE_IK_DEBUG
 	}	
 }

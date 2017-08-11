@@ -228,7 +228,7 @@ bool FAnimNode_RangeLimitedFabrik::IsValidToEvaluate(const USkeleton* Skeleton, 
 	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("AnimNode_RangeLimitedFabrik was not valid to evaluate -- an input wrapper object was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("AnimNode_RangeLimitedFabrik was not valid to evaluate -- an input wrapper object was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -251,7 +251,7 @@ void FAnimNode_RangeLimitedFabrik::InitializeBoneReferences(const FBoneContainer
 	if (IKChain == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize FAnimNode_RangeLimitedFabrik -- An input wrapper object was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize FAnimNode_RangeLimitedFabrik -- An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 		return;
 	}

@@ -165,7 +165,7 @@ public:
 #if ENABLE_IK_DEBUG
 		if (!bUpdatedThisTick)
 		{
-			UE_LOG(LogIK, Warning, TEXT("Warning -- Trace data was used before it was updated and may be stale. Use a trace node (e.g., IK Humanoid Leg Trace) to update your trace data early in the animgraph, before it is used!"));
+			UE_LOG(LogRTIK, Warning, TEXT("Warning -- Trace data was used before it was updated and may be stale. Use a trace node (e.g., IK Humanoid Leg Trace) to update your trace data early in the animgraph, before it is used!"));
 		}
 #endif // ENABLE_IK_DEBUG
 		return TraceData;
@@ -204,7 +204,7 @@ public:
 		if (!bInitialized)
 		{
 #if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+			UE_LOG(LogRTIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 			return false;
 		}
@@ -218,7 +218,7 @@ public:
 		if (!bInitialized)
 		{
 #if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+			UE_LOG(LogRTIK, Warning, TEXT("Humanoid IK Leg Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 			return false;
 		}
@@ -261,7 +261,7 @@ public:
 		if (!bInitialized)
 		{
 #if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+			UE_LOG(LogRTIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 			return false;
 		}
@@ -275,7 +275,7 @@ public:
 		if (!bInitialized)
 		{
 #if ENABLE_IK_DEBUG
-			UE_LOG(LogIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+			UE_LOG(LogRTIK, Warning, TEXT("Humanoid IK Arm Chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 			return false;
 		}

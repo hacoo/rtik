@@ -150,7 +150,7 @@ bool FHumanoidLegChain::GetIKFloorPointCS(const USkeletalMeshComponent& SkelComp
 #if ENABLE_IK_DEBUG_VERBOSE
 		else
 		{
-			UE_LOG(LogIK, Warning, TEXT("Warning, GetIKFloorPointCS was called on an invalid trace result. The output floor point may be invalid."));
+			UE_LOG(LogRTIK, Warning, TEXT("Warning, GetIKFloorPointCS was called on an invalid trace result. The output floor point may be invalid."));
 			// check (false);
 		}
 #endif // ENABLE_IK_DEBUG
@@ -182,7 +182,7 @@ bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 	if (!HipBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Hip Bone invalid"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialized IK leg chain - Hip Bone invalid"));
 #endif // ENABLE_IK_DEBUG			
 		bInitOk = false;
 	}
@@ -190,7 +190,7 @@ bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 	if (!ThighBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Thigh Bone invalid"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialized IK leg chain - Thigh Bone invalid"));
 #endif // ENABLE_IK_DEBUG
 		bInitOk = false;
 	}
@@ -198,7 +198,7 @@ bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 	if (!ShinBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Shin Bone invalid"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialized IK leg chain - Shin Bone invalid"));
 #endif // ENABLE_IK_DEBUG			
 		bInitOk = false;
 	}
@@ -206,7 +206,7 @@ bool FHumanoidLegChain::InitBoneReferences(const FBoneContainer& RequiredBones)
 	if (!FootBone.Init(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialized IK leg chain - Foot Bone invalid"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialized IK leg chain - Foot Bone invalid"));
 #endif // ENABLE_IK_DEBUG
 		bInitOk = false;
 	}

@@ -119,7 +119,7 @@ bool FAnimNode_HumanoidFootRotationController::IsValidToEvaluate(const USkeleton
 	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG_VERBOSE
-		UE_LOG(LogIK, Warning, TEXT("Humanoid Foot Rotation Controller was not valid to evaluate -- an input wrapper object was null"));		
+		UE_LOG(LogRTIK, Warning, TEXT("Humanoid Foot Rotation Controller was not valid to evaluate -- an input wrapper object was null"));		
 #endif ENABLE_IK_DEBUG_VERBOSE
 		return false;
 	}
@@ -129,7 +129,7 @@ bool FAnimNode_HumanoidFootRotationController::IsValidToEvaluate(const USkeleton
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("Humanoid Foot Rotation Controller was not valid to evaluate"));
+		UE_LOG(LogRTIK, Warning, TEXT("Humanoid Foot Rotation Controller was not valid to evaluate"));
 	}
 #endif // ENABLE_ANIM_DEBUG
 
@@ -142,7 +142,7 @@ void FAnimNode_HumanoidFootRotationController::InitializeBoneReferences(const FB
 	if (Leg == nullptr || TraceData == nullptr)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid Foot Rotation Controller-- An input wrapper object was null"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid Foot Rotation Controller-- An input wrapper object was null"));
 #endif // ENABLE_IK_DEBUG
 
 		return;
@@ -151,7 +151,7 @@ void FAnimNode_HumanoidFootRotationController::InitializeBoneReferences(const FB
 	if (!Leg->InitBoneReferences(RequiredBones))
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Could not initialize Humanoid Foot Rotation Controller"));
+		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid Foot Rotation Controller"));
 #endif // ENABLE_IK_DEBUG
 	}
 }

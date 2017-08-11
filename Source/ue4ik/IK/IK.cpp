@@ -59,7 +59,7 @@ bool FIKBone::Init(const FBoneContainer& RequiredBones)
 	else
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("FIKBone::Init -- IK Bone initialization failed for bone: %s"),
+		UE_LOG(LogRTIK, Warning, TEXT("FIKBone::Init -- IK Bone initialization failed for bone: %s"),
 			*BoneRef.BoneName.ToString());
 #endif // ENABLE_ANIM_DEBUG
 		return false;
@@ -73,7 +73,7 @@ bool FIKBone::IsValid(const FBoneContainer& RequiredBones)
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)
 	{
-		UE_LOG(LogIK, Warning, TEXT("FIKBone::IsValid -- IK Bone %s was invalid"),
+		UE_LOG(LogRTIK, Warning, TEXT("FIKBone::IsValid -- IK Bone %s was invalid"),
 			*BoneRef.BoneName.ToString());
 	}
 #endif // ENABLE_IK_DEBUG_VERBOSE
@@ -104,7 +104,7 @@ bool UIKBoneWrapper::InitIfInvalid(const FBoneContainer& RequiredBones)
 	if (!bInitialized)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 		return false;
 	}
@@ -117,7 +117,7 @@ bool UIKBoneWrapper::Init(const FBoneContainer& RequiredBones)
 	if (!bInitialized)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
+		UE_LOG(LogRTIK, Warning, TEXT("IK Bone Wrapper was not initialized -- you must call Initialize in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 		return false;
 	}
@@ -180,7 +180,7 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 			if (PreviousBone.BoneIndex.GetInt() >= Bone.BoneIndex.GetInt())
 			{
 #if ENABLE_IK_DEBUG
-				UE_LOG(LogIK, Warning, TEXT("Could not initialized range limited IK chain - bone named %s was not preceeded by a skeletal parent"),
+				UE_LOG(LogRTIK, Warning, TEXT("Could not initialized range limited IK chain - bone named %s was not preceeded by a skeletal parent"),
 					*(Bone.BoneRef.BoneName.ToString()));
 #endif // ENABLE_IK_DEBUG
 				bValid = false;
@@ -192,7 +192,7 @@ bool FRangeLimitedIKChain::InitBoneReferences(const FBoneContainer & RequiredBon
 			if (FVector::Dist(BoneTransform.GetLocation(), ParentTransform.GetLocation()) < KINDA_SMALL_NUMBER)
 			{
 #if ENABLE_IK_DEBUG
-				UE_LOG(LogIK, Warning, TEXT("Could not initialized range limited IK chain - bone named %s has zero length"),
+				UE_LOG(LogRTIK, Warning, TEXT("Could not initialized range limited IK chain - bone named %s has zero length"),
 					*(Bone.BoneRef.BoneName.ToString()));
 #endif // ENABLE_IK_DEBUG
 				bValid = false;
@@ -270,7 +270,7 @@ bool URangeLimitedIKChainWrapper::InitIfInvalid(const FBoneContainer& RequiredBo
 	if (!bInitialized)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+		UE_LOG(LogRTIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 		return false;
 	}
@@ -283,7 +283,7 @@ bool URangeLimitedIKChainWrapper::InitBoneReferences(const FBoneContainer& Requi
 	if (!bInitialized)
 	{
 #if ENABLE_IK_DEBUG
-		UE_LOG(LogIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
+		UE_LOG(LogRTIK, Warning, TEXT("Range limited IK chain wrapper was not initialized -- make sure you call Initialize function in blueprint before use"));
 #endif // ENABLE_IK_DEBUG
 		return false;
 	}
