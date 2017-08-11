@@ -7,7 +7,7 @@
  
 DECLARE_LOG_CATEGORY_EXTERN(LogRTIKEditor, All, All)
  
-class Fue4ikEditorModule
+class FrtikEditorModule
 	: public IModuleInterface
 {
 public:

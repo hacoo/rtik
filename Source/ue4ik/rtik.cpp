@@ -3,7 +3,7 @@
 #include "ue4ik.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, ue4ik, "ue4ik" );
+IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, rtik, "rtik" );
 
 DEFINE_LOG_CATEGORY(LogRTIK)
 

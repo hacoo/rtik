@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class ue4ik : ModuleRules
+public class rtik : ModuleRules
 {
-	public ue4ik(ReadOnlyTargetRules Target) : base(Target)
+	public rtik(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	

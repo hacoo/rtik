@@ -2,25 +2,25 @@
 
 using UnrealBuildTool;
 
-public class ue4ikEditor : ModuleRules
+public class rtikEditor : ModuleRules
 {
-	public ue4ikEditor(ReadOnlyTargetRules Target) : base(Target)
+	public rtikEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 
-        PublicDependencyModuleNames.AddRange(new string[] { "ue4ik", "Core", "CoreUObject", "Engine", "InputCore" , "UnrealEd" });
+        PublicDependencyModuleNames.AddRange(new string[] { "rtik", "Core", "CoreUObject", "Engine", "InputCore" , "UnrealEd" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { "EditorStyle", "AnimGraph", "BlueprintGraph", "PropertyEditor", "Slate", "SlateCore" });
 
         PublicIncludePaths.AddRange(
             new string[] {
-                "ue4ikEditor/Public"
+                "rtikEditor/Public"
             });
 
         PrivateIncludePaths.AddRange(
             new string[] {
-                "ue4ikEditor/Private"
+                "rtikEditor/Private"
             });
 
 		// Uncomment if you are using Slate UI

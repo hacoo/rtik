@@ -5,7 +5,7 @@
   "Description": "",
   "Modules": [
     {
-      "Name": "ue4ik",
+      "Name": "rtik",
       "Type": "Runtime",
       "LoadingPhase": "Default",
       "AdditionalDependencies": [
@@ -15,7 +15,7 @@
       ]
     },
     {
-      "Name": "ue4ikEditor",
+      "Name": "rtikEditor",
       "Type": "Editor",
       "LoadingPhase":  "PostEngineInit"
     }

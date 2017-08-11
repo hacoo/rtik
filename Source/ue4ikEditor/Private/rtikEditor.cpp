@@ -1,15 +1,15 @@
-#include "ue4ikEditor.h"
+#include "rtikEditor.h"
  
-IMPLEMENT_GAME_MODULE(Fue4ikEditorModule, ue4ikEditor);
+IMPLEMENT_GAME_MODULE(FrtikEditorModule, rtikEditor);
 
 DEFINE_LOG_CATEGORY(LogRTIKEditor)
  
-void Fue4ikEditorModule::StartupModule()
+void FrtikEditorModule::StartupModule()
 {
 	UE_LOG(LogRTIKEditor, Warning, TEXT("IK editor module staring"));
 }
  
-void Fue4ikEditorModule::ShutdownModule()
+void FrtikEditorModule::ShutdownModule()
 {
 	UE_LOG(LogRTIKEditor, Warning, TEXT("IK editor module shutdown"));
 }

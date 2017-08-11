@@ -3,17 +3,17 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class ue4ikTarget : TargetRules
+public class rtikTarget : TargetRules
 {
-	public ue4ikTarget(TargetInfo Target) : base(Target)
+	public rtikTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
 
-		ExtraModuleNames.AddRange( new string[] { "ue4ik" } );
+		ExtraModuleNames.AddRange( new string[] { "rtik" } );
 
         if (UEBuildConfiguration.bBuildEditor)
         {
-            ExtraModuleNames.Add("ue4ikEditor");
+            ExtraModuleNames.Add("rtikEditor");
         }
 	}
 }
