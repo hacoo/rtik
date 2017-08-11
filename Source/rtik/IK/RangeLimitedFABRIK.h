@@ -16,7 +16,7 @@
 * A three-point closed loop, containing two noisy effectors.
 * This is a very specific type of IK 'chain', used for the torso upper and lower body triangles.
 */
-struct UE4IK_API FNoisyThreePointClosedLoop
+struct RTIK_API FNoisyThreePointClosedLoop
 {
 public:
 
@@ -58,7 +58,7 @@ public:
 	float TargetABDistance;
 };
 
-struct UE4IK_API FRangeLimitedFABRIK
+struct RTIK_API FRangeLimitedFABRIK
 {
 public:
 	

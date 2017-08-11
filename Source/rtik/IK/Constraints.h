@@ -16,7 +16,7 @@
 	The bone is unconstrainted and may move freely.
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FNoBoneConstraint : public FIKBoneConstraint
+struct RTIK_API FNoBoneConstraint : public FIKBoneConstraint
 {
 	
 	GENERATED_USTRUCT_BODY()
@@ -61,7 +61,7 @@ public:
 	If the bone direction is normal to the rotation plane, it will be forced to point in FailsafeDirection.
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FPlanarRotation : public FIKBoneConstraint
+struct RTIK_API FPlanarRotation : public FIKBoneConstraint
 {
 	GENERATED_USTRUCT_BODY()
 

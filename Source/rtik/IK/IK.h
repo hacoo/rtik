@@ -76,7 +76,7 @@ public:
 	// Convert an EIKBoneAxis to a unit vector.
 	static FVector IKBoneAxisToVector(EIKBoneAxis InBoneAxis);
 
-	// Get the specified axis of the skeletal mesh, in world space. Component space is always relative to the skeletal mesh, 
+	// Get the specified axis of the skeletal mesh, in world space. Component space is always relative to the skeletal mesh, 6
 	// so for that just use IKBoneAxisToVector above :)	
 	static FVector GetSkeletalMeshWorldAxis(const USkeletalMeshComponent& SkelComp, EIKBoneAxis InBoneAxis);
 };
@@ -93,7 +93,7 @@ public:
 */
 
 USTRUCT(BlueprintType)
-struct UE4IK_API FIKBoneConstraint 
+struct RTIK_API FIKBoneConstraint 
 {
 	
 	GENERATED_USTRUCT_BODY()
@@ -167,7 +167,7 @@ public:
 *
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FIKBone
+struct RTIK_API FIKBone
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -206,7 +206,7 @@ protected:
 * Allows bones to be passed around in BP
 */
 UCLASS(BlueprintType)
-class UE4IK_API UIKBoneWrapper : public UObject
+class RTIK_API UIKBoneWrapper : public UObject
 {
 	
 	GENERATED_BODY()
@@ -247,7 +247,7 @@ protected:
 * This function should initialize bone references, and assign the RootBone and EffectorBone as needed.
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FIKModChain 
+struct RTIK_API FIKModChain 
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -270,7 +270,7 @@ public:
 * An IK chain with range limits.
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FRangeLimitedIKChain : public FIKModChain
+struct RTIK_API FRangeLimitedIKChain : public FIKModChain
 {
 	
 	GENERATED_USTRUCT_BODY()
@@ -312,7 +312,7 @@ protected:
 * Wraps an IK chain so it can be passed around in BPs
 */
 UCLASS(BlueprintType)
-class UE4IK_API UIKChainWrapper : public UObject
+class RTIK_API UIKChainWrapper : public UObject
 {
 	GENERATED_BODY()
 
@@ -343,7 +343,7 @@ protected:
 
 
 UCLASS(BlueprintType)
-class UE4IK_API URangeLimitedIKChainWrapper : public UIKChainWrapper
+class RTIK_API URangeLimitedIKChainWrapper : public UIKChainWrapper
 {
 	GENERATED_BODY()
 

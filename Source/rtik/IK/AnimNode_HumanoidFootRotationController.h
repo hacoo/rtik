@@ -14,7 +14,7 @@
   * Knee rotation is not enforced in this node.
 */
 USTRUCT()
-struct UE4IK_API FAnimNode_HumanoidFootRotationController : public FAnimNode_SkeletalControlBase
+struct RTIK_API FAnimNode_HumanoidFootRotationController : public FAnimNode_SkeletalControlBase
 {
 
 	GENERATED_USTRUCT_BODY()

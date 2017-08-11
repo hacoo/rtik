@@ -59,7 +59,7 @@ enum class EHumanoidArmTorsoIKMode : uint8
 * Rotates the torso and shoulders to prepare for IK.
 */
 USTRUCT()
-struct UE4IK_API FAnimNode_HumanoidArmTorsoAdjust : public FAnimNode_SkeletalControlBase
+struct RTIK_API FAnimNode_HumanoidArmTorsoAdjust : public FAnimNode_SkeletalControlBase
 {
 
 	GENERATED_USTRUCT_BODY()

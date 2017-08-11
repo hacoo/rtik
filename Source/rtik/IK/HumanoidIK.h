@@ -15,7 +15,7 @@
 * Represents a humanoid leg, with a hip bone, thigh bone, and shin bone.
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FHumanoidLegChain : public FIKModChain
+struct RTIK_API FHumanoidLegChain : public FIKModChain
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -96,7 +96,7 @@ protected:
 // Represents a humanoid arm, with UpperArm (shoulder to elbow) and LowerArm (elbow to wrist) bones
 // Basically this is a convenience wrapper, hiding details of FRangeLimitedIKChain
 USTRUCT(BlueprintType, hidecategories = ("RangeLimitedIK"))
-struct UE4IK_API FHumanoidArmChain : public FRangeLimitedIKChain
+struct RTIK_API FHumanoidArmChain : public FRangeLimitedIKChain
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -125,7 +125,7 @@ struct UE4IK_API FHumanoidArmChain : public FRangeLimitedIKChain
 * Holds trace data used in leg IK
 */
 USTRUCT(BlueprintType)
-struct UE4IK_API FHumanoidIKTraceData
+struct RTIK_API FHumanoidIKTraceData
 {
 	GENERATED_USTRUCT_BODY()
 		
@@ -139,7 +139,7 @@ public:
 * Wrapper for passing trace data around in BP. The trace node may write into the struct contained within!
 */
 UCLASS(BlueprintType, EditInlineNew)
-class UE4IK_API UHumanoidIKTraceData_Wrapper : public UObject
+class RTIK_API UHumanoidIKTraceData_Wrapper : public UObject
 {
 	GENERATED_BODY()
 
@@ -183,7 +183,7 @@ protected:
 * Wrapper class for passing around in BP
 */
 UCLASS(BlueprintType, EditInlineNew)
-class UE4IK_API UHumanoidLegChain_Wrapper : public UIKChainWrapper
+class RTIK_API UHumanoidLegChain_Wrapper : public UIKChainWrapper
 {
 	GENERATED_BODY()
 
@@ -240,7 +240,7 @@ public:
 /*
 * Wrapper class for passing around in BP
 UCLASS(BlueprintType, EditInlineNew)
-class UE4IK_API UHumanoidArmChain_Wrapper : public UIKChainWrapper
+class RTIK_API UHumanoidArmChain_Wrapper : public UIKChainWrapper
 {
 	GENERATED_BODY()
 

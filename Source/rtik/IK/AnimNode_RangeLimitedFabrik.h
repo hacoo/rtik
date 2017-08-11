@@ -31,7 +31,7 @@ enum class ERangeLimitedFABRIKSolverMode : uint8
 };
 
 USTRUCT()
-struct UE4IK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlBase
+struct RTIK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlBase
 {
 	GENERATED_USTRUCT_BODY()
 

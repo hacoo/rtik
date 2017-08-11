@@ -14,7 +14,7 @@
 * as a post-processing step after IK.
 */
 USTRUCT()
-struct UE4IK_API FAnimNode_HumanoidLegIKKneeCorrection : public FAnimNode_SkeletalControlBase
+struct RTIK_API FAnimNode_HumanoidLegIKKneeCorrection : public FAnimNode_SkeletalControlBase
 {
 
 	GENERATED_USTRUCT_BODY()
