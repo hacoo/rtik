@@ -152,7 +152,38 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		}
 	}
 
+	FTransform WaistCSPostIK = WaistCS;
 
+	// Readjust shoulders, and allow some waist movement, using noisy-three-point method
+	if (Mode != EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_Disabled)
+	{
+		FNoisyThreePointClosedLoop InClosedLoop(
+			PostIKTransformsLeft[0],
+			PostIKTransformsRight[0],
+			WaistCS,
+			FVector::Dist(CSTransformsLeft[0].GetLocation(), WaistCS.GetLocation()),
+			FVector::Dist(CSTransformsRight[0].GetLocation(), WaistCS.GetLocation()),
+			FVector::Dist(CSTransformsLeft[0].GetLocation(), CSTransformsRight[0].GetLocation())
+		);
+
+		FNoisyThreePointClosedLoop OutClosedLoop;
+		
+		FRangeLimitedFABRIK::SolveNoisyThreePoint(
+			InClosedLoop,
+			PostIKTransformsLeft[1],
+			PostIKTransformsRight[1],
+			OutClosedLoop,
+			10.0f,
+			ShoulderDragStiffness,
+			Precision,
+			MaxIterations,
+			nullptr
+		);
+	
+		PostIKTransformsLeft[0].SetLocation(OutClosedLoop.EffectorATransform.GetLocation());
+		PostIKTransformsRight[0].SetLocation(OutClosedLoop.EffectorBTransform.GetLocation());		
+		WaistCSPostIK.SetLocation(OutClosedLoop.RootTransform.GetLocation());
+	}
 
 	// Use first pass results to twist the torso around the spine direction
 	// Note --calculations here are relative to the waist bone, not root!
@@ -162,8 +193,8 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	FVector NeckPreIK = (ShoulderLeftPreIK + ShoulderRightPreIK) / 2;
 	FVector SpineDirection = NeckPreIK.GetUnsafeNormal();
 
-	FVector ShoulderLeftPostIK = PostIKTransformsLeft[0].GetLocation() - WaistCS.GetLocation();
-	FVector ShoulderRightPostIK = PostIKTransformsRight[0].GetLocation() - WaistCS.GetLocation();
+	FVector ShoulderLeftPostIK = PostIKTransformsLeft[0].GetLocation() - WaistCSPostIK.GetLocation();
+	FVector ShoulderRightPostIK = PostIKTransformsRight[0].GetLocation() - WaistCSPostIK.GetLocation();
 	FVector NeckPostIK = (ShoulderLeftPostIK + ShoulderRightPostIK) / 2;
 	FVector SpineDirectionPost = NeckPostIK.GetUnsafeNormal();
 		
@@ -254,6 +285,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		UWorld* World = SkelComp->GetWorld();		
 		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
 		FVector WaistLocWorld = ToWorld.TransformPosition(WaistCS.GetLocation());
+		FVector WaistLocWorldPostIK = ToWorld.TransformPosition(WaistCSPostIK.GetLocation());
 		FVector ParentLoc;
 		FVector ChildLoc;
 
@@ -306,21 +338,21 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 			FDebugDrawUtil::DrawSphere(World, ChildLoc, FColor(0, 255, 255), 3.0f);
 		}
 		// Draw torso triangle
-		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+		FDebugDrawUtil::DrawLine(World, WaistLocWorldPostIK,
 			ToWorld.TransformPosition(PostIKTransformsLeft[0].GetLocation()),
 			FColor(0, 255, 255));
-		FDebugDrawUtil::DrawLine(World, WaistLocWorld,
+		FDebugDrawUtil::DrawLine(World, WaistLocWorldPostIK,
 			ToWorld.TransformPosition(PostIKTransformsRight[0].GetLocation()),
 			FColor(0, 255, 255));
 		FDebugDrawUtil::DrawLine(World,
 			ToWorld.TransformPosition(PostIKTransformsLeft[0].GetLocation()),
 			ToWorld.TransformPosition(PostIKTransformsRight[0].GetLocation()),
 			FColor(0, 255, 255));
-		FDebugDrawUtil::DrawSphere(World, WaistLocWorld, FColor(0, 255, 255), 3.0f);
+		FDebugDrawUtil::DrawSphere(World, WaistLocWorldPostIK, FColor(0, 255, 255), 3.0f);
 
 		FVector NeckPointPost = ToWorld.TransformPosition((PostIKTransformsLeft[0].GetLocation() + PostIKTransformsRight[0].GetLocation()) / 2);
 		FDebugDrawUtil::DrawLine(World,
-			WaistLocWorld,
+			WaistLocWorldPostIK,
 			NeckPointPost,
 			FColor(0, 255, 255));
 		FDebugDrawUtil::DrawSphere(World, NeckPointPost, FColor(0, 255, 255), 3.0f);

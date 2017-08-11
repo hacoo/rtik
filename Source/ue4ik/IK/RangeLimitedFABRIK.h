@@ -20,12 +20,19 @@ struct UE4IK_API FNoisyThreePointClosedLoop
 {
 public:
 
-	FNoisyThreePointClosedLoop(const FTransform& InEffectorATransform, const FTransform& InEffectorBTransform,
-		const FTransform& InRootTransform)
+	FNoisyThreePointClosedLoop(const FTransform& InEffectorATransform, 
+		const FTransform& InEffectorBTransform,
+		const FTransform& InRootTransform,
+		float InTargetRootADistance,
+		float InTargetRootBDistance,
+		float InTargetABDistance)
 		:
 		EffectorATransform(InEffectorATransform),
 		EffectorBTransform(InEffectorBTransform),
-		RootTransform(InRootTransform)
+		RootTransform(InRootTransform),
+		TargetRootADistance(InTargetRootADistance),
+		TargetRootBDistance(InTargetRootBDistance),
+		TargetABDistance(InTargetABDistance)
 	{ }
 		
 	FNoisyThreePointClosedLoop()
@@ -40,6 +47,15 @@ public:
 	// The root transform. Not IKed onto a target location, but may be constrained not to drag too far from
 	// its starting position	
 	FTransform RootTransform;
+
+	// The desired distance between A and the root	
+	float TargetRootADistance; 
+
+	// The desired distance between B and the root
+	float TargetRootBDistance;
+
+	// The desired distance between A and B
+	float TargetABDistance;
 };
 
 struct UE4IK_API FRangeLimitedFABRIK
@@ -136,8 +152,8 @@ public:
 	*/
 	static bool SolveNoisyThreePoint(
 		const FNoisyThreePointClosedLoop& InClosedLoop,
-		const FVector& EffectorATarget,
-		const FVector& EffectorBTarget,
+		const FTransform& EffectorATarget,
+		const FTransform& EffectorBTarget,
 		FNoisyThreePointClosedLoop& OutClosedLoop,
 		float MaxRootDragDistance = 0.0f,
 		float RootDragStiffness = 1.0f,

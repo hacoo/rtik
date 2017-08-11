@@ -222,8 +222,8 @@ bool FRangeLimitedFABRIK::SolveClosedLoopFABRIK(
 
 bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
 	const FNoisyThreePointClosedLoop& InClosedLoop,
-	const FVector& EffectorATarget,
-	const FVector& EffectorBTarget,
+	const FTransform& EffectorAReference,
+	const FTransform& EffectorBReference,
 	FNoisyThreePointClosedLoop& OutClosedLoop,
 	float MaxRootDragDistance,
 	float RootDragStiffness,
@@ -238,71 +238,95 @@ bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
 	FTransform Root = InClosedLoop.RootTransform;
 
 	// Compute bone lengths
-	float DistAToRoot = FVector::Dist(A.GetLocation(), Root.GetLocation());
-	float DistBToRoot = FVector::Dist(B.GetLocation() - Root.GetLocation());
-	float DistAToB    = FVector::Dist(A.GetLocation() - B.GetLocation());
+	float DistAToRoot = InClosedLoop.TargetRootADistance;
+	float DistBToRoot = InClosedLoop.TargetRootBDistance;
+	float DistAToB    = InClosedLoop.TargetABDistance;
+	float DistARef    = FVector::Dist(A.GetLocation(), EffectorAReference.GetLocation());
+	float DistBRef    = FVector::Dist(B.GetLocation(), EffectorBReference.GetLocation());
+
+	// Now start the noisy solver method. The idea here is that A, B, and Root are out of whack;
+	// move them so inter-joint distances are satisfied again. Keep doing this until things settle down.
 
 	// See www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_Cοnstraints.pdf Figure 9 for
-	// description of each phase. Hopefully I'm implementing this right.
-   
-	bool bBoneLocationUpdated = false;
-	float Slop = FMath::Max(FVector::Dist(A.GetLocation, EffectorATarget), FVector::Dist(B.GetLocation, EffectorBTarget));
+	// description of each phase. Hopefully I'm implementing this right; unfortunatley the paper is vague
+
+	FVector LastA = A.GetLocation();
+	FVector LastB = B.GetLocation();
+
 	int32 IterationCount = 0;
-	while ((Slop > Precision) && (IterationCount++ < MaxIterations))
+	bool bBoneLocationUpdated = true;
+
+	// Phase 1 (Fig. 9 b): go around the loop
+	DragPoint(Root, DistAToRoot, A);
+	DragPoint(A, DistAToB, B);
+	DragPointTethered(InClosedLoop.RootTransform, B, DistBToRoot, MaxRootDragDistance, RootDragStiffness, Root);
+	DragPoint(Root, DistAToRoot, A);
+
+	// Phase 2 (Fig. 9 c): Reset root and go other way
+	Root.SetLocation(InClosedLoop.RootTransform.GetLocation());
+	DragPoint(Root, DistBToRoot, B);
+	DragPoint(B, DistAToB, A);
+
+	// Phase 3 (Fig. 9 d): Drag both effectors such that their distances to reference points (outside the closed loop)
+	// and distances from root are maintained
+	DragPoint(Root, DistAToRoot, A);
+	DragPoint(EffectorAReference, DistARef, A);	
+	DragPoint(Root, DistBToRoot, B);
+	DragPoint(EffectorBReference, DistBRef, B);	
+
+	// Phase 4 (Fig. 9 b): Same as phase 1
+	DragPoint(Root, DistAToRoot, A);
+	DragPoint(A, DistAToB, B);
+	DragPointTethered(InClosedLoop.RootTransform, B, DistBToRoot, MaxRootDragDistance, RootDragStiffness, Root);
+	DragPoint(Root, DistAToRoot, A);
+
+	// Phase 5 (Fig. 9 c): Same as phase 2, but don't reset root
+	DragPoint(Root, DistBToRoot, B);
+	DragPoint(B, DistAToB, A);
+
+	float PrecisionSq = Precision * Precision;
+	float Delta = FMath::Max(FVector::DistSquared(A.GetLocation(), LastA), FVector::Dist(B.GetLocation(), LastB));
+	LastA = A.GetLocation();
+	LastB = B.GetLocation();
+
+	while ((Delta > PrecisionSq) && (IterationCount++ < MaxIterations))
 	{
-		// Phase 1 (Fig. 9 b): go around the loop
-		DragPoint(A, DistAToRoot, Root);
-		DragPoint(B, DistAToB, A);
+		// Iterate phases 3-5 only
+		// Phase 3
+		DragPoint(Root, DistAToRoot, A);
+		DragPoint(EffectorAReference, DistARef, A);
 		DragPoint(Root, DistBToRoot, B);
-		DragPoint(A, DistAToRoot, Root);
-
-		// Phase 2 (Fig. 9 c): Reset root and go other way
-		Root.SetLocation(InClosedLoop.RootTransform.GetLocation());
-		DragPoint(B, DistBToRoot, Root);
+		DragPoint(EffectorBReference, DistBRef, B);
+		
+		// Phase 4
+		DragPoint(Root, DistAToRoot, A);
 		DragPoint(A, DistAToB, B);
-
-		// Phase 3 (Fig. 9 d): Drag root toward both effectors
-		DragPoint(A, DistAToRoot, Root);
-		DragPoint(B, DistBToRoot, Root);
-
-		// Phase 4 (Fig. 9 e): Same as phase 1
-		DragPoint(A, DistAToRoot, Root);
-		DragPoint(B, DistAToB, A);
+		DragPointTethered(InClosedLoop.RootTransform, B, DistBToRoot, MaxRootDragDistance, RootDragStiffness, Root);
+		DragPoint(Root, DistAToRoot, A);
+				
+		// Phase 5
 		DragPoint(Root, DistBToRoot, B);
-		DragPoint(A, DistAToRoot, Root);
-
-		// Phase 4 (Fig. 9 e): Same as phase 1
-		DragPoint(A, DistAToRoot, Root);
 		DragPoint(B, DistAToB, A);
-		DragPoint(Root, DistBToRoot, B);
-		DragPoint(A, DistAToRoot, Root);
 
-		// Phase 5 (Fig. 9 d): Same as phase 2
-		Root.SetLocation(InClosedLoop.RootTransform.GetLocation());
-		DragPoint(B, DistBToRoot, Root);
-		DragPoint(A, DistAToB, B);
-
-		bBoneLocationUpdated = true;
-		Slop = FMath::Max(FVector::Dist(A.GetLocation, EffectorATarget), FVector::Dist(B.GetLocation, EffectorBTarget));
+		Delta = FMath::Max(FVector::DistSquared(A.GetLocation(), LastA), FVector::Dist(B.GetLocation(), LastB));
+		LastA = A.GetLocation();
+		LastB = B.GetLocation();		
 	}
 	
 	// Update rotations
-	if (bBoneLocationUpdated)
+	if (!FMath::IsNearlyZero(DistAToRoot))
 	{
-		if (!FMath::IsNearlyZero(DistAToRoot))
-		{
-			UpdateParentRotation(Root, InClosedLoop.RootTransform, A, InClosedLoop.EffectorATransform);
-		}
+		UpdateParentRotation(Root, InClosedLoop.RootTransform, A, InClosedLoop.EffectorATransform);
+	}
+	
+	if (!FMath::IsNearlyZero(DistAToB))
+	{
+		UpdateParentRotation(A, InClosedLoop.EffectorATransform, B, InClosedLoop.EffectorBTransform);
+	}
 
-		if (!FMath::IsNearlyZero(DistAToB))
-		{
-			UpdateParentRotation(A, InClosedLoop.EffectorATransform, B, InClosedLoop.EffectorBTransform);
-		}
-
-		if (!FMath::IsNearlyZero(DistBToRoot))
-		{
-			UpdateParentRotation(B, InClosedLoop.EffectorBTransform, Root, InClosedLoop.RootTransform);
-		}
+	if (!FMath::IsNearlyZero(DistBToRoot))
+	{
+		UpdateParentRotation(B, InClosedLoop.EffectorBTransform, Root, InClosedLoop.RootTransform);
 	}
 	
 	// Copy transforms to output
@@ -310,7 +334,7 @@ bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
 	OutClosedLoop.EffectorBTransform = B;
 	OutClosedLoop.RootTransform = Root;
 
-	return bBoneLocationUpdated;
+	return true;
 }
 
 void FRangeLimitedFABRIK::FABRIKForwardPass(
