@@ -1,0 +1,24 @@
+{
+  "FileVersion": 3,
+
+  "FriendlyName": "Real Time Inverse Kinematics",
+  "Version": 0,
+  "VersionName": "0.1",
+  "Description": "Inverse kinematics system",
+  "CreatedBy": "Henry Cooney",
+  "CreatedByURL": "https://github.com/hacoo/rtik",
+  "CanContainContent": "true",
+
+  "Modules": [
+    {
+      "Name": "rtik",
+      "Type": "Runtime",
+      "LoadingPhase": "PreDefault"
+    },
+    {
+      "Name": "rtikEditor",
+      "Type": "Editor",
+      "LoadingPhase": "PreDefault"
+    }
+  ]
+}
