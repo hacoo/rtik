@@ -6,9 +6,9 @@ RTIK (Real Time Inverse Kinematics) is an inverse kinematics system for Unreal E
 
 This project attempts to create a modular, easy-to-use IK system for UE4. The goals are as follows:
 
- - Implement 'full-body' IK: that is, the ability to smoothly IK the hands and feet of a humanoid character, with appropriate adjusment to the torso, etc. See [1] for an idea of how this is done (though my approach will probably be a little different).
+ - Implement 'full-body' IK: that is, the ability to smoothly IK the hands and feet of a humanoid character, with appropriate adjusment to the torso, etc. See [1] for an idea of how this is done (though my is slightly different).
 
- - Provide a modular set of AnimGraph nodes that can be used to build IK setups. These nodes will be 'lower level', but should enable animators to create custom IK setups without needing to write C++.
+ - Provide a modular set of AnimGraph nodes that can be used to build IK setups. These nodes are 'lower level', but should enable animators to create custom IK setups without needing to write C++.
 
  - Create higher-level AnimGraph nodes for more common IK setups. These should make common IK scenarios easy to set up. In particular, a very easy-to-use setup for humanoids will be provided.
 
@@ -18,24 +18,24 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## How To Use
 
-   More information incoming! RTIK is currently in the early phases and is not useful.
+   RTIK is currently distributed as a UE4 non-game module. Source code can be found in the Plugins/ directory. Installation instructions will be posted soon. RTIK has been tested with UE4 4.16 only, although it may be work with other engine versions.
 
-   RTIK is currently distributed as a stand-alone UE4 project, similar to UE4 Content Examples. To run it, you will need Unreal Engine 4.16, available at `https://www.unrealengine.com/`. Once UE4 is installed, simply run ue4ik.uproject to start the project in-editor.
-   RTIK should be compatible with older engines, but has only been tested with 4.16+.
+   This repo contains an example project, consiting of a demo area, and a character with IK applied. You can experiment with the demo scene, or check the included AnimBPs for an example of using RTIK.
 
-   IK has been applied to several characters in the starting scene. You can look at their animgraphs to see how they have been set up, or run in-editor to see the results.
+   If you are interested in integrating RTIK with an existing project, you should download the Plugins/ directory only.
 
-   Since this is currently a stand-alone project, you will need to integrate the C++ code (in the Source directory) by hand to use it with your project. Later releases will package the project as a module for easy integration.
- 
 ## Status
 
-Updated 8/11/2017 
+Updated 8/15/2017 
+
+RTIK has been repackaged as a non-game module. This should make it easier to integrate with other Unreal projects.
 
 Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
 
 Upper body IK is also working, though there is no lower-hip movement.
 
 Closed loop and noisy-three-point solvers have been implemented. However, before adding new features, I'd like to clean up what I already have.
+
 So, current tasks are:
     - Repackage as a non-game module
     - Improve ease-of-use
@@ -47,10 +47,9 @@ IK nodes actually work pretty well for arm IK; you don't usually get bad arm pos
 
 I haven't attempted to integrate hip / lower body movements with upper body IK. Basically, clever use of FABRIK closed-loop
 solvers on the upper / lower body triangles allow the character to bend over in a more realistic way, moving the hips back / down
-instead of bending at the waist only. I don't think many people would actually use this, but it looks cool.
+instead of bending at the waist only. I don't think many people would actually use this, but it would look cool.
 
-Before I add any new features, I'd like to clean up what I have here and start making it into something that can easily be
-used with other projects. Also, I need to do some basic performance tests.
+I have done some performance testing. Performance is good; full body IK costs less than 200us / character on my laptop.
 
 ## License
 
