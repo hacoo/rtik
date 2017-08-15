@@ -4,11 +4,13 @@ Copyright (c) 2017 Henry Cooney
 
 RTIK (Real Time Inverse Kinematics) is an inverse kinematics system for Unreal Engine 4. UE4 includes several inverse kinematics solvers; however, these are only the basic building blocks of a functional IK system. Substantial additional work is required to make IK look good.
 
+A video demo can be found here: [demo](https://youtu.be/Cm-hjahqLh8)
+
 ![Alt text](media/lefthand.gif?raw=true "Hand IK")
 
 This project attempts to create a modular, easy-to-use IK system for UE4. The goals are as follows:
 
- - Implement 'full-body' IK: that is, the ability to smoothly IK the hands and feet of a humanoid character, with appropriate adjusment to the torso, etc. See [1] for an idea of how this is done (though my is slightly different).
+ - Implement 'full-body' IK: that is, the ability to smoothly IK the hands and feet of a humanoid character, with appropriate adjusment to the torso, etc. See [1] for an idea of how this is done (though my approach is slightly different).
 
  - Provide a modular set of AnimGraph nodes that can be used to build IK setups. These nodes are 'lower level', but should enable animators to create custom IK setups without needing to write C++.
 
@@ -18,40 +20,56 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
  - Implement 'prone' IK: that is, the ability for characters to lay down or crawl with minimal clipping through uneven ground (this is a longer-term goal).
 
+## Who it's for
+
+   RTIK is primarily aimed at UE4 developers who want an extra level of animation quality. Currently, it provides a nice-looking full-body IK for humanoid characters; its modular design may allow you to create custom IK setups, as well. 
+
+   RTIK may also be useful for animation or motion researchers, who may need an IK layer underneath other procedural animation systems.
+
 ## How To Use
 
-   RTIK is currently distributed as a UE4 non-game module. Source code can be found in the Plugins/ directory. Installation instructions will be posted soon. RTIK has been tested with UE4 4.16 only, although it may be work with other engine versions.
+   RTIK is currently distributed as a UE4 non-game module. Source code can be found in the Plugins/ directory. RTIK has been tested with UE4 4.16 only, although it may be work with other engine versions. 
 
-   This repo contains an example project, consiting of a demo area, and a character with IK applied. You can experiment with the demo scene, or check the included AnimBPs for an example of using RTIK.
+   This repo contains an example project, consiting of a demo area, and a character with IK applied. You can experiment with the demo scene, or check the included AnimBPs for an example of using RTIK. See 'Stand-Alone Demo Installation' for details of using the standalone RTIK demo.
 
-   If you are interested in integrating RTIK with an existing project, you should download the Plugins/ directory only.
+   If you are interested in integrating RTIK with an existing project, you should download the Plugins/ directory only. See 'Installing RTIK as a Plugin" for more instructions.
+
+## Requirements
+
+   RTIK has been tested under Windows 10 only. It has been tested with Unreal Engine 4.16, but may work with other engine versions. UE4 is available at https://www.epicgames.
+   
+   Building RTIK requires MS Visual Studio. MSVS may be found at https://www.visualstudio.com/.
+
+## Stand-Alone Demo Installation
+   
+   RTIK may be run as a stand-alone UE4 project. To run, you must download UE 4.16, and MS Visual Studio.
+
+   - Clone this repo
+   - Right click on IKDemo.uproject and select 'Generate project files'
+   - Double click on IKDemo.uproject to start (click 'Yes' to build if prompted)
+   	
+   This should start the demo in-editor. RTIK has been applied to CHAR_PatrolMannequin in the starting scene. You can select IK target actors, and enable/disable IK, in CHAR_PatrolMannequin's details panel, under IK.
+
+   An example AnimBP can be found at Content/Blueprints/Characters/PatrolMannequin/ANIMBP_IK_PatrolMannequin.
+
+## Installing RTIK as a Plugin
+
+   To install as a plugin with an existing project:
+   - Place the contents of the Plugins/ directory in your projects Plugins/ directory
+   - Start your project. If prompted to rebuild, click 'Yes'.
+   - Ensure that the plugin is enabled by going to the Edit/Plugins menu. In the Plugins window, find Real Time Inverse Kinematics under the Project/Other tab, and make sure the 'Enabled' box is checked.
+
+   Note that you MUST have C++ in your project to install RTIK, otherwise it cannot be compiled, as your project will have no .sln file to build from. If your project is blueprint-only, simply add a single C++ class by clicking 'Add New' in the Content brower, and selecting 'New C++ Class'. Creating any C++ class will generate the necessary project files.
 
 ## Status
 
 Updated 8/15/2017 
 
-RTIK has been repackaged as a non-game module. This should make it easier to integrate with other Unreal projects.
+An early build of RTIK is now available as a non-game module. While the current version of RTIK is very much an early alpha, you are welcome to experiment with it!
 
-Leg / Foot IK is working. I've tested it pretty extensively and it looks great!
+## Contact Info
 
-Upper body IK is also working, though there is no lower-hip movement.
-
-Closed loop and noisy-three-point solvers have been implemented. However, before adding new features, I'd like to clean up what I already have.
-
-So, current tasks are:
-    - Repackage as a non-game module
-    - Improve ease-of-use
-    - Make some early 'docs' and demo videos!
-
-Upper body IK is also working, with nice upper body / torso rotations. I haven't implemented any kind of arm constraints or joint
-corrections yet; to me, this is less important than with the legs since a. the targets are not procedural and b. Unreal's two-bone
-IK nodes actually work pretty well for arm IK; you don't usually get bad arm positions unless you do something stupid.
-
-I haven't attempted to integrate hip / lower body movements with upper body IK. Basically, clever use of FABRIK closed-loop
-solvers on the upper / lower body triangles allow the character to bend over in a more realistic way, moving the hips back / down
-instead of bending at the waist only. I don't think many people would actually use this, but it would look cool.
-
-I have done some performance testing. Performance is good; full body IK costs less than 200us / character on my laptop.
+For questions, concerns, comments, et cetera please contact me (Henry) at hacoo36@gmail.com. 
 
 ## License
 
