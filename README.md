@@ -4,6 +4,7 @@ Copyright (c) 2017 Henry Cooney
 
 RTIK (Real Time Inverse Kinematics) is an inverse kinematics system for Unreal Engine 4. UE4 includes several inverse kinematics solvers; however, these are only the basic building blocks of a functional IK system. Substantial additional work is required to make IK look good.
 
+![Alt text](media/lefthand.gif?raw=true "Hand IK")
 
 This project attempts to create a modular, easy-to-use IK system for UE4. The goals are as follows:
 
