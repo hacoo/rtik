@@ -79,7 +79,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector HipFootAxisPre    = FootCSPre - HipCSPre;
 	if (!HipFootAxisPre.Normalize())
 	{
-#if ENABLE_IK_DEBUG_VERBOSE
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - HipFootAxisPre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPre        = FVector(0.0f, 0.0f, 1.0f);
@@ -90,7 +90,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector HipFootAxisPost   = FootCSPost - HipCSPost;
 	if (!HipFootAxisPost.Normalize())
 	{
-#if ENABLE_IK_DEBUG_VERBOSE
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - HipFootAxisPost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		HipFootAxisPost       = FVector(0.0f, 0.0f, 1.0f);
@@ -104,15 +104,13 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	{
 		HipFootAxisPost *= -1;
 	}
-*/	
-
-
-
+*/
+	
 	// Get the projected foot-toe vectors
 	FVector FootToePre = FVector::VectorPlaneProject((ToeCSPre - FootCSPre), HipFootAxisPre);
 	if (!FootToePre.Normalize())
 	{
-#if ENABLE_IK_DEBUG_VERBOSE
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - FootToePre Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePre = KneeDirectionPre;
@@ -136,7 +134,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector FootToePost = FVector::VectorPlaneProject((ToeCSPostRotated - FootCSPostRotated), HipFootAxisPost);
 	if (!FootToePost.Normalize())
 	{
-#if ENABLE_IK_DEBUG_VERBOSE
+#if ENABLE_IK_DEBUG
 		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - FootToePost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePost = KneeDirectionPost;
@@ -150,7 +148,9 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector RotationAxis = FVector::CrossProduct(FootToePre, KneePre);
 
 	if (!RotationAxis.Normalize())
-	{
+	{		
+		UE_LOG(LogRTIK, Warning, TEXT("Rotation Axis normalization failure "));
+
 		if (FVector::DotProduct(FootToePre, KneePre) < 0.0f)
 		{
 			// Knee and foot point in opposite directions
