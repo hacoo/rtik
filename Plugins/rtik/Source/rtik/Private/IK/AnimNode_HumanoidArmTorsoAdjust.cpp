@@ -156,6 +156,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 	FTransform WaistCSPostIK = WaistCS;
 
+/*
 	// Readjust shoulders, and allow some waist movement, using noisy-three-point method
 	if (Mode != EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_Disabled)
 	{
@@ -186,6 +187,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 		PostIKTransformsRight[0].SetLocation(OutClosedLoop.EffectorBTransform.GetLocation());		
 		WaistCSPostIK.SetLocation(OutClosedLoop.RootTransform.GetLocation());
 	}
+*/
 
 	// Use first pass results to twist the torso around the spine direction
 	// Note --calculations here are relative to the waist bone, not root!
