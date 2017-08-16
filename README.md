@@ -55,6 +55,7 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 ## Installing RTIK as a Plugin
 
    To install as a plugin with an existing project:
+
    - Place the contents of the Plugins/ directory in your projects Plugins/ directory
    - Start your project. If prompted to rebuild, click 'Yes'.
    - Ensure that the plugin is enabled by going to the Edit/Plugins menu. In the Plugins window, find Real Time Inverse Kinematics under the Project/Other tab, and make sure the 'Enabled' box is checked.
