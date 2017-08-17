@@ -5,15 +5,10 @@
 #include "CoreMinimal.h"
 #include "IK.h"
 #include "HumanoidIK.h"
-#include "BoneControllers/AnimNode_Fabrik.h"
-#include "IK/AnimNode_RangeLimitedFabrik.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_HumanoidLegIK.generated.h"
 
-
-/*
-* How leg IK should behave
-*/
+// How leg IK should behave
 UENUM(BlueprintType)
 enum class EHumanoidLegIKMode : uint8
 {	
@@ -24,12 +19,24 @@ enum class EHumanoidLegIKMode : uint8
 	IK_Human_Leg_WorldLocation UMETA(DisplayName = "IK Onto World Location")
 };
 
-/*
-  * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
-  * Uses FABRIK IK solver.  
-  * 
-  * Knee rotation is not enforced in this node.
-*/
+
+// Which solver to use
+UENUM(BlueprintType)
+enum class EHumanoidLegIKSolver: uint8
+{	
+	// FABRIK solver - more flexible, slower
+	IK_Human_Leg_Solver_FABRIK UMETA(DisplayName = "FABRIK"),
+	
+	// Two-bone - Simple, fast
+	IK_Human_Leg_Solver_TwoBone UMETA(DisplayName = "Two-Bone")
+};
+
+
+
+// IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach.
+// Uses FABRIK IK solver.
+// 
+// Knee rotation is not enforced in this node.
 USTRUCT()
 struct RTIK_API FAnimNode_HumanoidLegIK : public FAnimNode_SkeletalControlBase
 {
@@ -74,7 +81,11 @@ public:
 	// Set to 'locomotion' for normal movement; 'world location' to manually IK the leg onto a world location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver, meta = (PinHiddenByDefault))
 	EHumanoidLegIKMode Mode;
-	
+
+	// Which solver method to use
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Solver)
+	EHumanoidLegIKSolver Solver;
+
 	// How to handle rotation of the effector (the foot). If set to No Change, the foot will maintain the same
 	// rotation as before IK. If set to Maintain Local, it will maintain the same rotation relative to the parent
 	// as before IK. Copy Target Rotation is the same as No Change for now.	
@@ -114,6 +125,7 @@ public:
 		MaxIterations(10),
 		bEnable(true),
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
+		Solver(EHumanoidLegIKSolver::IK_Human_Leg_Solver_FABRIK),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(50.0f),
 		bEffectorMovesInstantly(false),
@@ -134,5 +146,4 @@ public:
 protected:
 	float DeltaTime;
 	FVector LastEffectorOffset;
-	FAnimNode_Fabrik FabrikSolver;
 };

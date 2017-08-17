@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "AnimationRuntime.h"
+#include "RangeLimitedFABRIK.h"
 #include "Utility/AnimUtil.h"
 
 #if WITH_EDITOR
@@ -45,9 +46,11 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	
 	FMatrix ToCS               = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
-	FVector HipCS              = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
-	FVector KneeCS             = FAnimUtil::GetBoneCSLocation(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
+	FTransform HipCSTransform  = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
+	FTransform KneeCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
+	FVector HipCS              = HipCSTransform.GetLocation();
+	FVector KneeCS             = KneeCSTransform.GetLocation();
 	FVector FootCS             = FootCSTransform.GetLocation();
 
 	FVector FootTargetCS;
@@ -120,18 +123,38 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
 		float HipToTargetLengthSq = HipToTarget.SizeSquared();
 	}
+   
+	// Gather bone transforms and constraints
+	TArray<FTransform> SourceCSTransforms({ 
+		HipCSTransform, 
+		KneeCSTransform,
+		FootCSTransform
+	});
 	
-	FabrikSolver.EffectorTransformSpace = EBoneControlSpace::BCS_ComponentSpace;
-	FabrikSolver.EffectorRotationSource = EffectorRotationSource;
-	FTransform EffectorTransform(FootCSTransform);
-	EffectorTransform.SetLocation(FootTargetCS);
-	FabrikSolver.EffectorTransform = EffectorTransform;
+	TArray<FIKBoneConstraint*> Constraints({
+		Leg->Chain.HipBone.GetConstraint(),
+		Leg->Chain.ThighBone.GetConstraint(),
+		Leg->Chain.ShinBone.GetConstraint()
+	});
 
-	FTransform FootLocalTransform = Output.Pose.GetLocalSpaceTransform(Leg->Chain.FootBone.BoneIndex);
+	TArray<FTransform> DestCSTransforms;
 
-	// Internal fabrik solver will fill in OutBoneTransforms. Stock solver does not handle ROMs
-	FabrikSolver.EvaluateSkeletalControl_AnyThread(Output, OutBoneTransforms);
-	
+	bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+		SourceCSTransforms,
+		Constraints,
+		FootTargetCS,
+		DestCSTransforms,
+		0.0f,
+		1.0f,
+		Precision,
+		MaxIterations,
+		Cast<ACharacter>(SkelComp->GetOwner())
+	);
+
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, DestCSTransforms[0]));
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, DestCSTransforms[1]));
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, DestCSTransforms[2]));
+
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
 	{
@@ -166,15 +189,6 @@ bool FAnimNode_HumanoidLegIK::IsValidToEvaluate(const USkeleton * Skeleton, cons
 	}
 #endif // ENABLE_ANIM_DEBUG
 
-	
-	bValid &= FabrikSolver.IsValidToEvaluate(Skeleton, RequiredBones);
-#if ENABLE_IK_DEBUG_VERBOSE
-	if (!bValid)
-	{
-		UE_LOG(LogRTIK, Warning, TEXT("IK Node Humanoid IK Leg -- internal FABRIK solver was not ready to evaluate"));
-	}
-#endif // ENABLE_ANIM_DEBUG
-   
 	return bValid;
 }
 
@@ -196,13 +210,4 @@ void FAnimNode_HumanoidLegIK::InitializeBoneReferences(const FBoneContainer& Req
 		UE_LOG(LogRTIK, Warning, TEXT("Could not initialize Humanoid IK Leg"));
 #endif // ENABLE_IK_DEBUG
 	}
-	else
-	{
-		// Set up FABRIK solver
-		FabrikSolver.ActualAlpha   = 1.0f;
-		FabrikSolver.TipBone       = Leg->Chain.ShinBone.BoneRef;
-		FabrikSolver.RootBone      = Leg->Chain.HipBone.BoneRef;
-		FabrikSolver.Precision     = Precision;
-		FabrikSolver.MaxIterations = MaxIterations;
-	}	
 }
