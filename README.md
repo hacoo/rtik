@@ -22,17 +22,19 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Who it's for
 
-   RTIK is primarily aimed at UE4 developers who want an extra level of animation quality. Currently, it provides a nice-looking full-body IK for humanoid characters; its modular design may allow you to create custom IK setups, as well. 
+   RTIK is primarily aimed at UE4 developers who want an extra level of animation quality. Currently, it provides nice-looking full-body IK for humanoid characters; its modular design may allow you to create custom IK setups, as well. 
 
-   RTIK may also be useful for animation or motion researchers, who may need an IK layer underneath other procedural animation systems.
+   RTIK may also be useful for animation or motion researchers, who need an IK layer underneath other procedural animation systems.
 
 ## How To Use
 
-   RTIK is currently distributed as a UE4 non-game module. Source code can be found in the Plugins/ directory. RTIK has been tested with UE4 4.16 only, although it may be work with other engine versions. 
-
+   RTIK is currently distributed as a UE4 non-game module. Source code can be found in the Plugins/ directory.
+   
    This repo contains an example project, consiting of a demo area, and a character with IK applied. You can experiment with the demo scene, or check the included AnimBPs for an example of using RTIK. See 'Stand-Alone Demo Installation' for details of using the standalone RTIK demo.
-
-   If you are interested in integrating RTIK with an existing project, you should download the Plugins/ directory only. See 'Installing RTIK as a Plugin" for more instructions.
+   
+   The demo character has locomotion IK applied to the feet (arm IK is disabled by default). You can manually IK its arms and legs by selecting the character, going to the 'IK' tab under the details panel, and setting a limb to IK onto a world target.
+   
+   If you are interested in integrating RTIK with an existing project, you will need the contents of the Plugins/ directory only. See 'Installing RTIK as a Plugin" for more instructions.
 
 ## Requirements
 
@@ -42,13 +44,13 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Stand-Alone Demo Installation
    
-   RTIK may be run as a stand-alone UE4 project. To run, you must download UE 4.16, and MS Visual Studio.
+   RTIK may be run as a stand-alone UE4 project. To run, you must download UE 4.16, and MS Visual Studio. Steps to run follow:
 
    - Clone this repo
    - Right click on IKDemo.uproject and select 'Generate project files'
    - Double click on IKDemo.uproject to start (click 'Yes' to build if prompted)
    	
-   This should start the demo in-editor. RTIK has been applied to CHAR_PatrolMannequin in the starting scene. You can select IK target actors, and enable/disable IK, in CHAR_PatrolMannequin's details panel, under IK.
+   This should start the demo in-editor. RTIK has been applied to CHAR_PatrolMannequin in the starting scene. You can select IK target actors, and enable/disable targeted IK, in CHAR_PatrolMannequin's details panel, under IK.
 
    An example AnimBP can be found at Content/Blueprints/Characters/PatrolMannequin/ANIMBP_IK_PatrolMannequin.
 
@@ -64,9 +66,9 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Status
 
-Updated 8/15/2017 
+Updated 8/16/2017 
 
-An early build of RTIK is now available as a non-game module. While the current version of RTIK is very much an early alpha, you are welcome to experiment with it!
+An early build of RTIK is now available as a non-game module. It provides full body IK for humanoids. While the current version of RTIK is very much an early alpha, you are welcome to experiment with it!
 
 ## Contact Info
 
