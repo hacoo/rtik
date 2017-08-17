@@ -46,10 +46,10 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
    
    NOTE -- If you are having trouble building the project, or the IKDemo.sln doesn't load properly, try doing the following:
     
-    - Delete the Binaries/ and Intermediate/ directories
-    - Delete Plugins/rtik/Binaries and Plugins/rtik/Intermediate
-    - Right click IKDemo.uproject and 'Generate Project Files'
-    - Try building again
+   - Delete the Binaries/ and Intermediate/ directories
+   - Delete Plugins/rtik/Binaries and Plugins/rtik/Intermediate
+   - Right click IKDemo.uproject and 'Generate Project Files'
+   - Try building again
    
    Unfortunately the build process has been flaky since I turned the project into a plugin. I'm working on it! 
    
