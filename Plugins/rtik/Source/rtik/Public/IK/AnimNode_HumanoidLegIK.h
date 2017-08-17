@@ -98,6 +98,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEffectorMovesInstantly;
 
+	// Minumum distance between the effector and the target for IK to be applied. You can increase this to prevent IK
+	// from having an effect 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
+	float MinimumEffectorDelta;
+	
 public:
 
 	FAnimNode_HumanoidLegIK()

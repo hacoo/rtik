@@ -1,3 +1,5 @@
+// Copyright (c) Henry Cooney 2017
+ 
 #include "rtikEditor.h"
  
 IMPLEMENT_GAME_MODULE(FrtikEditorModule, rtikEditor);
