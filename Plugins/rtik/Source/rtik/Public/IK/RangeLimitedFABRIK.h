@@ -5,17 +5,16 @@
 #include "CoreMinimal.h"
 #include "IK.h"
 
-/*
-	Range-limited FABRIK solvers and related functions. Does not need to be in the context of a Skeleton; 
-	this solver is designed to work with generic transforms. Make sure all transforms are in the same space, though!
 
-	See www.andreasaristidou.com/FABRIK.html for details of the FABRIK algorithm.
-*/
+//	Range-limited FABRIK solvers and related functions. Does not need to be in the context of a Skeleton; 
+//	this solver is designed to work with generic transforms. Make sure all transforms are in the same space, though!
+//
+//	See www.andreasaristidou.com/FABRIK.html for details of the FABRIK algorithm.
 
-/* 
-* A three-point closed loop, containing two noisy effectors.
-* This is a very specific type of IK 'chain', used for the torso upper and lower body triangles.
-*/
+
+// A three-point closed loop, containing two noisy effectors.
+// This is a very specific type of IK 'chain', used for the torso upper and lower body triangles.
+
 struct RTIK_API FNoisyThreePointClosedLoop
 {
 public:
@@ -62,58 +61,56 @@ struct RTIK_API FRangeLimitedFABRIK
 {
 public:
 	
-	/*
-	* Uses the FABRIK algorithm to solve the IK problem on a chain of rigidly-connected points.	
-	*  
-	* InTransforms is a list of transforms representing the starting position of each point. The 0th element
-    * of this array is the ROOT. The last element is the EFFECTOR (sometimes called the 'tip' in code).
-	*
-	* The root point represents the start of the chain; its displacement from its starting position is limited.
-	* The effector represents the end of the chain, FABRIK will attempt to move this to EffectorTargetLocation,
-	* while maintaining inter-point distances.
-	*
-	* Each chain point, except the effector, has a CHILD - this is simply the next point in the chain. Correspondingly,
-	* each point except the root has a PARENT, which is the previous point. The displacement between a parent and its child 
-	* is loosely referred to as a BONE.	
-	* 
-	* FABRIK is an iterative algorithm. It will adjust each point in the chain in a forward-and-backward manner,
-	* until either the distance between the effector and EffectorTargetLocation is less than Precision, or MaxIterations
-	* iterations (up and down the chain) have been performed.
-	*
-	* In principal, FABRIK pays attention only to the location of each chain point, not their rotations. However, 
-	* this is impractical when working with skeletal bones. Once the final locations of each chain point are 
-	* determined, the rotation of each transform is updated as follows:
-	* 
-	* - Let P be a chain point which is not effector, and let C be its child, before FABRIK
-	* - Let P' and C' be the corresponding chain points after FABRIK is applied
-	* - Let Q be the shortest rotation from (C - P) to (C' - P')
-	* - Add the rotation Q to the rotation of P'	
-	*
-	* In other words, the rotation of each point transform is updated with the smallest rotation to make it 
-	* 'point toward' the newly adjusted child point.	
-	*
-	* The effector's rotation is NOT updated (unlike in the UE4 FABRIK implementation), you will need to do this
-	* yourself after running FABRIK.
-	*
-	* Parameter descriptions follow:
-	* 	
-	* @param InTransforsm - The starting transforms of each chain point. Not modified. Must contain at least 2 transforms.
-	* @param Constraints - Constraints corresponding to each chain point; entries should be set to nullptr for points that don't need a constraint.
-	*   these may modify chain transforms arbitrarily and are enforced each time a point is moved.
-	*	Strong constraints will degrade the results of FABRIK, it's up to you to figure out what works.
-	* @param EffectorTargetLocation - Where you want the effector to go. FABRIK will attempt to move the effector as close
-	*   as possible to this point.
-	* @param OutTransforms - The updated transforms o each chain point after FABRIK runs. Shoudl be an empty array. Will be emptied and filled with new transforms.  
-	* @param MaxRootDragDistance - How far the root may move from its original position. Set to 0 for no movement.
-	* @param RootDragStiffness - How much the root will resist being moved from the original position. 1.0 means no resistance; 
-	*   increase for more resistance. Settings less than 1.0 will make it move more.
-	* @param Precision - Iteration will terminate when the effector is within this distance from the target.
-	*  Decrease for possibly better results but possibly worse performance.
-	* @param MaxIterations - The maximum number of iterations to run. Increase for possibly better results but 
-	*  possibly worse performance.
-	* @param Character - Character pointer whcih may be used for debug drawing. May safely be set to nullptr or ignored.
-	* @return - True if any transforms in OutTransforms were updated; otherwise, false. If false, the contents of OutTransforms is identical to InTransforms.
-	*/
+	// Uses the FABRIK algorithm to solve the IK problem on a chain of rigidly-connected points.	
+	//  
+	// InTransforms is a list of transforms representing the starting position of each point. The 0th element
+    // of this array is the ROOT. The last element is the EFFECTOR (sometimes called the 'tip' in code).
+	//
+	// The root point represents the start of the chain; its displacement from its starting position is limited.
+	// The effector represents the end of the chain, FABRIK will attempt to move this to EffectorTargetLocation,
+	// while maintaining inter-point distances.
+	//
+	// Each chain point, except the effector, has a CHILD - this is simply the next point in the chain. Correspondingly,
+	// each point except the root has a PARENT, which is the previous point. The displacement between a parent and its child 
+	// is loosely referred to as a BONE.	
+	// 
+	// FABRIK is an iterative algorithm. It will adjust each point in the chain in a forward-and-backward manner,
+	// until either the distance between the effector and EffectorTargetLocation is less than Precision, or MaxIterations
+	// iterations (up and down the chain) have been performed.
+	//
+	// In principal, FABRIK pays attention only to the location of each chain point, not their rotations. However, 
+	// this is impractical when working with skeletal bones. Once the final locations of each chain point are 
+	// determined, the rotation of each transform is updated as follows:
+	// 
+	// - Let P be a chain point which is not effector, and let C be its child, before FABRIK
+	// - Let P' and C' be the corresponding chain points after FABRIK is applied
+	// - Let Q be the shortest rotation from (C - P) to (C' - P')
+	// - Add the rotation Q to the rotation of P'	
+	//
+	// In other words, the rotation of each point transform is updated with the smallest rotation to make it 
+	// 'point toward' the newly adjusted child point.	
+	//
+	// The effector's rotation is NOT updated (unlike in the UE4 FABRIK implementation), you will need to do this
+	// yourself after running FABRIK.
+	//
+	// Parameter descriptions follow:
+	// 	
+	// @param InTransforms - The starting transforms of each chain point. Not modified. Must contain at least 2 transforms.
+	// @param Constraints - Constraints corresponding to each chain point; entries should be set to nullptr for points that don't need a constraint.
+	//   Constraints are enforced each time a point moves.	
+	//	 Strong constraints may degrade the results of FABRIK, it's up to you to figure out what works.
+	// @param EffectorTargetLocation - Where you want the effector to go. FABRIK will attempt to move the effector as close
+	//   as possible to this point.
+	// @param OutTransforms - The updated transforms for each chain point after FABRIK runs. Should be an empty array. Will be emptied and filled with new transforms.  
+	// @param MaxRootDragDistance - How far the root may move from its original position. Set to 0 for no movement.
+	// @param RootDragStiffness - How much the root will resist being moved from the original position. 1.0 means no resistance; 
+	//   increase for more resistance. Settings less than 1.0 will make it move more.
+	// @param Precision - Iteration will terminate when the effector is within this distance from the target.
+	//   Decrease for possibly better results but possibly worse performance.
+	// @param MaxIterations - The maximum number of iterations to run. Increase for possibly better results but 
+	//   possibly worse performance.
+	// @param Character - Character pointer whcih may be used for debug drawing. May safely be set to nullptr or ignored.
+	// @return - True if any transforms in OutTransforms were updated; otherwise, false. If false, the contents of OutTransforms is identical to InTransforms.
 	static bool SolveRangeLimitedFABRIK(
 		const TArray<FTransform>& InTransforms,
 		const TArray<FIKBoneConstraint*>& Constraints,
@@ -126,14 +123,31 @@ public:
 		ACharacter* Character = nullptr
 	);
 
-	/*
-	* Solves FABRIK on a CLOSED LOOP, that is, a chain where the effector is assumed to be connected to the root.
-	* 	
-	* I'm not sure how well constraints will work with this solver, but they are nonetheless supported for the sake of
-	* keeping a consistent interface. You're welcome to try them out but results may be bad.	
-	*
-	* Note that you will probably HAVE to use root dragging if you want this solver to work!
-	*/
+	// Solves FABRIK on a CLOSED LOOP, that is, a chain where the effector is assumed to be connected to the root.
+	//
+	// Note that you will probably HAVE to use root dragging if you want this solver to work! If the root is not allowed to drag,
+	// the solution degenerates and this solver will behave like normal FABRIK.	
+	// 	
+	// I'm not sure how well constraints will work with this solver, but they are nonetheless supported for the sake of
+	// keeping a consistent interface. You're welcome to try them out but results may be bad.	
+	//
+	// @param InTransforms - The starting transforms of each chain point. Not modified. Must contain at least 2 transforms. Because this
+	//   is a closed loop, the last transform is assumed to be conneted to the first one.	
+	// @param Constraints - Constraints corresponding to each chain point; entries should be set to nullptr for points that don't need a constraint.
+	//   Constraints are enforced each time a point moves.
+	//	 Strong constraints may degrade the results of FABRIK, it's up to you to figure out what works.
+	// @param EffectorTargetLocation - Where you want the effector to go. FABRIK will attempt to move the effector as close
+	//    as possible to this point.
+	// @param OutTransforms - The updated transforms for each chain point after FABRIK runs. Should be an empty array. Will be emptied and filled with new transforms.  
+	// @param MaxRootDragDistance - How far the root may move from its original position. Set to 0 for no movement.
+	// @param RootDragStiffness - How much the root will resist being moved from the original position. 1.0 means no resistance; 
+	//   increase for more resistance. Settings less than 1.0 will make it move more.
+	// @param Precision - Iteration will terminate when the effector is within this distance from the target.
+	//   Decrease for possibly better results but possibly worse performance.
+	// @param MaxIterations - The maximum number of iterations to run. Increase for possibly better results but 
+	//   possibly worse performance.
+	// @param Character - Character pointer whcih may be used for debug drawing. May safely be set to nullptr or ignored.
+	// @return - True if any transforms in OutTransforms were updated; otherwise, false. If false, the contents of OutTransforms is identical to InTransforms.
 	static bool SolveClosedLoopFABRIK(
 		const TArray<FTransform>& InTransforms,
 		const TArray<FIKBoneConstraint*>& Constraints,
@@ -146,10 +160,19 @@ public:
 		ACharacter* Character = nullptr
 	);
 
-	/*
-	* Runs closed-loop FABRIK multiple times, attempting to move both 'noisy effectors' to their targets.
-	* See www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_Cοnstraints.pdf
-	*/
+	// Runs closed-loop FABRIK multiple times, attempting to move both 'noisy effectors' to their targets.
+	// See www.andreasaristidou.com/publications/papers/Extending_FABRIK_with_Model_Cοnstraints.pdf
+	//
+	// @param InClosedLoop - Input closed loop; describes starting positions of the  closed loop
+	// @param EffectorATarget - Target location for noisy effector A
+	// @param EffectorBTarget - Target location for noisy effector B
+	// @param OutClosedLoop - Adjusted transforms of the closed loop points will be output here. 
+	// @param MaxRootDragDistance - How far the root point may be dragged from its starting position
+	// @param RootDragStiffness - How much the root resists being dragged. Set to 1.0 for no resistance; higher will resist dragging, lower will enhance dragging
+	// @param Precision - Solver will stop iterating when both Effector A and Effector B moved less than this amount on the last iteration.
+	// @param MaxIterations - The maximum number of iterations the solver may run
+	// @param Character - Optional character pointer, used for debug drawing. 
+	// @result True if at least on transform changed. This algorithm always changes the transforms, so it always returns true.
 	static bool SolveNoisyThreePoint(
 		const FNoisyThreePointClosedLoop& InClosedLoop,
 		const FTransform& EffectorATarget,
@@ -164,6 +187,7 @@ public:
 	
 protected:
 
+	// Updates the rotation of the parent to point toward the child, using the shortest rotation
 	static void UpdateParentRotation(
 		FTransform& NewParentTransform,
 		const FTransform& OldParentTransform,

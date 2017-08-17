@@ -255,7 +255,6 @@ bool FRangeLimitedFABRIK::SolveNoisyThreePoint(
 	FVector LastB = B.GetLocation();
 
 	int32 IterationCount = 0;
-	bool bBoneLocationUpdated = true;
 
 	// Phase 1 (Fig. 9 b): go around the loop
 	DragPoint(Root, DistAToRoot, A);
