@@ -58,8 +58,8 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				BoneLengths,
 				OutTransforms,
 				Character
-			);
-			
+			);	
+
 			// Drag the root if enabled
 			DragPointTethered(
 				InTransforms[0],
@@ -79,9 +79,16 @@ bool FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 				Character
 			);
 
-			Slop = FVector::Dist(OutTransforms[EffectorIndex].GetLocation(), EffectorTargetLocation);
+			Slop = FMath::Abs(BoneLengths[EffectorIndex] - 
+				FVector::Dist(OutTransforms[EffectorIndex - 1].GetLocation(), EffectorTargetLocation));
 		}
-				
+
+		// Place effector based on how close we got to the target
+		FVector EffectorLocation = OutTransforms[EffectorIndex].GetLocation();
+		FVector EffectorParentLocation = OutTransforms[EffectorIndex - 1].GetLocation();
+		EffectorLocation = EffectorParentLocation + (EffectorLocation - EffectorParentLocation).GetUnsafeNormal() * BoneLengths[EffectorIndex];
+		OutTransforms[EffectorIndex].SetLocation(EffectorLocation);
+		
 		bBoneLocationUpdated = true;
 	}
 	
@@ -389,7 +396,7 @@ void FRangeLimitedFABRIK::FABRIKBackwardPass(
 	int32 NumPoints     = InTransforms.Num();
 	int32 EffectorIndex = NumPoints - 1;
 
-	for (int32 PointIndex = 1; PointIndex < NumPoints; PointIndex++)
+	for (int32 PointIndex = 1; PointIndex < EffectorIndex; PointIndex++)
 	{
 		FTransform& ParentPoint  = OutTransforms[PointIndex - 1];
 		FTransform& CurrentPoint = OutTransforms[PointIndex];
@@ -439,10 +446,11 @@ void FRangeLimitedFABRIK::DragPointTethered(
 	FTransform& PointToDrag
 )
 {
-	if (MaxDragDistance < SMALL_NUMBER)
+	if (MaxDragDistance < KINDA_SMALL_NUMBER || DragStiffness < KINDA_SMALL_NUMBER)
 	{
-		PointToDrag.SetLocation(StartingTransform.GetLocation());
-	}
+		PointToDrag = StartingTransform;
+		return;
+	}  
 		
 	FVector Target;
 	if (FMath::IsNearlyZero(BoneLength))
@@ -458,11 +466,8 @@ void FRangeLimitedFABRIK::DragPointTethered(
 		
 	FVector Displacement = Target - StartingTransform.GetLocation();
 
-	// Root drag stiffness 'pulls' the root back if enabled
-	if (DragStiffness > KINDA_SMALL_NUMBER)
-	{
-		Displacement /= DragStiffness;
-	}
+	// Root drag stiffness 'pulls' the root back (set to 1.0 to disable)
+	Displacement /= DragStiffness;	
 	
 	// limit root displacement to drag length
 	FVector LimitedDisplacement = Displacement.GetClampedToMaxSize(MaxDragDistance);
