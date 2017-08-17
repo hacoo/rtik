@@ -44,6 +44,15 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Stand-Alone Demo Installation
    
+   NOTE -- If you are having trouble building the project, or the IKDemo.sln doesn't load properly, try doing the following:
+    
+    - Delete the Binaries/ and Intermediate/ directories
+    - Delete Plugins/rtik/Binaries and Plugins/rtik/Intermediate
+    - Right click IKDemo.uproject and 'Generate Project Files'
+    - Try building again
+   
+   Unfortunately the build process has been flaky since I turned the project into a plugin. I'm working on it! 
+   
    RTIK may be run as a stand-alone UE4 project. To run, you must download UE 4.16, and MS Visual Studio. Steps to run follow:
 
    - Clone this repo
