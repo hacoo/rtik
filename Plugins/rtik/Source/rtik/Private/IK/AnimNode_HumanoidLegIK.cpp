@@ -3,8 +3,7 @@
 #include "rtik.h"
 #include "AnimNode_HumanoidLegIK.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Animation/AnimInstanceProxy.h"
-#include "AnimationRuntime.h"
+#include "TwoBoneIK.h"
 #include "RangeLimitedFABRIK.h"
 #include "Utility/AnimUtil.h"
 
@@ -78,7 +77,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
 		float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;
 
-		// Don't apply IK unless the foot is below the target height
+		// Don't move foot unless the foot is below the target height
 		if (FootCS.Z < MinimumHeight)
 		{
 			FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius);
@@ -124,36 +123,56 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		float HipToTargetLengthSq = HipToTarget.SizeSquared();
 	}
    
-	// Gather bone transforms and constraints
-	TArray<FTransform> SourceCSTransforms({ 
-		HipCSTransform, 
-		KneeCSTransform,
-		FootCSTransform
-	});
-	
-	TArray<FIKBoneConstraint*> Constraints({
-		Leg->Chain.HipBone.GetConstraint(),
-		Leg->Chain.ThighBone.GetConstraint(),
-		Leg->Chain.ShinBone.GetConstraint()
-	});
+	if (Solver == EHumanoidLegIKSolver::IK_Human_Leg_Solver_FABRIK)
+	{
+		// Gather bone transforms and constraints
+		TArray<FTransform> SourceCSTransforms({
+			HipCSTransform,
+			KneeCSTransform,
+			FootCSTransform
+		});
 
-	TArray<FTransform> DestCSTransforms;
+		TArray<FIKBoneConstraint*> Constraints({
+			Leg->Chain.HipBone.GetConstraint(),
+			Leg->Chain.ThighBone.GetConstraint(),
+			Leg->Chain.ShinBone.GetConstraint()
+		});
 
-	bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
-		SourceCSTransforms,
-		Constraints,
-		FootTargetCS,
-		DestCSTransforms,
-		0.0f,
-		1.0f,
-		Precision,
-		MaxIterations,
-		Cast<ACharacter>(SkelComp->GetOwner())
-	);
+		TArray<FTransform> DestCSTransforms;
 
-	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, DestCSTransforms[0]));
-	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, DestCSTransforms[1]));
-	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, DestCSTransforms[2]));
+		bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
+			SourceCSTransforms,
+			Constraints,
+			FootTargetCS,
+			DestCSTransforms,
+			0.0f,
+			1.0f,
+			Precision,
+			MaxIterations,
+			Cast<ACharacter>(SkelComp->GetOwner())
+		);
+
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, DestCSTransforms[0]));
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, DestCSTransforms[1]));
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, DestCSTransforms[2]));
+	}
+	else if (Solver == EHumanoidLegIKSolver::IK_Human_Leg_Solver_TwoBone)
+	{
+		AnimationCore::SolveTwoBoneIK(
+			HipCSTransform,
+			KneeCSTransform,
+			FootCSTransform,
+			FVector(1.0f, 0.0f, 0.0f), // Use forward direction, knee correction node will fix it
+			FootTargetCS,
+			false,
+			1.0f,
+			1.0f
+		);
+
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, HipCSTransform));
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, KneeCSTransform));
+		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, FootCSTransform));		
+	}
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
