@@ -134,7 +134,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	FVector FootToePost = FVector::VectorPlaneProject((ToeCSPostRotated - FootCSPostRotated), HipFootAxisPost);
 	if (!FootToePost.Normalize())
 	{
-#if ENABLE_IK_DEBUG
+#if ENABLE_IK_DEBUG_VERBOSE
 		UE_LOG(LogRTIK, Warning, TEXT("Knee Correction - FootToePost Normalization Failure"));
 #endif // ENABLE_IK_DEBUG_VERBOSE
 		FootToePost = KneeDirectionPost;
@@ -149,7 +149,10 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 
 	if (!RotationAxis.Normalize())
 	{		
-		UE_LOG(LogRTIK, Warning, TEXT("Rotation Axis normalization failure "));
+
+#if ENABLE_IK_DEBUG_VERBOSE
+		UE_LOG(LogRTIK, Warning, TEXT("Knee correction -- rotation Axis normalization failure "));
+#endif
 
 		if (FVector::DotProduct(FootToePre, KneePre) < 0.0f)
 		{
