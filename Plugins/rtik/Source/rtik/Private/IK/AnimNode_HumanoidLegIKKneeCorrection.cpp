@@ -97,14 +97,6 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	}
 	FVector CenterPost        = HipCSPost + (KneeCSPost - HipCSPost).ProjectOnToNormal(HipFootAxisPost);
 	FVector KneeDirectionPost = (KneeCSPost - CenterPost).GetUnsafeNormal();
-
-/*
-	// Ensure both axes point in the same direction
-	if (FVector::DotProduct(HipFootAxisPre, HipFootAxisPost) < 0.0f)
-	{
-		HipFootAxisPost *= -1;
-	}
-*/
 	
 	// Get the projected foot-toe vectors
 	FVector FootToePre = FVector::VectorPlaneProject((ToeCSPre - FootCSPre), HipFootAxisPre);
