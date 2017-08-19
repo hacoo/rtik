@@ -75,7 +75,10 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		bool bWithinRotationLimit = Leg->Chain.GetIKFloorPointCS(*SkelComp, TraceData->GetTraceData(), FloorCS);
 		
 		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
-		float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;
+
+		// Old method included FootRadius -- could cause IK to cut in suddenly during level movement. Leaving in for historical interest
+		// float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;		
+		float MinimumHeight = FloorCS.Z + HeightAboveRoot;
 
 		// Don't move foot unless the foot is below the target height
 		if (FootCS.Z < MinimumHeight)
@@ -94,7 +97,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	}
 
 	// Interpolate the foot target (if needed)
-	if (bEffectorMovesInstantly || Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
+	if (bEffectorMovesInstantly)
 	{
 		LastEffectorOffset = FVector(0.0f, 0.0f, 0.0f);		
 	}
@@ -112,17 +115,9 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		LastEffectorOffset    = LastEffectorOffset + RequiredDelta;
 	}
 
-	if (Mode != EHumanoidLegIKMode::IK_Human_Leg_Locomotion)
-	{
-		// Ensure that the target is reachable; if not do not apply IK
-		// This only tests distance to the target. Future work: check ROM as well
-		// No need to check if in locomotion mode; target should always be reachable.
+	// Will contain post-IK transforms	
+	TArray<FTransform> DestCSTransforms;
 
-		FVector HipToTarget = (FootTargetCS - HipCS);
-		float LegLengthSq = FMath::Square(Leg->Chain.GetTotalChainLength());
-		float HipToTargetLengthSq = HipToTarget.SizeSquared();
-	}
-   
 	if (Solver == EHumanoidLegIKSolver::IK_Human_Leg_Solver_FABRIK)
 	{
 		// Gather bone transforms and constraints
@@ -138,8 +133,6 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 			Leg->Chain.ShinBone.GetConstraint()
 		});
 
-		TArray<FTransform> DestCSTransforms;
-
 		bool bBoneLocationUpdated = FRangeLimitedFABRIK::SolveRangeLimitedFABRIK(
 			SourceCSTransforms,
 			Constraints,
@@ -151,28 +144,29 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 			MaxIterations,
 			Cast<ACharacter>(SkelComp->GetOwner())
 		);
-
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, DestCSTransforms[0]));
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, DestCSTransforms[1]));
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, DestCSTransforms[2]));
 	}
 	else if (Solver == EHumanoidLegIKSolver::IK_Human_Leg_Solver_TwoBone)
 	{
+		DestCSTransforms.Reserve(3);
+		DestCSTransforms.Add(HipCSTransform);
+		DestCSTransforms.Add(KneeCSTransform);
+		DestCSTransforms.Add(FootCSTransform);
+
 		AnimationCore::SolveTwoBoneIK(
-			HipCSTransform,
-			KneeCSTransform,
-			FootCSTransform,
+			DestCSTransforms[0],
+			DestCSTransforms[1],
+			DestCSTransforms[2],
 			FVector(1.0f, 0.0f, 0.0f), // Use forward direction, knee correction node will fix it
 			FootTargetCS,
 			false,
 			1.0f,
 			1.0f
 		);
-
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, HipCSTransform));
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, KneeCSTransform));
-		OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, FootCSTransform));		
 	}
+
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.HipBone.BoneIndex, DestCSTransforms[0]));
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ThighBone.BoneIndex, DestCSTransforms[1]));
+	OutBoneTransforms.Add(FBoneTransform(Leg->Chain.ShinBone.BoneIndex, DestCSTransforms[2]));
 
 #if WITH_EDITOR
 	if (bEnableDebugDraw)
@@ -184,7 +178,30 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FDebugDrawUtil::DrawSphere(World, ToWorld.TransformPosition(FloorCS), FColor(255, 0, 0));
 		FDebugDrawUtil::DrawSphere(World, TraceData->GetTraceData().FootHitResult.ImpactPoint, FColor(255, 255, 0), 10.0f);
 		FDebugDrawUtil::DrawSphere(World, TraceData->GetTraceData().ToeHitResult.ImpactPoint, FColor(255, 255, 0), 10.0f);
-		
+
+		// Leg before IK, in yellow:
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(HipCSTransform.GetLocation()),
+			ToWorld.TransformPosition(KneeCSTransform.GetLocation()),
+			FColor(255, 255, 0)
+		);
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(KneeCSTransform.GetLocation()),
+			ToWorld.TransformPosition(FootCSTransform.GetLocation()),
+			FColor(255, 255, 0)
+		);
+
+		// Leg after IK, in cyan
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(DestCSTransforms[0].GetLocation()),
+			ToWorld.TransformPosition(DestCSTransforms[1].GetLocation()),
+			FColor(0, 255, 255)
+		);
+		FDebugDrawUtil::DrawLine(World,
+			ToWorld.TransformPosition(DestCSTransforms[1].GetLocation()),
+			ToWorld.TransformPosition(DestCSTransforms[2].GetLocation()),
+			FColor(0, 255, 255)
+		);	   
 	}
 #endif // WITH_EDITOR
 }

@@ -24,10 +24,10 @@ enum class EHumanoidLegIKMode : uint8
 UENUM(BlueprintType)
 enum class EHumanoidLegIKSolver: uint8
 {	
-	// FABRIK solver - more flexible, slower
-	IK_Human_Leg_Solver_FABRIK UMETA(DisplayName = "FABRIK"),
+	// FABRIK solver - more flexible, slower, supports constraints
+	IK_Human_Leg_Solver_FABRIK UMETA(DisplayName = "Range-Limited FABRIK"),
 	
-	// Two-bone - Simple, fast
+	// Two-bone - No constraint support, simple, fast
 	IK_Human_Leg_Solver_TwoBone UMETA(DisplayName = "Two-Bone")
 };
 
@@ -104,8 +104,6 @@ public:
 	// If true, the effector will snap instantly to the target location. If false, the effector will
 	// move smoothly, according to EffectorVelocity. Setting to true will make IK responsive but quite snappy. 
 	// For most applications, you should probably set this to false.
-	//
-	// This is only used if IK mode is 'Normal Locomotion' -- World Target IK always behaves as if this is set to true and moves instantly.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings)
 	bool bEffectorMovesInstantly;
 
