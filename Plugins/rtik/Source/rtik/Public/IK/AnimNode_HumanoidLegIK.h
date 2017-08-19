@@ -125,7 +125,7 @@ public:
 		Mode(EHumanoidLegIKMode::IK_Human_Leg_Locomotion),
 		Solver(EHumanoidLegIKSolver::IK_Human_Leg_Solver_FABRIK),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
-		EffectorVelocity(50.0f),
+		EffectorVelocity(300.0f),
 		bEffectorMovesInstantly(false),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f)
 	{ }

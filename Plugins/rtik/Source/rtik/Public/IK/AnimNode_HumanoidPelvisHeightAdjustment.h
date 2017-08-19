@@ -63,8 +63,8 @@ public:
 		:
 		DeltaTime(0.0f),
 		LastPelvisOffset(0.0f, 0.0f, 0.0f),
-		PelvisAdjustVelocity(20.0f),
-		MaxPelvisAdjustSize(40.0),
+		PelvisAdjustVelocity(150.0f),
+		MaxPelvisAdjustSize(50.0),
 		bEnableDebugDraw(false)
 	{ }
 
