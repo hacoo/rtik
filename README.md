@@ -38,9 +38,9 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Requirements
 
-   RTIK has been tested under Windows 10 only. It has been tested with Unreal Engine 4.16, but may work with other engine versions. UE4 is available at https://www.epicgames.
+   RTIK has been tested under Windows 10 only. It has been tested with Unreal Engine 4.16, but may work with other engine versions. UE4 is available at https://www.epicgames.com/
    
-   Building RTIK requires MS Visual Studio. MSVS may be found at https://www.visualstudio.com/.
+   Building RTIK requires MS Visual Studio. MSVS may be found at https://www.visualstudio.com/
 
 ## Stand-Alone Demo Installation
    
