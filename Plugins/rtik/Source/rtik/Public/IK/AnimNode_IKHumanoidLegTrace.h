@@ -8,12 +8,14 @@
 #include "AnimNode_IKHumanoidLegTrace.generated.h"
 
 
-/*
-  * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
-  * Uses FABRIK IK solver.  
-  * 
-  * Knee rotation is not enforced in this node.
-*/
+// Traces towards the floor underneath the foot and toe. The results of this trace
+// are used to determine where the foot should go during IK, among other things (e.g.,
+// foot rotation). 
+//
+// Tracing is expensive; for many IK setups, this is the most expensive step. Therefore,
+// trace data is stored in a wrapper passed in by pointer. During the execution of this node,
+// trace data is store in the TraceData input; you can then re-use this wrapper object
+// later in your AnimGraph.
 USTRUCT()
 struct RTIK_API FAnimNode_IKHumanoidLegTrace : public FAnimNode_SkeletalControlBase
 {
@@ -27,12 +29,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))
 	UIKBoneWrapper* PelvisBone;
 
-	// The trace data object to fill in
+	// The trace data object to fill in. Trace data will be set in this node, you may then 
+	// use it later in your AnimGraph.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trace, meta = (PinShownByDefault))
 	UHumanoidIKTraceData_Wrapper* TraceData;
 
 	// Maximum height above the floor to do pelvis adjustment. Will transition back to base pose if the 
-	// required hip adjustment is larger than this value. Should probably be something 1 / 3 character capsule height
+	// required hip adjustment is larger than this value. Should probably be something like 1 / 3 character capsule height
     // (more if you're brave)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Settings, meta = (PinShownByDefault))
 	float MaxPelvisAdjustSize;

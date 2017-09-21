@@ -13,7 +13,7 @@
  * it ensures that both legs are close enough to the ground to actually reach.
  * 
  * Functions as follows:
- * - Assumes that the animroot rests on the floor. Checks the height offset of each foot relative to the animroot.
+ * - Assumes that the animroot rests on the floor. 
  * - Traces to the floor from each foot. Each foot 'should' be the same height above the floor impact point as they
  *   are above the animroot.
  * - Moves the hips so that the lowest foot above the lowest floor point is at target height. 

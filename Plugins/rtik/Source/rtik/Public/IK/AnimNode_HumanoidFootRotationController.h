@@ -7,12 +7,8 @@
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_HumanoidFootRotationController.generated.h"
 
-/*
-  * IKs a humanoid biped leg onto a target location. Should be preceeded by hip adjustment to ensure the legs can reach. 
-  * Uses FABRIK IK solver.  
-  * 
-  * Knee rotation is not enforced in this node.
-*/
+// Rotates the foot to match the floor slope during IK. Will also adjust the foot when it's just
+// above the floor, as this looks more natural.
 USTRUCT()
 struct RTIK_API FAnimNode_HumanoidFootRotationController : public FAnimNode_SkeletalControlBase
 {

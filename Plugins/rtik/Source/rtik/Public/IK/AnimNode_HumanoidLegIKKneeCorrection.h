@@ -12,6 +12,10 @@
 * Corrects rotation of the knee after IK. The IK solver will often leave the knee in a bad position; rotating inward or even
 * folding backward. This node returns the knee to the proper angle, without moving the end effector. You should usually have it 
 * as a post-processing step after IK.
+*
+* The corrected knee angle is determined by comparing the direction of the foot and knee in the
+* original animation. Therefore, the corrected angle should blend seamlessly with the original
+* animation, without creating an awkward or stiff look.
 */
 USTRUCT()
 struct RTIK_API FAnimNode_HumanoidLegIKKneeCorrection : public FAnimNode_SkeletalControlBase

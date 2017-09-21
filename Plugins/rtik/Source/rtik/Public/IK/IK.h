@@ -1,7 +1,7 @@
 // Copyright (c) Henry Cooney 2017
 
 /*
-* Contains basic IK structures.
+* Contains basic IK structures and definitions.
 */
 
 #pragma once

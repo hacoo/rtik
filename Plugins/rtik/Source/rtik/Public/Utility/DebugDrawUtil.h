@@ -7,6 +7,7 @@
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
 #include "Runtime/Engine/Public/BonePose.h"
 #include "DebugDrawUtil.generated.h"
+
 /*
 * Thread-safe debug drawing utilities. Animgraph code may be multithreaded; debug-drawing on animation threads 
 * seems to cause crashes. Functions in this class use AsyncTasks to draw on the game thread, instead. 

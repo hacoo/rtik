@@ -6,15 +6,10 @@
 #include "IK.h"
 #include "Constraints.generated.h"
 
-/*
-	Contains defintions for constraint types used in IK
-*/
 
+// Contains defintions for constraint types used in IK
 
-
-/*
-	The bone is unconstrainted and may move freely.
-*/
+// The bone is unconstrainted and may move freely.
 USTRUCT(BlueprintType)
 struct RTIK_API FNoBoneConstraint : public FIKBoneConstraint
 {
@@ -49,17 +44,16 @@ public:
 };
 
 
-/*
-	The bone may only rotate around the specified Rotation Axis; i.e., it must stay in the plane normal to the rotation axis.	
 
-	Rotation axis is a vector in component space.
-
-	The rotation angle is with respect to a second component-space vector, ForwardDirection. I.e.: if the bone is aligned directly with ForwardDirection, the rotation is 0 degrees. If ForwardDirection is not on the rotation plane, it will be projected onto it, so it must not be normal to the rotation plane.
-
-	Finally, the sign of the rotation angle is defined by the cross product of RotationAxis and ForwardDirection.
-
-	If the bone direction is normal to the rotation plane, it will be forced to point in FailsafeDirection.
-*/
+// The bone may only rotate around the specified Rotation Axis; i.e., it must stay in the plane normal to the rotation axis.
+// 
+// Rotation axis is a vector in component space.
+// 
+// The rotation angle is with respect to a second component - space vector, ForwardDirection.I.e.: if the bone is aligned directly with ForwardDirection, the rotation is 0 degrees.If ForwardDirection is not on the rotation plane, it will be projected onto it, so it must not be normal to the rotation plane.
+//
+// Finally, the sign of the rotation angle is defined by the cross product of RotationAxis and ForwardDirection.
+//
+// If the bone direction is normal to the rotation plane, it will be forced to point in FailsafeDirection.
 USTRUCT(BlueprintType)
 struct RTIK_API FPlanarRotation : public FIKBoneConstraint
 {
