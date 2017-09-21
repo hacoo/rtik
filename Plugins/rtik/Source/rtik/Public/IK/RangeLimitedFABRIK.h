@@ -64,7 +64,7 @@ public:
 	// Uses the FABRIK algorithm to solve the IK problem on a chain of rigidly-connected points.	
 	//  
 	// InTransforms is a list of transforms representing the starting position of each point. The 0th element
-    // of this array is the ROOT. The last element is the EFFECTOR (sometimes called the 'tip' in code).
+	// of this array is the ROOT. The last element is the EFFECTOR (sometimes called the 'tip' in code).
 	//
 	// The root point represents the start of the chain; its displacement from its starting position is limited.
 	// The effector represents the end of the chain, FABRIK will attempt to move this to EffectorTargetLocation,
