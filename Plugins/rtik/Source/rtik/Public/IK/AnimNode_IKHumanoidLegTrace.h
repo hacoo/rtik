@@ -8,9 +8,13 @@
 #include "AnimNode_IKHumanoidLegTrace.generated.h"
 
 
-// Traces towards the floor underneath the foot and toe. The results of this trace
-// are used to determine where the foot should go during IK, among other things (e.g.,
-// foot rotation). 
+// Traces towards down to find the location of the floor under the foot and toe.
+// The results of this trace are used to determine where the foot should go during IK,
+// among other things(e.g., foot rotation). 
+// 
+// The trace proceeds in a downward vertical line through the foot / toe. The trace will start 
+// at the pelvis height or the foot / toe height, whichever is higher, and end at 
+// the maximum reach of the leg, plus the pelvis adjustment distance.
 //
 // Tracing is expensive; for many IK setups, this is the most expensive step. Therefore,
 // trace data is stored in a wrapper passed in by pointer. During the execution of this node,
