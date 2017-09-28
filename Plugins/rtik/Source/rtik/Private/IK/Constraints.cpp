@@ -20,34 +20,31 @@ void FNoBoneConstraint::EnforceConstraint(
 {
 	return;
 }
+
+bool FNoBoneConstraint::Initialize()
+{
+	return true;
+}
+
 #pragma endregion FIKNoBoneConstraint
 
 #pragma region FPlanarRotation
-/*
-void FPlanarRotation::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) 
+bool FPlanarRotation::Initialize()
 {
 	// make sure axes are normalized; compute up axis
 	bool bAxesOK = true;
 	bAxesOK &= ForwardDirection.Normalize();
 	bAxesOK &= RotationAxis.Normalize();
 	bAxesOK &= FailsafeDirection.Normalize();
-		
-	if (bAxesOK)
-	{
-		UpDirection = FVector::CrossProduct(ForwardDirection, RotationAxis);
-		bAxesOK &= UpDirection.Normalize();
-	}
-
+	   
 	if (!bAxesOK)
 	{
-		UE_LOG(LogRTIK, Warning, TEXT("Planar Rotation Constraint was set up incorrectly. Forward direction direction and rotation axis must not be colinear."))
+		UE_LOG(LogRTIK, Warning, TEXT("Planar Rotation Constraint was set up incorrectly. Forward direction direction and rotation axis must not be colinear."));
+		return false;
 	}
-
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-} 
-*/
-
-
+	
+	return true;
+}
 
 void FPlanarRotation::EnforceConstraint(
 	int32 Index,
@@ -69,7 +66,7 @@ void FPlanarRotation::EnforceConstraint(
 
 	FVector UpDirection = FVector::CrossProduct(RotationAxis, ForwardDirection);
 
-#if ENABLE_IK_DEBUG
+#if ENABLE_IK_DEBUG_VERBOSE
 	if (!RotationAxis.IsNormalized() || !ForwardDirection.IsNormalized() || !UpDirection.IsNormalized())
 	{
 		UE_LOG(LogRTIK, Warning, TEXT("Planar rotation constraint contained an unnormalized direction"));

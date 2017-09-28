@@ -20,6 +20,8 @@ public:
   
 	FNoBoneConstraint() { }
 
+	bool Initialize() override;
+
 	virtual void EnforceConstraint(
 		int32 Index,
 		const TArray<FTransform>& ReferenceCSTransforms,
@@ -82,6 +84,8 @@ public:
 	float MinDegrees;
 
 public:
+
+	bool Initialize() override;	
 
 	FPlanarRotation()
 		:

@@ -115,6 +115,12 @@ public:
 		bEnableDebugDraw(false)
 	{ }
 
+	// Initialize the constraint. This function must be called before
+	// the constraint is used. Returns initialization success.	
+	virtual	bool Initialize() 
+	{
+		return true;
+	}
 
 	// Enforces the constraint. Will modify OutCSTransforms if needed.
 	// @param Index - The index of this constraint in Constraints; should correspond to the same bone in in InCSTransforms and OutCSTransforms
@@ -226,7 +232,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = IK)
 	void Initialize(FIKBone InBone);
-
 
 	bool InitIfInvalid(const FBoneContainer& RequiredBones);
 	

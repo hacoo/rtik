@@ -52,6 +52,16 @@ bool FIKBone::InitIfInvalid(const FBoneContainer& RequiredBones)
 // Initialize this IK Bone. Must be called before use.
 bool FIKBone::Init(const FBoneContainer& RequiredBones)
 {
+	FIKBoneConstraint* Constraint = GetConstraint();
+
+	if (Constraint != nullptr && !Constraint->Initialize())
+	{
+#if ENABLE_IK_DEBUG
+		UE_LOG(LogRTIK, Warning, TEXT("FIKBone::Init -- Constraint for bone %s failed to initialize"),
+			*BoneRef.BoneName.ToString());
+#endif // ENABLE_IK_DEBUG
+	}
+
 	if (BoneRef.Initialize(RequiredBones))
 	{
 		BoneIndex = BoneRef.GetCompactPoseIndex(RequiredBones);
@@ -62,7 +72,7 @@ bool FIKBone::Init(const FBoneContainer& RequiredBones)
 #if ENABLE_IK_DEBUG
 		UE_LOG(LogRTIK, Warning, TEXT("FIKBone::Init -- IK Bone initialization failed for bone: %s"),
 			*BoneRef.BoneName.ToString());
-#endif // ENABLE_ANIM_DEBUG
+#endif // ENABLE_IK_DEBUG
 		return false;
 	}
 }

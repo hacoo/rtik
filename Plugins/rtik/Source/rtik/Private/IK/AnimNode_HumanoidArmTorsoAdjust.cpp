@@ -99,7 +99,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 
 	TArray<FIKBoneConstraint*> ConstraintsRight;
 	ConstraintsRight.Reserve(NumBonesLeft);
-	for (FIKBone& Bone : LeftArm->Chain.BonesRootToEffector)
+	for (FIKBone& Bone : RightArm->Chain.BonesRootToEffector)
 	{
 		ConstraintsRight.Add(Bone.GetConstraint());
 	}
