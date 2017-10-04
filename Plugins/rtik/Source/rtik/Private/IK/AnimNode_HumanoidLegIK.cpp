@@ -13,15 +13,15 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Leg IK Eval"), STAT_HumanoidLegIK_Eval, STATGROUP_Anim);
 
-void FAnimNode_HumanoidLegIK::Initialize(const FAnimationInitializeContext & Context)
+void FAnimNode_HumanoidLegIK::Initialize_AnyThread(const FAnimationInitializeContext & Context)
 {
-	Super::Initialize(Context);
+	Super::Initialize_AnyThread(Context);
 	BaseComponentPose.Initialize(Context);
 }
 
-void FAnimNode_HumanoidLegIK::CacheBones(const FAnimationCacheBonesContext & Context)
+void FAnimNode_HumanoidLegIK::CacheBones_AnyThread(const FAnimationCacheBonesContext & Context)
 {
-	Super::CacheBones(Context);
+	Super::CacheBones_AnyThread(Context);
 	BaseComponentPose.CacheBones(Context);
 }
 
@@ -44,7 +44,7 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 	USkeletalMeshComponent* SkelComp   = Output.AnimInstanceProxy->GetSkelMeshComponent();
 	
-	FMatrix ToCS               = SkelComp->ComponentToWorld.ToMatrixNoScale().Inverse();
+	FMatrix ToCS               = SkelComp->GetComponentToWorld().ToMatrixNoScale().Inverse();
 	FTransform HipCSTransform  = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.HipBone.BoneIndex);
 	FTransform KneeCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ThighBone.BoneIndex);
 	FTransform FootCSTransform = FAnimUtil::GetBoneCSTransform(*SkelComp, Output.Pose, Leg->Chain.ShinBone.BoneIndex);
@@ -61,6 +61,9 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		if (TraceData->GetTraceData().FootHitResult.GetActor() == nullptr &&
 			TraceData->GetTraceData().ToeHitResult.GetActor() == nullptr)
 		{
+#if ENABLE_IK_DEBUG_VERBOSE
+			UE_LOG(LogRTIK, Warning, TEXT("Leg IK trace did not hit a valid actor"));
+#endif
 			return;
 		}
 
@@ -68,22 +71,26 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 		FComponentSpacePoseContext BasePose(Output);
 		BaseComponentPose.EvaluateComponentSpace(BasePose);
 
-		FVector BaseRootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, FCompactPoseBoneIndex(0));
-		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.FootBone.BoneIndex);
-
 		// If within foot rotation limit, use the low point. Otherwise, use the higher point and the foot shouldn't rotate.
 		bool bWithinRotationLimit = Leg->Chain.GetIKFloorPointCS(*SkelComp, TraceData->GetTraceData(), FloorCS);
+
+		FVector BaseRootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, FCompactPoseBoneIndex(0));
+		FVector BaseFootCS = FAnimUtil::GetBoneCSLocation(*SkelComp, BasePose.Pose, Leg->Chain.ShinBone.BoneIndex);
 		
-		float HeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
+		// How high the foot should be above the root. If below this, IK turns on.
+		float FootHeightAboveRoot = BaseFootCS.Z - BaseRootCS.Z;
 
 		// Old method included FootRadius -- could cause IK to cut in suddenly during level movement. Leaving in for historical interest
 		// float MinimumHeight = FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius;		
-		float MinimumHeight = FloorCS.Z + HeightAboveRoot;
+
+		float MinimumFootHeight = FloorCS.Z + FootHeightAboveRoot;
 
 		// Don't move foot unless the foot is below the target height
-		if (FootCS.Z < MinimumHeight)
+		if (FootCS.Z < MinimumFootHeight)
 		{
-			FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + HeightAboveRoot + Leg->Chain.FootRadius);
+			//Again, foot radius is now ignored. Don't need it 
+			//FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + FootHeightAboveRoot + Leg->Chain.FootRadius);
+			FootTargetCS = FVector(FootCS.X, FootCS.Y, FloorCS.Z + FootHeightAboveRoot);
 		}
 		else
 		{
@@ -172,8 +179,9 @@ void FAnimNode_HumanoidLegIK::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	if (bEnableDebugDraw)
 	{
 		UWorld* World = SkelComp->GetWorld();		
-		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FMatrix ToWorld = SkelComp->GetComponentToWorld().ToMatrixNoScale();
 		FVector EffectorWorld = ToWorld.TransformPosition(FootTargetCS);
+
 		FDebugDrawUtil::DrawSphere(World, EffectorWorld, FColor(255, 0, 255));
 		FDebugDrawUtil::DrawSphere(World, ToWorld.TransformPosition(FloorCS), FColor(255, 0, 0));
 		FDebugDrawUtil::DrawSphere(World, TraceData->GetTraceData().FootHitResult.ImpactPoint, FColor(255, 255, 0), 10.0f);
