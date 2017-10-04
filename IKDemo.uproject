@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.16",
+	"EngineAssociation": "4.17",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -9,9 +9,9 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-        "Engine",
-        "rtik",
-        "rtikEditor"
+				"Engine",
+				"rtik",
+				"rtikEditor"
 			]
 		}
 	]

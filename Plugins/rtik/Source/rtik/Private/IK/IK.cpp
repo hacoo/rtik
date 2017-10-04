@@ -79,7 +79,7 @@ bool FIKBone::Init(const FBoneContainer& RequiredBones)
 
 bool FIKBone::IsValid(const FBoneContainer& RequiredBones)
 {
-	bool bValid = BoneRef.IsValid(RequiredBones);
+	bool bValid = BoneRef.IsValidToEvaluate(RequiredBones);
 	
 #if ENABLE_IK_DEBUG_VERBOSE
 	if (!bValid)

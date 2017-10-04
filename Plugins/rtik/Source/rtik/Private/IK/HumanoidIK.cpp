@@ -51,7 +51,7 @@ void FHumanoidIK::HumanoidIKLegTrace(ACharacter* Character,
 	FVector ToeTraceEnd(ToeLocation.X, ToeLocation.Y, TraceEndHeight);
 
 	// Convert to world space for tracing
-	FTransform ComponentToWorld = SkelComp->ComponentToWorld;
+	FTransform ComponentToWorld = SkelComp->GetComponentToWorld();
 	FootTraceStart = ComponentToWorld.TransformPosition(FootTraceStart);
 	FootTraceEnd   = ComponentToWorld.TransformPosition(FootTraceEnd);
 	ToeTraceStart  = ComponentToWorld.TransformPosition(ToeTraceStart);

@@ -13,15 +13,15 @@
 
 DECLARE_CYCLE_STAT(TEXT("IK Humanoid Knee Correction Eval"), STAT_HumanoidLegIKKneeCorrection_Eval, STATGROUP_Anim);
 
-void FAnimNode_HumanoidLegIKKneeCorrection::Initialize(const FAnimationInitializeContext & Context)
+void FAnimNode_HumanoidLegIKKneeCorrection::Initialize_AnyThread(const FAnimationInitializeContext & Context)
 {
-	Super::Initialize(Context);
+	Super::Initialize_AnyThread(Context);
 	BaseComponentPose.Initialize(Context);
 }
 
-void FAnimNode_HumanoidLegIKKneeCorrection::CacheBones(const FAnimationCacheBonesContext & Context)
+void FAnimNode_HumanoidLegIKKneeCorrection::CacheBones_AnyThread(const FAnimationCacheBonesContext & Context)
 {
-	Super::CacheBones(Context);
+	Super::CacheBones_AnyThread(Context);
 	BaseComponentPose.CacheBones(Context);
 }
 
@@ -191,7 +191,7 @@ void FAnimNode_HumanoidLegIKKneeCorrection::EvaluateSkeletalControl_AnyThread(FC
 	if (bEnableDebugDraw)
 	{
 		UWorld* World = SkelComp->GetWorld();
-		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FMatrix ToWorld = SkelComp->GetComponentToWorld().ToMatrixNoScale();
 
 		// Draw the pre-IK leg, in red
 		FDebugDrawUtil::DrawBoneChain(World, *SkelComp, BasePose.Pose, 

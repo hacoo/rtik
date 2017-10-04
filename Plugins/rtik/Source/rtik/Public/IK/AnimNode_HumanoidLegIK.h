@@ -131,8 +131,8 @@ public:
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
-	virtual void Initialize(const FAnimationInitializeContext& Context) override;
-	virtual void CacheBones(const FAnimationCacheBonesContext& Context) override;
+	virtual void Initialize_AnyThread(const FAnimationInitializeContext& Context) override;
+	virtual void CacheBones_AnyThread(const FAnimationCacheBonesContext& Context) override;
 
 	virtual void UpdateInternal(const FAnimationUpdateContext& Context) override;
 	virtual void EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) override;

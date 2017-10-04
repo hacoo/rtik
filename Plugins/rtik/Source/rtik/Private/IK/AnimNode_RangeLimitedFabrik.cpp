@@ -122,7 +122,7 @@ void FAnimNode_RangeLimitedFabrik::EvaluateSkeletalControl_AnyThread(FComponentS
 	{
 		USkeletalMeshComponent* SkelComp = Output.AnimInstanceProxy->GetSkelMeshComponent();
 		UWorld* World = SkelComp->GetWorld();
-		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FMatrix ToWorld = SkelComp->GetComponentToWorld().ToMatrixNoScale();
 
 		if (SolverMode == ERangeLimitedFABRIKSolverMode::RLF_Normal)
 		{

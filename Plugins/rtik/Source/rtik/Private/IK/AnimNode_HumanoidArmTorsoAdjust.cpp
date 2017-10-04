@@ -287,7 +287,7 @@ void FAnimNode_HumanoidArmTorsoAdjust::EvaluateSkeletalControl_AnyThread(FCompon
 	if (bEnableDebugDraw)
 	{
 		UWorld* World = SkelComp->GetWorld();		
-		FMatrix ToWorld = SkelComp->ComponentToWorld.ToMatrixNoScale();
+		FMatrix ToWorld = SkelComp->GetComponentToWorld().ToMatrixNoScale();
 		FVector WaistLocWorld = ToWorld.TransformPosition(WaistCS.GetLocation());
 		FVector WaistLocWorldPostIK = ToWorld.TransformPosition(WaistCSPostIK.GetLocation());
 		FVector ParentLoc;

@@ -60,7 +60,7 @@ struct RTIK_API FAnimNode_RangeLimitedFabrik : public FAnimNode_SkeletalControlB
 	TEnumAsByte<enum EBoneControlSpace> EffectorTransformSpace;
 
 	// If EffectorTransformSpace is a bone, this is the bone to use. *
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = EndEffector)
+	UPROPERTY(EditAnywhere, Category = EndEffector)
 	FBoneReference EffectorTransformBone;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bones, meta = (PinShownByDefault))

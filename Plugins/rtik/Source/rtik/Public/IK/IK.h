@@ -115,6 +115,9 @@ public:
 		bEnableDebugDraw(false)
 	{ }
 
+	virtual ~FIKBoneConstraint()
+	{ }
+
 	// Initialize the constraint. This function must be called before
 	// the constraint is used. Returns initialization success.	
 	virtual	bool Initialize() 
@@ -184,7 +187,7 @@ public:
 		BoneIndex(INDEX_NONE)
 	{ }
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UPROPERTY(EditAnywhere, Category = "Settings")
 	FBoneReference BoneRef;
 
 	FIKBoneConstraint* GetConstraint();
@@ -285,6 +288,9 @@ public:
 	FRangeLimitedIKChain()
 		:
 		bValid(false)
+	{ }
+
+	virtual ~FRangeLimitedIKChain()
 	{ }
 
 	// Bones in the chain, ordered from the effector bone to the root.
