@@ -13,9 +13,9 @@ public class rtikEditor : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[] { "EditorStyle", "AnimGraph", "BlueprintGraph", "PropertyEditor", "Slate", "SlateCore" });
 
-        PublicIncludePaths.AddRange(new string[] { "rtikEditor/Public", "rtikEditor/Public/GraphNodes" });
+        // PublicIncludePaths.AddRange(new string[] { "rtikEditor/Public", "rtikEditor/Public/GraphNodes" });
 
-        PrivateIncludePaths.AddRange(new string[] { "rtikEditor/Private", "rtikEditor/Private/GraphNodes" });
+        // PrivateIncludePaths.AddRange(new string[] { "rtikEditor/Private", "rtikEditor/Private/GraphNodes" });
 
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
