@@ -12,9 +12,9 @@ public class rtik : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-        PublicIncludePaths.AddRange(new string[] { "rtik/Public", "rtik/Public/IK", "rtik/Public/Utility" });
+        // PublicIncludePaths.AddRange(new string[] { "rtik/Public", "rtik/Public/IK", "rtik/Public/Utility" });
 
-        PrivateIncludePaths.AddRange(new string[] { "rtik/Private", "rtik/Private/IK", "rtik/Private/Utility"});
+        // PrivateIncludePaths.AddRange(new string[] { "rtik/Private", "rtik/Private/IK", "rtik/Private/Utility"});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
