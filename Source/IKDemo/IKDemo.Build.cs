@@ -8,9 +8,9 @@ public class IKDemo : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "rtik", "rtikEditor" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "rtik" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "rtik", "rtikEditor" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "rtik" });
 
         // DynamicallyLoadedModuleNames.AddRange(new string[] { "rtik" });
 

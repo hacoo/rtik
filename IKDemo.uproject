@@ -10,8 +10,7 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"rtik",
-				"rtikEditor"
+				"rtik"
 			]
 		}
 	]

@@ -8,7 +8,7 @@ public class rtik : ModuleRules
     {     
         // PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraph", "BlueprintGraph", "AnimGraphRuntime", "AnimationCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraphRuntime", "AnimationCore" });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
 
