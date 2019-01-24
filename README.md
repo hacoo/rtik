@@ -14,11 +14,7 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
  - Provide a modular set of AnimGraph nodes that can be used to build IK setups. These nodes are 'lower level', but should enable animators to create custom IK setups without needing to write C++.
 
- - Create higher-level AnimGraph nodes for more common IK setups. These should make common IK scenarios easy to set up. In particular, a very easy-to-use setup for humanoids will be provided.
-
- - Add tooling support; that is, a graphical editor for setting up IK and testing with different animations (this is a longer-term goal)
-
- - Implement 'prone' IK: that is, the ability for characters to lay down or crawl with minimal clipping through uneven ground (this is a longer-term goal).
+ - Create higher-level AnimGraph nodes for more common IK setups. These should make common IK scenarios easy to set up. In particular, a very easy-to-use setups for humanoids.
 
 ## Who it's for
 
@@ -75,13 +71,9 @@ This project attempts to create a modular, easy-to-use IK system for UE4. The go
 
 ## Status
 
-Updated 8/16/2017 
+An early build of RTIK is now available as a non-game module. It provides full body IK for humanoids. While the current version of RTIK is incomplete, you are welcome to experiment with it!
 
-An early build of RTIK is now available as a non-game module. It provides full body IK for humanoids. While the current version of RTIK is very much an early alpha, you are welcome to experiment with it!
-
-## Contact Info
-
-For questions, concerns, comments, et cetera please contact me (Henry) at hacoo36@gmail.com. 
+RTIK is currently not under active development, however, pull requests are welcome.
 
 ## License
 
