@@ -51,8 +51,8 @@ public:
 
 	FAnimNode_IKHumanoidLegTrace()
 		:
-		bEnableDebugDraw(false),
-		MaxPelvisAdjustSize(40.0f)
+		MaxPelvisAdjustSize(40.0f),
+		bEnableDebugDraw(false)
 	{ }
 
 protected: 

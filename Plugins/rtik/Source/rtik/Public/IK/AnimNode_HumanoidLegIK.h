@@ -116,9 +116,8 @@ public:
 
 	FAnimNode_HumanoidLegIK()
 		:
-		bEnableDebugDraw(false),
-		DeltaTime(0.0f),
 		FootTargetWorld(FVector(0.0f, 0.0f, 0.0f)),
+		bEnableDebugDraw(false),
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
@@ -127,6 +126,7 @@ public:
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
 		EffectorVelocity(300.0f),
 		bEffectorMovesInstantly(false),
+		DeltaTime(0.0f),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f)
 	{ }
 

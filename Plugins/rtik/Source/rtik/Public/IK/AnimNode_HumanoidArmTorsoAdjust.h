@@ -171,7 +171,6 @@ public:
 		:
 		Mode(EHumanoidArmTorsoIKMode::IK_Human_ArmTorso_Disabled),
 		bEnableDebugDraw(false),
-		DeltaTime(0.0f),
 		Precision(0.001f),
 		MaxIterations(10),
 		bEnable(true),
@@ -189,6 +188,7 @@ public:
 		LeftArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		RightArmWorldTarget(FVector(0.0f, 0.0f, 0.0f)),
 		EffectorRotationSource(EBoneRotationSource::BRS_KeepComponentSpaceRotation),
+		DeltaTime(0.0f),
 		LastEffectorOffset(0.0f, 0.0f, 0.0f),
 		LastRotationOffset(FQuat::Identity)
 	{ }

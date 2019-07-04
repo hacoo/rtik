@@ -43,11 +43,11 @@ public:
 
 	FAnimNode_HumanoidFootRotationController()
 		:
+		RotationSlerpSpeed(20.0f),
+		bInterpolateRotation(true),
 		bEnableDebugDraw(false),
 		DeltaTime(0.0f),
-		LastRotationOffset(FQuat::Identity),
-		RotationSlerpSpeed(20.0f),
-		bInterpolateRotation(true)
+		LastRotationOffset(FQuat::Identity)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
