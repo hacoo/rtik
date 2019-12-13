@@ -5,8 +5,10 @@ using UnrealBuildTool;
 public class rtik : ModuleRules
 {
     public rtik(ReadOnlyTargetRules Target) : base(Target)
-    {     
+    {
         // PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+        PrivatePCHHeaderFile = "rtik.h";
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraphRuntime", "AnimationCore" });
 

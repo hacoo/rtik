@@ -25,9 +25,9 @@ public:
 		:
 		FootRadius(10.0f),
 		ToeRadius(5.0f),
-		TotalChainLength(0.0f),
+		MaxFootRotationDegrees(30.0f),
 		bInitOk(false),
-		MaxFootRotationDegrees(30.0f)
+		TotalChainLength(0.0f)
 	{ }
 	
 	// Distance between the bottom of the shin bone and the bottom surface of the foot
