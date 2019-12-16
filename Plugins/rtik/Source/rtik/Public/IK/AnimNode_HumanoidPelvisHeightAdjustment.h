@@ -61,11 +61,11 @@ public:
 
 	FAnimNode_HumanoidPelvisHeightAdjustment()
 		:
-		DeltaTime(0.0f),
-		LastPelvisOffset(0.0f, 0.0f, 0.0f),
 		PelvisAdjustVelocity(150.0f),
 		MaxPelvisAdjustSize(50.0),
-		bEnableDebugDraw(false)
+		bEnableDebugDraw(false),
+		DeltaTime(0.0f),
+		LastPelvisOffset(0.0f, 0.0f, 0.0f)
 	{ }
 
 	// FAnimNode_SkeletalControlBase Interface
