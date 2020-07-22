@@ -8,6 +8,7 @@ public class rtik : ModuleRules
     {     
         // PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		PrivatePCHHeaderFile = "rtik.h";
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AnimGraphRuntime", "AnimationCore" });
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
